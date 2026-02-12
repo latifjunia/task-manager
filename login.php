@@ -7,12 +7,21 @@ if (isLoggedIn()) {
 }
 
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $result = loginUser($_POST['username'], $_POST['password']);
-    if ($result['success']) {
-        redirect('index.php');
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    if ($username !== '' && $password !== '') {
+        $result = loginUser($username, $password);
+
+        if ($result['success']) {
+            redirect('index.php');
+        } else {
+            $error = $result['message'];
+        }
     } else {
-        $error = $result['message'];
+        $error = "Username dan password wajib diisi.";
     }
 }
 ?>
@@ -21,122 +30,154 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Task Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fc;
             min-height: 100vh;
             display: flex;
+            justify-content: center;
             align-items: center;
-            padding-top: 40px;
-            padding-bottom: 40px;
+            font-family: 'Segoe UI', sans-serif;
         }
+
         .login-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+            padding: 35px;
         }
-        .login-header {
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+
+        .logo {
+            width: 55px;
+            height: 55px;
+            background: #4e73df;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
             color: white;
-            border-radius: 15px 15px 0 0;
-            padding: 30px;
-            text-align: center;
         }
-        .login-body {
-            padding: 30px;
-            background-color: white;
-            border-radius: 0 0 15px 15px;
+
+        .form-control {
+            border-radius: 10px;
+            padding: 10px;
         }
-        .form-control:focus {
-            border-color: #4361ee;
-            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-        }
+
         .btn-login {
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            background: #4e73df;
             border: none;
+            border-radius: 10px;
             padding: 12px;
             font-weight: 600;
+            transition: 0.2s ease-in-out;
         }
+
         .btn-login:hover {
-            background: linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%);
+            background: #2e59d9;
+        }
+
+        .small-text {
+            font-size: 0.9rem;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-6 col-lg-5">
-                <div class="login-card">
-                    <div class="login-header">
-                        <h1 class="display-6 mb-3">
-                            <i class="bi bi-kanban-fill"></i>
-                        </h1>
-                        <h2 class="h4 mb-0">Task Manager</h2>
-                        <p class="mb-0 opacity-75">Sistem Kolaborasi Tim</p>
-                    </div>
-                    
-                    <div class="login-body">
-                        <h3 class="text-center mb-4">Login ke Akun</h3>
-                        
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <form method="POST" action="">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Username atau Email</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-person"></i>
-                                    </span>
-                                    <input type="text" class="form-control" id="username" name="username" 
-                                           placeholder="Masukkan username atau email" required
-                                           value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="mb-4">
-                                <label for="password" class="form-label">Password</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-lock"></i>
-                                    </span>
-                                    <input type="password" class="form-control" id="password" name="password" 
-                                           placeholder="Masukkan password" required>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-login btn-lg">
-                                    <i class="bi bi-box-arrow-in-right"></i> Login
-                                </button>
-                            </div>
-                            
-                            <div class="text-center">
-                                <p class="mb-0">Belum punya akun?
-                                    <a href="register.php" class="text-decoration-none fw-bold">Daftar di sini</a>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <p class="text-white mb-0">
-                        &copy; <?php echo date('Y'); ?> Task Manager. Sistem Manajemen Tugas & Kolaborasi Tim.
-                    </p>
-                </div>
+
+<div class="login-card">
+
+    <div class="text-center mb-4">
+        <div class="logo">
+            <i class="bi bi-kanban-fill"></i>
+        </div>
+        <h4 class="fw-bold">Task Manager</h4>
+        <p class="text-muted small-text mb-0">Sistem Manajemen Tugas</p>
+    </div>
+
+    <?php if ($error): ?>
+        <div class="alert alert-danger text-center">
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" autocomplete="off">
+
+        <div class="mb-3">
+            <label class="form-label">Username atau Email</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-person"></i>
+                </span>
+                <input type="text"
+                       name="username"
+                       class="form-control"
+                       placeholder="Masukkan username atau email"
+                       required>
             </div>
         </div>
-    </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+        <div class="mb-4">
+            <label class="form-label">Password</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white">
+                    <i class="bi bi-lock"></i>
+                </span>
+                <input type="password"
+                       name="password"
+                       id="password"
+                       class="form-control"
+                       placeholder="Masukkan password"
+                       required>
+
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        onclick="togglePassword()">
+                    <i class="bi bi-eye" id="eyeIcon"></i>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-login w-100">
+            <i class="bi bi-box-arrow-in-right me-2"></i>
+            Login
+        </button>
+
+        <div class="text-center mt-4 small-text">
+            Belum punya akun?
+            <a href="register.php" class="fw-semibold text-decoration-none">Daftar</a>
+        </div>
+
+    </form>
+</div>
+
+<script>
+function togglePassword() {
+    const password = document.getElementById("password");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    if (password.type === "password") {
+        password.type = "text";
+        eyeIcon.classList.replace("bi-eye", "bi-eye-slash");
+    } else {
+        password.type = "password";
+        eyeIcon.classList.replace("bi-eye-slash", "bi-eye");
+    }
+}
+</script>
+
 </body>
 </html>

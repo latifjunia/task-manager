@@ -9,34 +9,30 @@ if (isLoggedIn()) {
 $error = '';
 $success = '';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $fullname = trim($_POST['fullname'] ?? '');
     $username = trim($_POST['username'] ?? '');
-    $email = trim($_POST['email'] ?? '');
-    $password = $_POST['password'] ?? '';
-    $confirm_password = $_POST['confirm_password'] ?? '';
-    $full_name = trim($_POST['full_name'] ?? '');
-    
-    // Validasi
-    if (empty($username) || empty($email) || empty($password) || empty($full_name)) {
-        $error = 'Semua field wajib diisi';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $error = 'Format email tidak valid';
-    } elseif ($password !== $confirm_password) {
-        $error = 'Password dan konfirmasi password tidak sama';
-    } elseif (strlen($password) < 6) {
-        $error = 'Password minimal 6 karakter';
-    } else {
-        $result = registerUser($username, $email, $password, $full_name);
-        if ($result['success']) {
-            $success = $result['message'];
-            // Auto login setelah registrasi
-            $login_result = loginUser($username, $password);
-            if ($login_result['success']) {
-                redirect('index.php');
-            }
+    $email    = trim($_POST['email'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $confirm  = trim($_POST['confirm_password'] ?? '');
+
+    if ($fullname && $username && $email && $password && $confirm) {
+
+        if ($password !== $confirm) {
+            $error = "Konfirmasi password tidak cocok.";
         } else {
-            $error = $result['message'];
+            $result = registerUser($fullname, $username, $email, $password);
+
+            if ($result['success']) {
+                $success = "Registrasi berhasil! Silakan login.";
+            } else {
+                $error = $result['message'];
+            }
         }
+
+    } else {
+        $error = "Semua field wajib diisi.";
     }
 }
 ?>
@@ -45,185 +41,145 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Register - Task Manager</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+
     <style>
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f8f9fc;
             min-height: 100vh;
             display: flex;
+            justify-content: center;
             align-items: center;
-            padding-top: 40px;
-            padding-bottom: 40px;
+            font-family: 'Segoe UI', sans-serif;
         }
+
         .register-card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 480px;
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.08);
+            padding: 35px;
         }
-        .register-header {
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+
+        .logo {
+            width: 55px;
+            height: 55px;
+            background: #4e73df;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px auto;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
             color: white;
-            border-radius: 15px 15px 0 0;
-            padding: 30px;
-            text-align: center;
         }
-        .register-body {
-            padding: 30px;
-            background-color: white;
-            border-radius: 0 0 15px 15px;
+
+        .form-control {
+            border-radius: 10px;
+            padding: 10px;
         }
-        .form-control:focus {
-            border-color: #4361ee;
-            box-shadow: 0 0 0 0.2rem rgba(67, 97, 238, 0.25);
-        }
+
         .btn-register {
-            background: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            background: #4e73df;
             border: none;
+            border-radius: 10px;
             padding: 12px;
             font-weight: 600;
+            transition: 0.2s ease-in-out;
         }
+
         .btn-register:hover {
-            background: linear-gradient(135deg, #3a0ca3 0%, #4361ee 100%);
+            background: #2e59d9;
+        }
+
+        .small-text {
+            font-size: 0.9rem;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <div class="row justify-content-center">
-            <div class="col-md-8 col-lg-6">
-                <div class="register-card">
-                    <div class="register-header">
-                        <h1 class="display-6 mb-3">
-                            <i class="bi bi-kanban-fill"></i>
-                        </h1>
-                        <h2 class="h4 mb-0">Daftar Akun Baru</h2>
-                        <p class="mb-0 opacity-75">Bergabung dengan Task Manager</p>
-                    </div>
-                    
-                    <div class="register-body">
-                        <?php if (!empty($success)): ?>
-                            <div class="alert alert-success alert-dismissible fade show" role="alert">
-                                <?php echo htmlspecialchars($success); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <?php if (!empty($error)): ?>
-                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                                <?php echo htmlspecialchars($error); ?>
-                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                            </div>
-                        <?php endif; ?>
-                        
-                        <form method="POST" action="">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="full_name" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-person-badge"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="full_name" name="full_name" 
-                                               placeholder="Masukkan nama lengkap" required
-                                               value="<?php echo isset($_POST['full_name']) ? htmlspecialchars($_POST['full_name']) : ''; ?>">
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6 mb-3">
-                                    <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-at"></i>
-                                        </span>
-                                        <input type="text" class="form-control" id="username" name="username" 
-                                               placeholder="Masukkan username" required
-                                               value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>">
-                                    </div>
-                                    <small class="text-muted">Username akan digunakan untuk login</small>
-                                </div>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-envelope"></i>
-                                    </span>
-                                    <input type="email" class="form-control" id="email" name="email" 
-                                           placeholder="nama@contoh.com" required
-                                           value="<?php echo isset($_POST['email']) ? htmlspecialchars($_POST['email']) : ''; ?>">
-                                </div>
-                            </div>
-                            
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="password" class="form-label">Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-key"></i>
-                                        </span>
-                                        <input type="password" class="form-control" id="password" name="password" 
-                                               placeholder="Minimal 6 karakter" required>
-                                    </div>
-                                </div>
-                                
-                                <div class="col-md-6 mb-4">
-                                    <label for="confirm_password" class="form-label">Konfirmasi Password <span class="text-danger">*</span></label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">
-                                            <i class="bi bi-key-fill"></i>
-                                        </span>
-                                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
-                                               placeholder="Ulangi password" required>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-register btn-lg">
-                                    <i class="bi bi-person-plus"></i> Daftar Akun
-                                </button>
-                            </div>
-                            
-                            <div class="text-center">
-                                <p class="mb-0">Sudah punya akun?
-                                    <a href="login.php" class="text-decoration-none fw-bold">Login di sini</a>
-                                </p>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-                
-                <div class="text-center mt-4">
-                    <p class="text-white mb-0">
-                        &copy; <?php echo date('Y'); ?> Task Manager. Sistem Manajemen Tugas & Kolaborasi Tim.
-                    </p>
-                </div>
-            </div>
+
+<div class="register-card">
+
+    <div class="text-center mb-4">
+        <div class="logo">
+            <i class="bi bi-kanban-fill"></i>
         </div>
+        <h4 class="fw-bold">Daftar Akun</h4>
+        <p class="text-muted small-text mb-0">Bergabung dengan Task Manager</p>
     </div>
-    
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        // Validasi password match
-        document.addEventListener('DOMContentLoaded', function() {
-            const password = document.getElementById('password');
-            const confirmPassword = document.getElementById('confirm_password');
-            
-            function validatePassword() {
-                if (password.value !== confirmPassword.value) {
-                    confirmPassword.setCustomValidity('Password tidak sama');
-                } else {
-                    confirmPassword.setCustomValidity('');
-                }
-            }
-            
-            password.addEventListener('change', validatePassword);
-            confirmPassword.addEventListener('keyup', validatePassword);
-        });
-    </script>
+
+    <?php if ($error): ?>
+        <div class="alert alert-danger text-center">
+            <?= htmlspecialchars($error) ?>
+        </div>
+    <?php endif; ?>
+
+    <?php if ($success): ?>
+        <div class="alert alert-success text-center">
+            <?= htmlspecialchars($success) ?>
+            <br>
+            <a href="login.php" class="fw-semibold text-decoration-none">Login sekarang</a>
+        </div>
+    <?php endif; ?>
+
+    <form method="POST" autocomplete="off">
+
+        <div class="mb-3">
+            <label class="form-label">Nama Lengkap</label>
+            <input type="text" name="fullname" class="form-control"
+                   placeholder="Masukkan nama lengkap" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control"
+                   placeholder="Masukkan username" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control"
+                   placeholder="nama@email.com" required>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password"
+                   id="password" class="form-control"
+                   placeholder="Masukkan password" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Konfirmasi Password</label>
+            <input type="password" name="confirm_password"
+                   id="confirm_password" class="form-control"
+                   placeholder="Ulangi password" required>
+        </div>
+
+        <button type="submit" class="btn btn-register w-100">
+            <i class="bi bi-person-plus me-2"></i>
+            Daftar
+        </button>
+
+        <div class="text-center mt-4 small-text">
+            Sudah punya akun?
+            <a href="login.php" class="fw-semibold text-decoration-none">Login</a>
+        </div>
+
+    </form>
+
+</div>
+
 </body>
 </html>

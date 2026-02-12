@@ -2,461 +2,214 @@
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
 
-if (!isLoggedIn()) {
-    redirect('login.php');
-}
+if (!isLoggedIn()) redirect('login.php');
+if (!isset($_GET['id'])) redirect('index.php');
 
-if (!isset($_GET['id'])) {
-    redirect('index.php');
-}
-
-$project_id = intval($_GET['id']);
+$project_id = (int)$_GET['id'];
 $user_id = $_SESSION['user_id'];
 
-// CEK AKSES
-if (!hasProjectAccess($project_id, $user_id) && !isAdmin()) {
+if (!hasProjectAccess($project_id, $user_id)) {
     $_SESSION['error'] = 'Anda tidak memiliki akses ke proyek ini';
     redirect('index.php');
 }
 
-// AMBIL DATA PROYEK
 $project = getProjectById($project_id);
-if (!$project) {
-    $_SESSION['error'] = 'Proyek tidak ditemukan';
-    redirect('index.php');
-}
+if (!$project) redirect('index.php');
 
-// AMBIL ANGGOTA
 $members = getProjectMembers($project_id);
-
-// CEK ROLE USER
 $user_role = getUserProjectRole($project_id, $user_id);
-$is_admin_global = isAdmin();
-$is_owner = ($user_role == 'owner' || $is_admin_global);
-$is_project_admin = ($user_role == 'owner' || $user_role == 'admin' || $is_admin_global);
-$is_member = ($user_role == 'member' && !$is_admin_global);
+$is_admin = isProjectAdmin($project_id, $user_id);
+$is_owner = isProjectOwner($project_id, $user_id);
 
-// AMBIL TUGAS
+// Get tasks
 $todo_tasks = getTasksByStatus($project_id, 'todo');
 $in_progress_tasks = getTasksByStatus($project_id, 'in_progress');
 $review_tasks = getTasksByStatus($project_id, 'review');
 $done_tasks = getTasksByStatus($project_id, 'done');
 
 $stats = getProjectStats($project_id);
-
-// MESSAGES
-$success_message = $_SESSION['success'] ?? '';
-$error_message = $_SESSION['error'] ?? '';
-unset($_SESSION['success'], $_SESSION['error']);
 ?>
 
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.5, user-scalable=yes">
-    <title><?php echo htmlspecialchars($project['name']); ?> - Task Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= htmlspecialchars($project['name']) ?> - Task Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.css" rel="stylesheet">
     <style>
-        :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --success: #4cc9f0;
-            --danger: #f72585;
-            --warning: #f8961e;
-            --light: #f8f9fa;
-            --dark: #212529;
-        }
-        
         body {
-            background: #f5f7fb;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f8f9fa;
+            font-family: 'Inter', -apple-system, sans-serif;
         }
-        
         .navbar {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 12px 0;
         }
-        
         .navbar-brand {
             font-weight: 700;
+            color: #4361ee;
         }
-        
-        .card {
-            border: none;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 1rem;
-        }
-        
-        .card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
         .kanban-column {
             background: white;
             border-radius: 12px;
-            padding: 1rem;
-            min-height: 500px;
+            padding: 20px;
             height: 100%;
+            min-height: 600px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
             display: flex;
             flex-direction: column;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
-        
         .column-header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 0.75rem 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #edf2f7;
         }
-        
-        .column-header h6 {
-            margin: 0;
-            font-weight: 600;
-        }
-        
-        .sortable-list {
+        .task-list {
             flex: 1;
-            min-height: 300px;
+            min-height: 400px;
             overflow-y: auto;
-            padding-right: 0.25rem;
+            padding-right: 4px;
         }
-        
         .task-card {
             background: white;
-            border: 1px solid #e9ecef;
-            border-left: 4px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 0.75rem;
+            border: 1px solid #edf2f7;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
             cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-            animation: fadeIn 0.3s ease-out;
+            transition: all 0.2s;
+            border-left: 4px solid #dee2e6;
         }
-        
         .task-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: #4361ee;
             transform: translateY(-2px);
-            border-color: var(--primary);
         }
-        
         .task-card.priority-low { border-left-color: #28a745; }
         .task-card.priority-medium { border-left-color: #ffc107; }
         .task-card.priority-high { border-left-color: #fd7e14; }
         .task-card.priority-urgent { border-left-color: #dc3545; }
-        
-        .task-card.overdue {
-            background: #fff5f5;
-            border-left-color: #dc3545;
-        }
-        
-        .task-card.due-soon {
-            background: #fff3cd;
-            border-left-color: #ffc107;
-        }
-        
-        .task-title {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #212529;
-            line-height: 1.4;
-        }
-        
-        .task-description {
-            font-size: 0.8rem;
-            color: #6c757d;
-            margin-bottom: 0.75rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-        
-        .badge {
-            padding: 0.35rem 0.65rem;
-            border-radius: 20px;
-            font-weight: 500;
-            font-size: 0.7rem;
-        }
-        
-        .stats-card {
-            border-radius: 10px;
-            padding: 1rem;
-            color: white;
-            transition: transform 0.3s;
-        }
-        
-        .stats-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .progress {
-            height: 8px;
-            border-radius: 4px;
-        }
+        .task-card.overdue { background: #fff5f5; }
+        .task-card.due-soon { background: #fff3cd; }
         
         .sortable-ghost {
             opacity: 0.4;
             background: #e9ecef;
         }
-        
         .sortable-chosen {
-            background: #fff;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
         }
         
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .stats-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
         }
         
-        @media (max-width: 992px) {
-            .kanban-column {
-                min-height: 400px;
-                margin-bottom: 1rem;
-            }
+        .btn-primary {
+            background: #4361ee;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 8px;
+        }
+        .btn-primary:hover { background: #3046c0; }
+        
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
         }
         
         @media (max-width: 768px) {
-            .navbar-nav {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
             .kanban-column {
-                min-height: 350px;
-                padding: 0.75rem;
+                min-height: 400px;
+                margin-bottom: 20px;
             }
-            
-            .task-card {
-                padding: 0.75rem;
-            }
-            
-            .stats-card {
-                margin-bottom: 0.75rem;
-            }
-            
-            .btn-sm {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.75rem;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .column-header {
-                padding: 0.5rem 0.75rem;
-            }
-            
-            .task-title {
-                font-size: 0.85rem;
-            }
-            
-            .badge {
-                padding: 0.25rem 0.5rem;
-                font-size: 0.65rem;
-            }
-        }
-        
-        .toast-container {
-            z-index: 1100;
-        }
-        
-        .member-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-        
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
-        }
-        
-        ::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8;
         }
     </style>
 </head>
 <body>
-    <!-- NAVIGATION -->
-    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
-        <div class="container-fluid">
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-4">
             <a class="navbar-brand" href="index.php">
-                <i class="bi bi-arrow-left me-2"></i> 
-                <span class="d-none d-md-inline">Kembali</span>
+                <i class="bi bi-arrow-left me-2"></i><?= htmlspecialchars($project['name']) ?>
             </a>
             
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav me-auto">
-                    <span class="navbar-text text-white">
-                        <i class="bi bi-folder me-1"></i> 
-                        <?php echo htmlspecialchars(substr($project['name'], 0, 30)); ?>
-                        <?php if (strlen($project['name']) > 30): ?>...<?php endif; ?>
-                    </span>
-                </div>
-                
-                <div class="navbar-nav">
-                    <!-- MEMBER COUNT -->
-                    <span class="navbar-text text-white me-3">
-                        <i class="bi bi-people"></i> 
-                        <span class="d-none d-md-inline"><?php echo count($members); ?> anggota</span>
-                        <span class="d-md-none"><?php echo count($members); ?></span>
-                        
-                        <?php if ($user_role): ?>
-                            <span class="badge bg-light text-dark ms-1">
-                                <?php 
-                                if ($is_owner) echo 'Pemilik';
-                                elseif ($user_role == 'admin') echo 'Admin';
-                                else echo 'Anggota';
-                                ?>
-                            </span>
-                        <?php endif; ?>
-                    </span>
-                    
-                    <!-- KELOLA ANGGOTA - HANYA UNTUK ADMIN PROYEK -->
-                    <?php if ($is_project_admin): ?>
-                        <button class="btn btn-outline-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#manageMembersModal">
-                            <i class="bi bi-people-fill"></i> 
-                            <span class="d-none d-md-inline">Kelola Anggota</span>
-                        </button>
+            <div class="d-flex align-items-center">
+                <span class="badge bg-primary me-3">
+                    <i class="bi bi-people me-1"></i><?= count($members) ?> anggota
+                    <?php if ($user_role): ?>
+                        <span class="ms-1 bg-white text-primary px-2 py-1 rounded-pill">
+                            <?= $user_role == 'owner' ? 'Owner' : ($user_role == 'admin' ? 'Admin' : 'Member') ?>
+                        </span>
                     <?php endif; ?>
-                    
-                    <!-- TOMBOL TUGAS BARU - SEMUA ANGGOTA BISA -->
-                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#newTaskModal">
-                        <i class="bi bi-plus-circle"></i> 
-                        <span class="d-none d-md-inline">Tugas Baru</span>
+                </span>
+                
+                <?php if ($is_admin): ?>
+                    <button class="btn btn-outline-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#manageMembersModal">
+                        <i class="bi bi-people-fill me-1"></i>Kelola Anggota
                     </button>
-                </div>
+                <?php endif; ?>
+                
+                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#newTaskModal">
+                    <i class="bi bi-plus-circle me-1"></i>Tugas Baru
+                </button>
             </div>
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
-    <div class="container-fluid mt-3 px-3 px-md-4">
-        <!-- MESSAGES -->
-        <?php if ($success_message): ?>
-            <div class="alert alert-success alert-dismissible fade show">
-                <i class="bi bi-check-circle me-2"></i> <?php echo htmlspecialchars($success_message); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-        
-        <?php if ($error_message): ?>
-            <div class="alert alert-danger alert-dismissible fade show">
-                <i class="bi bi-exclamation-triangle me-2"></i> <?php echo htmlspecialchars($error_message); ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
-
-        <!-- PROJECT HEADER -->
-        <div class="row mb-4">
-            <div class="col-12">
-                <div class="card">
-                    <div class="card-body p-3 p-md-4">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h4 class="mb-2">
-                                    <i class="bi bi-folder text-primary me-2"></i>
-                                    <?php echo htmlspecialchars($project['name']); ?>
-                                </h4>
-                                <p class="text-muted mb-2">
-                                    <?php echo nl2br(htmlspecialchars($project['description'] ?: 'Tidak ada deskripsi')); ?>
-                                </p>
-                                <div class="d-flex flex-wrap gap-2">
-                                    <span class="badge bg-primary">
-                                        <i class="bi bi-list-task me-1"></i> <?php echo $stats['total']; ?> tugas
-                                    </span>
-                                    <span class="badge bg-success">
-                                        <i class="bi bi-check-circle me-1"></i> <?php echo $stats['done']; ?> selesai
-                                    </span>
-                                    <?php if ($stats['overdue'] > 0): ?>
-                                        <span class="badge bg-danger">
-                                            <i class="bi bi-clock me-1"></i> <?php echo $stats['overdue']; ?> terlambat
-                                        </span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                                <small class="text-muted d-block">
-                                    <i class="bi bi-person"></i> Dibuat oleh: <?php echo htmlspecialchars($project['creator_name'] ?? 'Tidak diketahui'); ?>
-                                </small>
-                                <small class="text-muted d-block mt-1">
-                                    <i class="bi bi-calendar"></i> <?php echo date('d M Y', strtotime($project['created_at'])); ?>
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- PROGRESS STATS -->
-        <div class="row mb-4">
-            <div class="col-6 col-md-3 mb-2 mb-md-0">
-                <div class="stats-card bg-primary">
-                    <div class="d-flex justify-content-between align-items-center">
+    <!-- Main Content -->
+    <div class="container-fluid px-4 py-4">
+        <!-- Project Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="stats-card bg-primary text-white">
+                    <div class="d-flex justify-content-between">
                         <div>
-                            <h6 class="text-uppercase mb-1">Progress</h6>
-                            <h3 class="mb-0"><?php echo $stats['progress']; ?>%</h3>
+                            <h6 class="mb-1">Progress</h6>
+                            <h2 class="mb-0"><?= $stats['progress'] ?>%</h2>
                         </div>
                         <i class="bi bi-pie-chart fs-1 opacity-50"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-6 col-md-3 mb-2 mb-md-0">
+            <div class="col-md-3">
                 <div class="stats-card bg-warning">
-                    <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex justify-content-between">
                         <div>
-                            <h6 class="text-uppercase mb-1">To Do</h6>
-                            <h3 class="mb-0"><?php echo $stats['todo']; ?></h3>
+                            <h6 class="mb-1">To Do</h6>
+                            <h2 class="mb-0"><?= $stats['todo'] ?></h2>
                         </div>
                         <i class="bi bi-card-checklist fs-1 opacity-50"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-6 col-md-3">
-                <div class="stats-card bg-info">
-                    <div class="d-flex justify-content-between align-items-center">
+            <div class="col-md-3">
+                <div class="stats-card bg-info text-white">
+                    <div class="d-flex justify-content-between">
                         <div>
-                            <h6 class="text-uppercase mb-1">In Progress</h6>
-                            <h3 class="mb-0"><?php echo $stats['in_progress']; ?></h3>
+                            <h6 class="mb-1">In Progress</h6>
+                            <h2 class="mb-0"><?= $stats['in_progress'] ?></h2>
                         </div>
                         <i class="bi bi-arrow-repeat fs-1 opacity-50"></i>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-6 col-md-3">
-                <div class="stats-card bg-success">
-                    <div class="d-flex justify-content-between align-items-center">
+            <div class="col-md-3">
+                <div class="stats-card bg-success text-white">
+                    <div class="d-flex justify-content-between">
                         <div>
-                            <h6 class="text-uppercase mb-1">Selesai</h6>
-                            <h3 class="mb-0"><?php echo $stats['done']; ?></h3>
+                            <h6 class="mb-1">Done</h6>
+                            <h2 class="mb-0"><?= $stats['done'] ?></h2>
                         </div>
                         <i class="bi bi-check2-all fs-1 opacity-50"></i>
                     </div>
@@ -464,683 +217,414 @@ unset($_SESSION['success'], $_SESSION['error']);
             </div>
         </div>
 
-        <!-- KANBAN BOARD -->
-        <div class="row g-3" id="kanban-board">
-            <!-- TO DO COLUMN -->
+        <!-- Kanban Board -->
+        <div class="row g-4">
+            <!-- Todo Column -->
             <div class="col-xl-3 col-lg-6">
                 <div class="kanban-column">
                     <div class="column-header">
-                        <h6><i class="bi bi-card-checklist me-2"></i> To Do</h6>
-                        <span class="badge bg-light text-dark"><?php echo count($todo_tasks); ?></span>
+                        <h5 class="fw-bold mb-0">To Do</h5>
+                        <span class="badge bg-secondary"><?= count($todo_tasks) ?></span>
                     </div>
-                    <div id="todo-column" class="sortable-list">
+                    <div id="todo-list" class="task-list">
                         <?php foreach ($todo_tasks as $task): ?>
                             <?php include 'includes/task_card.php'; ?>
                         <?php endforeach; ?>
-                        
-                        <?php if (empty($todo_tasks)): ?>
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-inbox fs-1 mb-2"></i>
-                                <p class="mb-0">Belum ada tugas</p>
-                                <small>Klik "Tugas Baru" untuk mulai</small>
-                            </div>
-                        <?php endif; ?>
                     </div>
-                    <button class="btn btn-outline-primary w-100 mt-3" onclick="showNewTaskModal('todo')">
-                        <i class="bi bi-plus"></i> Tambah Tugas
+                    <button class="btn btn-outline-primary w-100 mt-3" onclick="openNewTaskModal('todo')">
+                        <i class="bi bi-plus"></i>Tambah Tugas
                     </button>
                 </div>
             </div>
-
-            <!-- IN PROGRESS COLUMN -->
+            
+            <!-- In Progress Column -->
             <div class="col-xl-3 col-lg-6">
                 <div class="kanban-column">
                     <div class="column-header">
-                        <h6><i class="bi bi-arrow-repeat me-2"></i> In Progress</h6>
-                        <span class="badge bg-light text-dark"><?php echo count($in_progress_tasks); ?></span>
+                        <h5 class="fw-bold mb-0">In Progress</h5>
+                        <span class="badge bg-primary"><?= count($in_progress_tasks) ?></span>
                     </div>
-                    <div id="in-progress-column" class="sortable-list">
+                    <div id="progress-list" class="task-list">
                         <?php foreach ($in_progress_tasks as $task): ?>
                             <?php include 'includes/task_card.php'; ?>
                         <?php endforeach; ?>
-                        
-                        <?php if (empty($in_progress_tasks)): ?>
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-hourglass-split fs-1 mb-2"></i>
-                                <p class="mb-0">Belum ada tugas</p>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-
-            <!-- REVIEW COLUMN -->
+            
+            <!-- Review Column -->
             <div class="col-xl-3 col-lg-6">
                 <div class="kanban-column">
                     <div class="column-header">
-                        <h6><i class="bi bi-eye me-2"></i> Review</h6>
-                        <span class="badge bg-light text-dark"><?php echo count($review_tasks); ?></span>
+                        <h5 class="fw-bold mb-0">Review</h5>
+                        <span class="badge bg-info"><?= count($review_tasks) ?></span>
                     </div>
-                    <div id="review-column" class="sortable-list">
+                    <div id="review-list" class="task-list">
                         <?php foreach ($review_tasks as $task): ?>
                             <?php include 'includes/task_card.php'; ?>
                         <?php endforeach; ?>
-                        
-                        <?php if (empty($review_tasks)): ?>
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-clipboard-check fs-1 mb-2"></i>
-                                <p class="mb-0">Belum ada tugas</p>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
-
-            <!-- DONE COLUMN -->
+            
+            <!-- Done Column -->
             <div class="col-xl-3 col-lg-6">
                 <div class="kanban-column">
                     <div class="column-header">
-                        <h6><i class="bi bi-check2-circle me-2"></i> Done</h6>
-                        <span class="badge bg-light text-dark"><?php echo count($done_tasks); ?></span>
+                        <h5 class="fw-bold mb-0">Done</h5>
+                        <span class="badge bg-success"><?= count($done_tasks) ?></span>
                     </div>
-                    <div id="done-column" class="sortable-list">
+                    <div id="done-list" class="task-list">
                         <?php foreach ($done_tasks as $task): ?>
                             <?php include 'includes/task_card.php'; ?>
                         <?php endforeach; ?>
-                        
-                        <?php if (empty($done_tasks)): ?>
-                            <div class="text-center py-5 text-muted">
-                                <i class="bi bi-check2-all fs-1 mb-2"></i>
-                                <p class="mb-0">Belum ada tugas</p>
-                            </div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL TUGAS BARU - SEMUA ANGGOTA BISA -->
+    <!-- New Task Modal -->
     <div class="modal fade" id="newTaskModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-plus-circle me-2"></i> Tugas Baru
-                    </h5>
+                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i>Tugas Baru</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="newTaskForm" method="POST" action="api/tasks.php?action=create">
-                    <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
-                    <input type="hidden" name="column_status" id="taskColumnStatus" value="todo">
+                <form id="newTaskForm" action="api/tasks.php?action=create" method="POST">
+                    <input type="hidden" name="project_id" value="<?= $project_id ?>">
+                    <input type="hidden" name="column_status" id="task_status" value="todo">
                     <div class="modal-body">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="taskTitle" class="form-label">Judul Tugas <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="taskTitle" name="title" 
-                                           required maxlength="200" placeholder="Contoh: Membuat halaman login">
-                                </div>
-                                <div class="mb-3">
-                                    <label for="taskDescription" class="form-label">Deskripsi</label>
-                                    <textarea class="form-control" id="taskDescription" name="description" 
-                                              rows="4" placeholder="Jelaskan detail tugas..."></textarea>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="taskPriority" class="form-label">Prioritas</label>
-                                    <select class="form-select" id="taskPriority" name="priority">
-                                        <option value="low">Rendah</option>
-                                        <option value="medium" selected>Sedang</option>
-                                        <option value="high">Tinggi</option>
-                                        <option value="urgent">Mendesak</option>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="taskAssignee" class="form-label">Ditugaskan kepada</label>
-                                    <select class="form-select" id="taskAssignee" name="assignee_id">
-                                        <option value="">Pilih anggota...</option>
-                                        <?php foreach ($members as $member): ?>
-                                            <option value="<?php echo $member['id']; ?>">
-                                                <?php echo htmlspecialchars($member['full_name']); ?>
-                                            </option>
-                                        <?php endforeach; ?>
-                                    </select>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="taskDueDate" class="form-label">Tenggat Waktu</label>
-                                    <input type="date" class="form-control" id="taskDueDate" name="due_date">
-                                    <small class="text-muted">Kosongkan jika tidak ada deadline</small>
-                                </div>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Judul Tugas</label>
+                            <input type="text" class="form-control" name="title" required 
+                                   placeholder="Contoh: Membuat halaman login">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Deskripsi</label>
+                            <textarea class="form-control" name="description" rows="3" 
+                                      placeholder="Jelaskan detail tugas..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Prioritas</label>
+                            <select class="form-select" name="priority">
+                                <option value="low">Rendah</option>
+                                <option value="medium" selected>Sedang</option>
+                                <option value="high">Tinggi</option>
+                                <option value="urgent">Mendesak</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ditugaskan Kepada</label>
+                            <select class="form-select" name="assignee_id">
+                                <option value="">Pilih anggota...</option>
+                                <?php foreach ($members as $member): ?>
+                                    <option value="<?= $member['id'] ?>"><?= htmlspecialchars($member['full_name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Tenggat Waktu</label>
+                            <input type="date" class="form-control" name="due_date" id="task_due_date">
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            <span class="spinner-border spinner-border-sm d-none"></span>
-                            Simpan Tugas
-                        </button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- MODAL KELOLA ANGGOTA - HANYA UNTUK ADMIN PROYEK -->
-    <?php if ($is_project_admin): ?>
+    <!-- Task Detail Modal -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content" id="taskDetailContent">
+                <!-- Loaded via AJAX -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Members Modal (Admin Only) -->
+    <?php if ($is_admin): ?>
     <div class="modal fade" id="manageMembersModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">
-                        <i class="bi bi-people-fill me-2"></i> Kelola Anggota Proyek
-                    </h5>
+                    <h5 class="modal-title"><i class="bi bi-people-fill me-2"></i>Kelola Anggota</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <!-- DAFTAR ANGGOTA -->
-                    <div class="mb-4">
-                        <h6 class="border-bottom pb-2">Anggota Proyek (<?php echo count($members); ?>)</h6>
-                        <div id="membersList" style="max-height: 350px; overflow-y: auto;">
-                            <!-- LOAD VIA AJAX -->
-                        </div>
+                    <h6 class="fw-bold mb-3">Daftar Anggota</h6>
+                    <div id="membersList" style="max-height: 300px; overflow-y: auto;">
+                        <!-- Load via AJAX -->
                     </div>
                     
-                    <!-- TAMBAH ANGGOTA BARU - HANYA UNTUK ADMIN/OWNER -->
-                    <?php if ($is_project_admin): ?>
-                    <div>
-                        <h6 class="border-bottom pb-2">Tambah Anggota Baru</h6>
-                        <form id="addMemberForm">
-                            <input type="hidden" name="project_id" value="<?php echo $project_id; ?>">
-                            <div class="row g-2">
-                                <div class="col-md-6">
-                                    <select class="form-select" name="user_id" id="userSelect" required>
-                                        <option value="">Pilih pengguna...</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select" name="role" required>
-                                        <option value="member">Anggota</option>
-                                        <?php if ($is_owner): ?>
-                                            <option value="admin">Admin</option>
-                                        <?php endif; ?>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="bi bi-plus"></i> Tambah
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <?php endif; ?>
+                    <hr>
+                    
+                    <h6 class="fw-bold mb-3">Tambah Anggota</h6>
+                    <form id="addMemberForm">
+                        <input type="hidden" name="project_id" value="<?= $project_id ?>">
+                        <div class="mb-3">
+                            <select class="form-select" name="user_id" required>
+                                <option value="">Pilih pengguna...</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <select class="form-select" name="role">
+                                <option value="member">Anggota</option>
+                                <?php if ($is_owner): ?>
+                                    <option value="admin">Admin</option>
+                                <?php endif; ?>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Tambah</button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
     <?php endif; ?>
 
-    <!-- MODAL DETAIL TUGAS -->
-    <div class="modal fade" id="taskDetailModal" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content" id="taskDetailContent">
-                <!-- LOAD VIA AJAX -->
-            </div>
-        </div>
-    </div>
-
-    <!-- SCRIPT -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
     
     <script>
-        // ==================== GLOBAL VARIABLES ====================
-        const currentProjectId = <?php echo $project_id; ?>;
-        const currentUserId = <?php echo $user_id; ?>;
-        const isProjectAdmin = <?php echo $is_project_admin ? 'true' : 'false'; ?>;
-        const isOwner = <?php echo $is_owner ? 'true' : 'false'; ?>;
-        const isAdminGlobal = <?php echo $is_admin_global ? 'true' : 'false'; ?>;
-
-        // ==================== INITIALIZATION ====================
-        document.addEventListener('DOMContentLoaded', function() {
-            initSortable();
-            initForms();
-            initTaskWarnings();
-            setMinDateForDueDate();
-            
-            // LOAD MEMBERS SAAT MODAL DIBUKA
-            const manageMembersModal = document.getElementById('manageMembersModal');
-            if (manageMembersModal) {
-                manageMembersModal.addEventListener('shown.bs.modal', loadProjectMembers);
+        // Initialize Sortable
+        const columns = ['todo-list', 'progress-list', 'review-list', 'done-list'];
+        columns.forEach(columnId => {
+            const el = document.getElementById(columnId);
+            if (el) {
+                new Sortable(el, {
+                    group: 'tasks',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    chosenClass: 'sortable-chosen',
+                    onEnd: function(evt) {
+                        const taskId = evt.item.dataset.taskId;
+                        const status = evt.to.id.replace('-list', '');
+                        updateTaskStatus(taskId, status);
+                    }
+                });
             }
         });
 
-        // ==================== SORTABLE DRAG & DROP ====================
-        function initSortable() {
-            const columns = [
-                { id: 'todo-column', status: 'todo' },
-                { id: 'in-progress-column', status: 'in_progress' },
-                { id: 'review-column', status: 'review' },
-                { id: 'done-column', status: 'done' }
-            ];
-            
-            columns.forEach(column => {
-                const element = document.getElementById(column.id);
-                if (element) {
-                    new Sortable(element, {
-                        group: 'tasks',
-                        animation: 150,
-                        ghostClass: 'sortable-ghost',
-                        chosenClass: 'sortable-chosen',
-                        onEnd: function(evt) {
-                            const taskId = evt.item.dataset.taskId;
-                            const newStatus = evt.to.id.replace('-column', '').replace('-', '_');
-                            updateTaskStatus(taskId, newStatus);
-                        }
-                    });
-                }
-            });
-        }
-
-        // ==================== UPDATE STATUS TUGAS ====================
+        // Update task status
         function updateTaskStatus(taskId, status) {
             fetch('api/tasks.php?action=update_status', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
                 body: 'task_id=' + taskId + '&status=' + status
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('success', 'Status tugas berhasil diperbarui');
+                    showNotification('Status tugas berhasil diperbarui', 'success');
                 } else {
-                    showToast('danger', data.message || 'Gagal memperbarui status');
                     location.reload();
                 }
-            })
-            .catch(error => {
-                showToast('danger', 'Terjadi kesalahan');
-                location.reload();
             });
         }
 
-        // ==================== FORM HANDLERS ====================
-        function initForms() {
-            // FORM TUGAS BARU
-            const newTaskForm = document.getElementById('newTaskForm');
-            if (newTaskForm) {
-                newTaskForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const form = this;
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const spinner = submitBtn.querySelector('.spinner-border');
-                    const originalText = submitBtn.innerHTML;
-                    
-                    submitBtn.disabled = true;
-                    if (spinner) spinner.classList.remove('d-none');
-                    
-                    const formData = new FormData(form);
-                    
-                    fetch(form.action, {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            const modal = bootstrap.Modal.getInstance(document.getElementById('newTaskModal'));
-                            modal.hide();
-                            showToast('success', 'Tugas berhasil dibuat!');
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showToast('danger', data.message || 'Gagal membuat tugas');
-                        }
-                    })
-                    .catch(error => {
-                        showToast('danger', 'Terjadi kesalahan');
-                    })
-                    .finally(() => {
-                        submitBtn.disabled = false;
-                        if (spinner) spinner.classList.add('d-none');
-                        submitBtn.innerHTML = originalText;
-                    });
-                });
-            }
-            
-            // FORM TAMBAH ANGGOTA - HANYA UNTUK ADMIN
-            const addMemberForm = document.getElementById('addMemberForm');
-            if (addMemberForm) {
-                addMemberForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    
-                    const form = this;
-                    const submitBtn = form.querySelector('button[type="submit"]');
-                    const originalText = submitBtn.innerHTML;
-                    
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-                    
-                    const formData = new FormData(form);
-                    
-                    fetch('api/project_members.php?action=add', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            showToast('success', 'Anggota berhasil ditambahkan');
-                            loadProjectMembers();
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showToast('danger', data.message || 'Gagal menambahkan anggota');
-                        }
-                    })
-                    .catch(error => {
-                        showToast('danger', 'Terjadi kesalahan');
-                    })
-                    .finally(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.innerHTML = originalText;
-                    });
-                });
-            }
+        // Open new task modal with status
+        function openNewTaskModal(status) {
+            document.getElementById('task_status').value = status;
+            new bootstrap.Modal(document.getElementById('newTaskModal')).show();
         }
 
-        // ==================== SHOW NEW TASK MODAL ====================
-        function showNewTaskModal(status) {
-            document.getElementById('taskColumnStatus').value = status;
-            const modal = new bootstrap.Modal(document.getElementById('newTaskModal'));
-            modal.show();
-        }
-
-        // ==================== SHOW TASK DETAIL ====================
+        // Show task detail
         function showTaskDetail(taskId) {
-            const modalContent = document.getElementById('taskDetailContent');
-            modalContent.innerHTML = `
-                <div class="modal-header">
-                    <h5 class="modal-title">Memuat...</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body text-center py-5">
-                    <div class="spinner-border text-primary"></div>
-                    <p class="mt-3">Memuat detail tugas</p>
-                </div>
-            `;
-            
-            const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
-            modal.show();
-            
             fetch('api/tasks.php?action=get&id=' + taskId)
                 .then(response => response.text())
                 .then(html => {
-                    modalContent.innerHTML = html;
-                })
-                .catch(error => {
-                    modalContent.innerHTML = `
-                        <div class="modal-header">
-                            <h5 class="modal-title text-danger">Error</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p class="text-danger">Gagal memuat detail tugas</p>
-                        </div>
-                    `;
+                    document.getElementById('taskDetailContent').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('taskDetailModal')).show();
                 });
         }
 
-        // ==================== DELETE TASK ====================
+        // Delete task
         function deleteTask(taskId) {
-            if (!confirm('Apakah Anda yakin ingin menghapus tugas ini?')) return;
+            if (confirm('Hapus tugas ini?')) {
+                fetch('api/tasks.php?action=delete', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'task_id=' + taskId
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        bootstrap.Modal.getInstance(document.getElementById('taskDetailModal')).hide();
+                        location.reload();
+                    }
+                });
+            }
+        }
+
+        // Add comment
+        function addComment(taskId, form) {
+            const content = form.querySelector('input[name="content"]').value;
+            if (!content.trim()) return;
             
-            fetch('api/tasks.php?action=delete', {
+            fetch('api/comments.php?action=add', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'task_id=' + taskId
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'task_id=' + taskId + '&content=' + encodeURIComponent(content)
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('taskDetailModal'));
-                    if (modal) modal.hide();
-                    showToast('success', 'Tugas berhasil dihapus');
-                    setTimeout(() => location.reload(), 1000);
-                } else {
-                    showToast('danger', data.message || 'Gagal menghapus tugas');
+                    form.querySelector('input[name="content"]').value = '';
+                    showTaskDetail(taskId);
                 }
-            })
-            .catch(error => {
-                showToast('danger', 'Terjadi kesalahan');
             });
         }
 
-        // ==================== LOAD PROJECT MEMBERS ====================
+        // Load members for admin modal
+        <?php if ($is_admin): ?>
+        document.getElementById('manageMembersModal')?.addEventListener('shown.bs.modal', function() {
+            loadProjectMembers();
+            loadAvailableUsers();
+        });
+
         function loadProjectMembers() {
-            const membersList = document.getElementById('membersList');
-            if (!membersList) return;
-            
-            membersList.innerHTML = '<div class="text-center py-3"><div class="spinner-border"></div><p class="mt-2">Memuat...</p></div>';
-            
-            fetch('api/project_members.php?action=list&project_id=' + currentProjectId)
+            fetch('api/project_members.php?action=list&project_id=<?= $project_id ?>')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.members) {
+                    if (data.success) {
                         let html = '';
-                        
                         data.members.forEach(member => {
-                            const isCurrentUser = member.id == currentUserId;
-                            const isOwner = member.role == 'owner';
-                            
                             html += `
-                            <div class="d-flex justify-content-between align-items-center border-bottom py-3">
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(member.full_name)}&background=4361ee&color=fff&size=40" 
-                                         class="rounded-circle me-3" width="40" height="40">
+                                <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
                                     <div>
                                         <div class="fw-bold">${member.full_name}</div>
-                                        <div class="small text-muted">@${member.username}</div>
-                                        <div class="small text-muted">
-                                            ${new Date(member.joined_at).toLocaleDateString('id-ID', {day:'numeric', month:'short', year:'numeric'})}
-                                        </div>
+                                        <small class="text-muted">@${member.username}</small>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="badge bg-${member.role == 'owner' ? 'danger' : member.role == 'admin' ? 'warning' : 'primary'} me-2">
+                                            ${member.role}
+                                        </span>
+                                        <?php if ($is_owner): ?>
+                                        ${member.role != 'owner' && member.id != <?= $user_id ?> ? `
+                                            <button class="btn btn-sm btn-outline-danger" onclick="removeMember(${member.id})">
+                                                <i class="bi bi-person-dash"></i>
+                                            </button>
+                                        ` : ''}
+                                        <?php endif; ?>
                                     </div>
                                 </div>
-                                <div class="d-flex align-items-center">
-                                    <span class="badge ${member.role == 'owner' ? 'bg-danger' : member.role == 'admin' ? 'bg-warning' : 'bg-primary'} me-3">
-                                        ${member.role == 'owner' ? 'Pemilik' : member.role == 'admin' ? 'Admin' : 'Anggota'}
-                                    </span>
-                                    <!-- DROPDOWN UNTUK ADMIN PROYEK -->
-                                    ${isProjectAdmin && !isOwner && !isCurrentUser ? `
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown">
-                                            <i class="bi bi-three-dots"></i>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            ${isOwner ? `
-                                            <li><a class="dropdown-item" href="#" onclick="changeRole(${member.id}, 'admin')">
-                                                <i class="bi bi-shield-check me-2"></i> Jadikan Admin
-                                            </a></li>
-                                            <li><a class="dropdown-item" href="#" onclick="changeRole(${member.id}, 'member')">
-                                                <i class="bi bi-person me-2"></i> Jadikan Anggota
-                                            </a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            ` : ''}
-                                            <li><a class="dropdown-item text-danger" href="#" onclick="removeMember(${member.id})">
-                                                <i class="bi bi-person-dash me-2"></i> Hapus dari Proyek
-                                            </a></li>
-                                        </ul>
-                                    </div>
-                                    ` : ''}
-                                </div>
-                            </div>
                             `;
                         });
-                        
-                        membersList.innerHTML = html;
-                        
-                        // LOAD USERS UNTUK DITAMBAH
-                        loadUsersForAdding(data.members);
+                        document.getElementById('membersList').innerHTML = html;
                     }
-                })
-                .catch(error => {
-                    membersList.innerHTML = '<p class="text-danger text-center py-3">Gagal memuat anggota</p>';
                 });
         }
 
-        // ==================== LOAD USERS FOR ADDING ====================
-        function loadUsersForAdding(existingMembers) {
-            const userSelect = document.getElementById('userSelect');
-            if (!userSelect) return;
-            
+        function loadAvailableUsers() {
             fetch('api/users.php?action=get_all')
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success && data.users) {
-                        let html = '<option value="">Pilih pengguna...</option>';
-                        
+                    if (data.success) {
+                        let options = '<option value="">Pilih pengguna...</option>';
                         data.users.forEach(user => {
-                            const isInProject = existingMembers.some(m => m.id == user.id);
-                            if (!isInProject) {
-                                html += `<option value="${user.id}">${user.full_name} (@${user.username})</option>`;
-                            }
+                            options += `<option value="${user.id}">${user.full_name} (@${user.username})</option>`;
                         });
-                        
-                        userSelect.innerHTML = html;
+                        document.querySelector('#addMemberForm select[name="user_id"]').innerHTML = options;
                     }
-                })
-                .catch(error => console.error('Error:', error));
+                });
         }
 
-        // ==================== CHANGE MEMBER ROLE ====================
-        function changeRole(userId, newRole) {
-            if (!confirm('Ubah role pengguna ini?')) return;
-            
-            const formData = new FormData();
-            formData.append('project_id', currentProjectId);
-            formData.append('user_id', userId);
-            formData.append('role', newRole);
-            
-            fetch('api/project_members.php?action=update_role', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showToast('success', 'Role berhasil diubah');
-                    loadProjectMembers();
-                } else {
-                    showToast('danger', data.message || 'Gagal mengubah role');
-                }
-            })
-            .catch(error => {
-                showToast('danger', 'Terjadi kesalahan');
-            });
-        }
-
-        // ==================== REMOVE MEMBER ====================
         function removeMember(userId) {
-            if (!confirm('Hapus anggota ini dari proyek?')) return;
+            if (confirm('Hapus anggota ini?')) {
+                const formData = new FormData();
+                formData.append('project_id', <?= $project_id ?>);
+                formData.append('user_id', userId);
+                
+                fetch('api/project_members.php?action=remove', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        loadProjectMembers();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+            }
+        }
+
+        document.getElementById('addMemberForm')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
             
-            const formData = new FormData();
-            formData.append('project_id', currentProjectId);
-            formData.append('user_id', userId);
-            
-            fetch('api/project_members.php?action=remove', {
+            fetch('api/project_members.php?action=add', {
                 method: 'POST',
                 body: formData
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showToast('success', 'Anggota berhasil dihapus');
+                    this.reset();
                     loadProjectMembers();
-                    setTimeout(() => location.reload(), 1000);
+                    loadAvailableUsers();
                 } else {
-                    showToast('danger', data.message || 'Gagal menghapus anggota');
+                    alert(data.message);
                 }
+            });
+        });
+        <?php endif; ?>
+
+        // New task form
+        document.getElementById('newTaskForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = this;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+            submitBtn.disabled = true;
+            
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form)
             })
-            .catch(error => {
-                showToast('danger', 'Terjadi kesalahan');
-            });
-        }
-
-        // ==================== TASK WARNINGS ====================
-        function initTaskWarnings() {
-            const today = new Date();
-            const taskCards = document.querySelectorAll('.task-card');
-            
-            taskCards.forEach(card => {
-                const dueDateStr = card.dataset.dueDate;
-                if (!dueDateStr) return;
-                
-                const dueDate = new Date(dueDateStr);
-                const daysDiff = Math.ceil((dueDate - today) / (1000 * 3600 * 24));
-                
-                if (daysDiff < 0) {
-                    card.classList.add('overdue');
-                    if (!card.querySelector('.overdue-badge')) {
-                        const badge = document.createElement('span');
-                        badge.className = 'badge bg-danger position-absolute top-0 end-0 m-2 overdue-badge';
-                        badge.textContent = 'Terlambat';
-                        card.appendChild(badge);
-                    }
-                } else if (daysDiff <= 2) {
-                    card.classList.add('due-soon');
-                    if (!card.querySelector('.due-soon-badge')) {
-                        const badge = document.createElement('span');
-                        badge.className = 'badge bg-warning position-absolute top-0 end-0 m-2 due-soon-badge';
-                        badge.textContent = 'Segera';
-                        card.appendChild(badge);
-                    }
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                    submitBtn.innerHTML = 'Simpan';
+                    submitBtn.disabled = false;
                 }
             });
-        }
+        });
 
-        // ==================== SET MIN DATE ====================
-        function setMinDateForDueDate() {
-            const dueDate = document.getElementById('taskDueDate');
-            if (dueDate) {
-                const today = new Date().toISOString().split('T')[0];
-                dueDate.min = today;
-            }
-        }
+        // Set min date for due date
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('task_due_date').min = today;
 
-        // ==================== TOAST NOTIFICATION ====================
-        function showToast(type, message) {
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            
+        // Show notification
+        function showNotification(message, type = 'success') {
             const toast = document.createElement('div');
-            toast.className = `toast align-items-center text-white bg-${type} border-0`;
-            toast.setAttribute('role', 'alert');
+            toast.className = `position-fixed top-0 end-0 p-3`;
+            toast.style.zIndex = '9999';
             toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
-                        ${message}
+                <div class="toast align-items-center text-white bg-${type} border-0 show" role="alert">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${type == 'success' ? 'bi-check-circle' : 'bi-info-circle'} me-2"></i>
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             `;
-            
-            toastContainer.appendChild(toast);
-            const bsToast = new bootstrap.Toast(toast, { autohide: true, delay: 3000 });
-            bsToast.show();
-            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
         }
-
-        // ==================== RESET FORMS ====================
-        document.getElementById('newTaskModal')?.addEventListener('hidden.bs.modal', function() {
-            document.getElementById('newTaskForm')?.reset();
-        });
     </script>
 </body>
 </html>

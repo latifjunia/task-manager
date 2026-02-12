@@ -1,16 +1,13 @@
 <?php
 session_start();
-
-// Atur timezone
 date_default_timezone_set('Asia/Jakarta');
 
-// Konfigurasi database
+// Database configuration
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');
 define('DB_PASS', '');
 define('DB_NAME', 'task_manager');
 
-// Koneksi database
 try {
     $pdo = new PDO(
         "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
@@ -23,10 +20,9 @@ try {
         ]
     );
 } catch(PDOException $e) {
-    die("Koneksi database gagal: " . $e->getMessage());
+    die("Connection failed: " . $e->getMessage());
 }
 
-// Fungsi redirect (HANYA INI DI CONFIG)
 function redirect($url) {
     if (!headers_sent()) {
         header("Location: $url");

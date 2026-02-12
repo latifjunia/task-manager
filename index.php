@@ -1,17 +1,21 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
+require_once 'includes/auth.php';
 
 if (!isLoggedIn()) {
     redirect('login.php');
 }
 
 $user_id = $_SESSION['user_id'];
-$projects = getUserProjects($user_id);
+$is_admin = isAdmin();
+
+// Get data based on role
+$projects = $is_admin ? getAllProjects() : getUserProjects($user_id);
 $notifications = getNotifications($user_id);
 $stats = getUserStatistics($user_id);
-$activities = getRecentActivities($user_id);
-$upcoming_deadlines = getUpcomingDeadlines($user_id);
+$deadlines = getUpcomingDeadlines($user_id);
+$notif_count = getNotificationCount($user_id);
 ?>
 
 <!DOCTYPE html>
@@ -22,57 +26,93 @@ $upcoming_deadlines = getUpcomingDeadlines($user_id);
     <title>Dashboard - Task Manager</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
-    <link href="assets/css/style.css" rel="stylesheet">
     <style>
+        body {
+            background: #f8f9fa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .navbar {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 0;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #4361ee;
+        }
         .stat-card {
-            transition: transform 0.3s;
+            background: white;
             border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+            transition: all 0.2s;
         }
         .stat-card:hover {
-            transform: translateY(-5px);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 16px rgba(67,97,238,0.1);
         }
         .project-card {
+            background: white;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.2s;
             height: 100%;
-            transition: all 0.3s;
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
         }
         .project-card:hover {
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transform: translateY(-3px);
+            border-color: #4361ee;
+            box-shadow: 0 4px 12px rgba(67,97,238,0.1);
         }
         .activity-item {
-            border-left: 3px solid #4361ee;
-            padding-left: 15px;
-            margin-bottom: 10px;
-            transition: all 0.3s;
+            border-bottom: 1px solid #edf2f7;
+            padding: 12px 0;
         }
-        .activity-item:hover {
-            background-color: #f8f9fa;
-            border-left-color: #3a0ca3;
+        .activity-item:last-child {
+            border-bottom: none;
         }
-        @media (max-width: 768px) {
-            .navbar-nav {
-                flex-direction: column;
-            }
-            .stat-card {
-                margin-bottom: 15px;
-            }
-            .project-card {
-                margin-bottom: 15px;
-            }
+        .btn-primary {
+            background: #4361ee;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .btn-primary:hover {
+            background: #3046c0;
+        }
+        .btn-outline-primary {
+            border: 1px solid #4361ee;
+            color: #4361ee;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        .btn-outline-primary:hover {
+            background: #4361ee;
+            color: white;
+        }
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        .progress {
+            height: 6px;
+            border-radius: 3px;
+            background: #edf2f7;
+        }
+        .progress-bar {
+            background: #4361ee;
+            border-radius: 3px;
         }
     </style>
 </head>
 <body>
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
-        <div class="container-fluid">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid px-4">
             <a class="navbar-brand" href="index.php">
-                <i class="bi bi-kanban me-2"></i> Task Manager
+                <i class="bi bi-kanban me-2"></i>Task Manager
             </a>
             
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -91,23 +131,45 @@ $upcoming_deadlines = getUpcomingDeadlines($user_id);
                 
                 <ul class="navbar-nav">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-bell"></i>
-                            <?php if (count($notifications) > 0): ?>
-                                <span class="badge bg-danger notification-badge"><?php echo count($notifications); ?></span>
+                        <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown">
+                            <i class="bi bi-bell fs-5"></i>
+                            <?php if ($notif_count > 0): ?>
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                    <?= $notif_count ?>
+                                </span>
                             <?php endif; ?>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end">
-                            <h6 class="dropdown-header">Notifikasi</h6>
+                        <div class="dropdown-menu dropdown-menu-end" style="width: 320px;">
+                            <div class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span class="fw-bold">Notifikasi</span>
+                                <?php if ($notif_count > 0): ?>
+                                    <span class="badge bg-danger"><?= $notif_count ?> baru</span>
+                                <?php endif; ?>
+                            </div>
                             <?php if (empty($notifications)): ?>
-                                <a class="dropdown-item text-muted" href="#">
-                                    <small>Tidak ada notifikasi</small>
-                                </a>
+                                <div class="text-center py-4 px-3">
+                                    <i class="bi bi-bell-slash fs-1 text-muted mb-2"></i>
+                                    <p class="text-muted mb-0">Tidak ada notifikasi</p>
+                                </div>
                             <?php else: ?>
                                 <?php foreach ($notifications as $notif): ?>
-                                    <a class="dropdown-item" href="#">
-                                        <div><strong><?php echo htmlspecialchars($notif['title']); ?></strong></div>
-                                        <small class="text-muted"><?php echo htmlspecialchars(substr($notif['message'], 0, 50)); ?>...</small>
+                                    <a class="dropdown-item border-bottom py-2" href="#">
+                                        <div class="d-flex">
+                                            <div class="me-2">
+                                                <?php if ($notif['type'] == 'assignment'): ?>
+                                                    <i class="bi bi-person-plus text-primary"></i>
+                                                <?php elseif ($notif['type'] == 'comment'): ?>
+                                                    <i class="bi bi-chat text-success"></i>
+                                                <?php else: ?>
+                                                    <i class="bi bi-info-circle text-info"></i>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <div class="fw-bold small"><?= htmlspecialchars($notif['title']) ?></div>
+                                                <div class="small text-muted"><?= htmlspecialchars($notif['message']) ?></div>
+                                                <div class="small text-muted mt-1"><?= timeAgo($notif['created_at']) ?></div>
+                                            </div>
+                                        </div>
                                     </a>
                                 <?php endforeach; ?>
                             <?php endif; ?>
@@ -115,16 +177,23 @@ $upcoming_deadlines = getUpcomingDeadlines($user_id);
                     </li>
                     
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person-circle"></i> <?php echo htmlspecialchars($_SESSION['full_name']); ?>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" data-bs-toggle="dropdown">
+                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                 style="width: 32px; height: 32px;">
+                                <?= strtoupper(substr($_SESSION['full_name'], 0, 1)) ?>
+                            </div>
+                            <span><?= htmlspecialchars($_SESSION['full_name']) ?></span>
+                            <?php if ($is_admin): ?>
+                                <span class="badge bg-danger ms-2">Admin</span>
+                            <?php endif; ?>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end">
                             <a class="dropdown-item" href="profile.php">
-                                <i class="bi bi-person me-2"></i> Profil
+                                <i class="bi bi-person me-2"></i>Profil
                             </a>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="logout.php">
-                                <i class="bi bi-box-arrow-right me-2"></i> Logout
+                                <i class="bi bi-box-arrow-right me-2"></i>Logout
                             </a>
                         </div>
                     </li>
@@ -134,235 +203,216 @@ $upcoming_deadlines = getUpcomingDeadlines($user_id);
     </nav>
 
     <!-- Main Content -->
-    <div class="container-fluid mt-4">
+    <div class="container-fluid px-4 py-4">
         <!-- Welcome Section -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h2 class="mb-2">Selamat datang, <?php echo htmlspecialchars($_SESSION['full_name']); ?>! 👋</h2>
-                                <p class="mb-0">Kelola tugas Anda dan kolaborasi dengan tim secara efisien.</p>
-                            </div>
-                            <div class="col-md-4 text-end">
-                                <button class="btn btn-light btn-lg" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                                    <i class="bi bi-plus-circle"></i> Buat Proyek Baru
-                                </button>
-                            </div>
+                <div class="bg-white p-4 rounded-3 shadow-sm">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h2 class="mb-2">Halo, <?= htmlspecialchars($_SESSION['full_name']) ?>! 👋</h2>
+                            <p class="text-muted mb-0">
+                                <?php if ($is_admin): ?>
+                                    Anda memiliki akses penuh ke semua proyek.
+                                <?php else: ?>
+                                    Kelola tugas dan kolaborasi dengan tim Anda.
+                                <?php endif; ?>
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                                <i class="bi bi-plus-circle me-2"></i>Proyek Baru
+                            </button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card stat-card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-uppercase">Total Proyek</h6>
-                                <h2><?php echo $stats['total_projects']; ?></h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-folder display-6"></i>
-                            </div>
+        <!-- Statistics -->
+        <div class="row g-4 mb-4">
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Total Proyek</p>
+                            <h2 class="mb-0 fw-bold"><?= $stats['total_projects'] ?></h2>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3">
+                            <i class="bi bi-folder text-primary fs-3"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card stat-card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-uppercase">Tugas Aktif</h6>
-                                <h2><?php echo $stats['active_tasks']; ?></h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-list-task display-6"></i>
-                            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Tugas Aktif</p>
+                            <h2 class="mb-0 fw-bold"><?= $stats['active_tasks'] ?></h2>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-3">
+                            <i class="bi bi-list-task text-warning fs-3"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card stat-card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-uppercase">Tugas Selesai</h6>
-                                <h2><?php echo $stats['completed_tasks']; ?></h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-check-circle display-6"></i>
-                            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Tugas Selesai</p>
+                            <h2 class="mb-0 fw-bold"><?= $stats['completed_tasks'] ?></h2>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3">
+                            <i class="bi bi-check-circle text-success fs-3"></i>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <div class="col-xl-3 col-md-6 mb-3">
-                <div class="card stat-card bg-danger text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h6 class="text-uppercase">Deadline Mendatang</h6>
-                                <h2><?php echo $stats['upcoming_deadlines']; ?></h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="bi bi-calendar-event display-6"></i>
-                            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="stat-card">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="text-muted mb-1">Deadline Mendatang</p>
+                            <h2 class="mb-0 fw-bold"><?= $stats['upcoming_deadlines'] ?></h2>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-3">
+                            <i class="bi bi-calendar-event text-danger fs-3"></i>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row">
-            <!-- Left Column: Projects -->
+        <!-- Projects & Activities -->
+        <div class="row g-4">
+            <!-- Projects List -->
             <div class="col-lg-8">
-                <!-- My Projects -->
-                <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0"><i class="bi bi-folder"></i> Proyek Saya</h5>
-                        <a href="projects.php" class="btn btn-sm btn-primary">Lihat Semua</a>
+                <div class="bg-white rounded-3 shadow-sm p-4">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0">
+                            <i class="bi bi-folder me-2 text-primary"></i>
+                            <?= $is_admin ? 'Semua Proyek' : 'Proyek Saya' ?>
+                        </h5>
+                        <span class="badge bg-primary"><?= count($projects) ?> Proyek</span>
                     </div>
-                    <div class="card-body">
-                        <?php if (empty($projects)): ?>
-                            <div class="text-center py-4">
-                                <i class="bi bi-folder-x display-1 text-muted mb-3"></i>
-                                <h5>Belum ada proyek</h5>
-                                <p class="text-muted">Mulai dengan membuat proyek pertama Anda</p>
-                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                                    <i class="bi bi-plus-circle"></i> Buat Proyek
-                                </button>
-                            </div>
-                        <?php else: ?>
-                            <div class="row">
-                                <?php foreach (array_slice($projects, 0, 4) as $project): ?>
-                                    <?php $project_stats = getProjectStats($project['id']); ?>
-                                    <div class="col-md-6 mb-3">
-                                        <div class="card project-card">
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    <div>
-                                                        <h5 class="card-title mb-1">
-                                                            <i class="bi bi-folder2 text-primary"></i> 
-                                                            <?php echo htmlspecialchars($project['name']); ?>
-                                                        </h5>
-                                                        <p class="card-text text-muted small mb-2">
-                                                            <?php echo htmlspecialchars(substr($project['description'] ?? 'Tidak ada deskripsi', 0, 100)); ?>
-                                                        </p>
-                                                    </div>
-                                                    <span class="badge bg-primary">
-                                                        <?php echo $project_stats['total']; ?> tugas
-                                                    </span>
-                                                </div>
-                                                
-                                                <!-- Progress Bar -->
-                                                <div class="mb-3">
-                                                    <div class="d-flex justify-content-between mb-1">
-                                                        <small class="text-muted">Progress</small>
-                                                        <small>
-                                                            <?php 
-                                                            $progress = $project_stats['total'] > 0 
-                                                                ? round(($project_stats['done'] / $project_stats['total']) * 100) 
-                                                                : 0;
-                                                            echo $progress; ?>%
-                                                        </small>
-                                                    </div>
-                                                    <div class="progress" style="height: 6px;">
-                                                        <div class="progress-bar bg-success" style="width: <?php echo $progress; ?>%"></div>
-                                                    </div>
-                                                </div>
-                                                
-                                                <!-- Quick Stats -->
-                                                <div class="row text-center">
-                                                    <div class="col-4">
-                                                        <small class="text-muted d-block">To Do</small>
-                                                        <span class="fw-bold"><?php echo $project_stats['todo']; ?></span>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <small class="text-muted d-block">Progress</small>
-                                                        <span class="fw-bold"><?php echo $project_stats['in_progress']; ?></span>
-                                                    </div>
-                                                    <div class="col-4">
-                                                        <small class="text-muted d-block">Selesai</small>
-                                                        <span class="fw-bold"><?php echo $project_stats['done']; ?></span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div class="mt-3">
-                                                    <a href="project.php?id=<?php echo $project['id']; ?>" class="btn btn-sm btn-outline-primary w-100">
-                                                        <i class="bi bi-box-arrow-in-right"></i> Buka Proyek
-                                                    </a>
-                                                </div>
+                    
+                    <?php if (empty($projects)): ?>
+                        <div class="text-center py-5">
+                            <i class="bi bi-folder-x display-1 text-muted mb-3"></i>
+                            <h5>Belum ada proyek</h5>
+                            <p class="text-muted mb-4">Mulai dengan membuat proyek pertama Anda</p>
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                                <i class="bi bi-plus-circle me-2"></i>Buat Proyek
+                            </button>
+                        </div>
+                    <?php else: ?>
+                        <div class="row g-3">
+                            <?php foreach (array_slice($projects, 0, 4) as $project): ?>
+                                <?php $stats = getProjectStats($project['id']); ?>
+                                <div class="col-md-6">
+                                    <div class="project-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h6 class="fw-bold mb-1"><?= htmlspecialchars($project['name']) ?></h6>
+                                                <p class="small text-muted mb-2">
+                                                    <?= htmlspecialchars(substr($project['description'] ?? 'Tidak ada deskripsi', 0, 60)) ?>...
+                                                </p>
+                                            </div>
+                                            <?php if ($is_admin): ?>
+                                                <span class="badge bg-info"><?= $project['total_members'] ?? 0 ?> anggota</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <div class="d-flex justify-content-between mb-1">
+                                                <small class="text-muted">Progress</small>
+                                                <small class="fw-bold"><?= $stats['progress'] ?>%</small>
+                                            </div>
+                                            <div class="progress">
+                                                <div class="progress-bar" style="width: <?= $stats['progress'] ?>%"></div>
                                             </div>
                                         </div>
-                                    </div>
-                                <?php endforeach; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right Column: Activities & Deadlines -->
-            <div class="col-lg-4">
-                <!-- Recent Activities -->
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Aktivitas Terbaru</h5>
-                    </div>
-                    <div class="card-body" style="max-height: 300px; overflow-y: auto;">
-                        <?php if (empty($activities)): ?>
-                            <p class="text-muted text-center py-3">Belum ada aktivitas</p>
-                        <?php else: ?>
-                            <?php foreach ($activities as $activity): ?>
-                                <div class="activity-item">
-                                    <div class="d-flex justify-content-between">
-                                        <strong class="text-primary"><?php echo htmlspecialchars($activity['title']); ?></strong>
-                                        <small class="text-muted"><?php echo $activity['time_ago']; ?></small>
-                                    </div>
-                                    <p class="mb-0 small"><?php echo htmlspecialchars($activity['message']); ?></p>
-                                </div>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </div>
-                </div>
-
-                <!-- Upcoming Deadlines -->
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Deadline Mendatang</h5>
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($upcoming_deadlines)): ?>
-                            <p class="text-muted text-center py-3">Tidak ada deadline mendatang</p>
-                        <?php else: ?>
-                            <?php foreach ($upcoming_deadlines as $task): ?>
-                                <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                                    <div class="flex-shrink-0">
-                                        <div class="bg-<?php echo getPriorityColor($task['priority']); ?> rounded-circle p-2">
-                                            <i class="bi bi-calendar text-white"></i>
+                                        
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div class="small text-muted">
+                                                <i class="bi bi-list-task me-1"></i><?= $stats['total'] ?> tugas
+                                            </div>
+                                            <a href="project.php?id=<?= $project['id'] ?>" class="btn btn-outline-primary btn-sm">
+                                                Buka <i class="bi bi-arrow-right ms-1"></i>
+                                            </a>
                                         </div>
                                     </div>
-                                    <div class="flex-grow-1 ms-3">
-                                        <h6 class="mb-1"><?php echo htmlspecialchars($task['title']); ?></h6>
-                                        <small class="text-muted">
-                                            <i class="bi bi-folder"></i> <?php echo htmlspecialchars($task['project_name']); ?>
-                                            • Due: <?php echo date('d M', strtotime($task['due_date'])); ?>
-                                        </small>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+            
+            <!-- Right Sidebar -->
+            <div class="col-lg-4">
+                <!-- Recent Activities -->
+                <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-clock-history me-2 text-warning"></i>
+                        Aktivitas Terbaru
+                    </h5>
+                    <div style="max-height: 300px; overflow-y: auto;">
+                        <?php if (empty($notifications)): ?>
+                            <p class="text-muted text-center py-3">Belum ada aktivitas</p>
+                        <?php else: ?>
+                            <?php foreach (array_slice($notifications, 0, 5) as $activity): ?>
+                                <div class="activity-item">
+                                    <div class="d-flex">
+                                        <div class="me-2">
+                                            <?php if ($activity['type'] == 'assignment'): ?>
+                                                <i class="bi bi-person-plus text-primary"></i>
+                                            <?php elseif ($activity['type'] == 'comment'): ?>
+                                                <i class="bi bi-chat text-success"></i>
+                                            <?php else: ?>
+                                                <i class="bi bi-info-circle text-info"></i>
+                                            <?php endif; ?>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold small"><?= htmlspecialchars($activity['title']) ?></div>
+                                            <div class="small text-muted"><?= htmlspecialchars($activity['message']) ?></div>
+                                            <div class="small text-muted mt-1"><?= timeAgo($activity['created_at']) ?></div>
+                                        </div>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                         <?php endif; ?>
                     </div>
+                </div>
+                
+                <!-- Upcoming Deadlines -->
+                <div class="bg-white rounded-3 shadow-sm p-4">
+                    <h5 class="fw-bold mb-3">
+                        <i class="bi bi-calendar-check me-2 text-success"></i>
+                        Deadline Mendatang
+                    </h5>
+                    <?php if (empty($deadlines)): ?>
+                        <p class="text-muted text-center py-3">Tidak ada deadline mendatang</p>
+                    <?php else: ?>
+                        <?php foreach ($deadlines as $task): ?>
+                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                                <div class="flex-shrink-0">
+                                    <div class="bg-<?= getPriorityColor($task['priority']) ?> bg-opacity-10 p-2 rounded-3 me-3">
+                                        <i class="bi bi-calendar text-<?= getPriorityColor($task['priority']) ?>"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1"><?= htmlspecialchars($task['title']) ?></h6>
+                                    <div class="small text-muted">
+                                        <?= htmlspecialchars($task['project_name']) ?> • 
+                                        <?= date('d M', strtotime($task['due_date'])) ?>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -373,160 +423,66 @@ $upcoming_deadlines = getUpcomingDeadlines($user_id);
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title"><i class="bi bi-plus-circle me-2"></i> Proyek Baru</h5>
+                    <h5 class="modal-title">
+                        <i class="bi bi-plus-circle me-2"></i>Proyek Baru
+                    </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <form id="newProjectForm" method="POST" action="api/projects.php?action=create">
+                <form id="newProjectForm" action="api/projects.php?action=create" method="POST">
                     <div class="modal-body">
                         <div class="mb-3">
-                            <label for="projectName" class="form-label">Nama Proyek <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" id="projectName" name="name" required 
-                                   placeholder="Masukkan nama proyek" maxlength="100">
+                            <label class="form-label fw-bold">Nama Proyek</label>
+                            <input type="text" class="form-control" name="name" required 
+                                   placeholder="Contoh: Website E-Commerce">
                         </div>
                         <div class="mb-3">
-                            <label for="projectDescription" class="form-label">Deskripsi</label>
-                            <textarea class="form-control" id="projectDescription" name="description" rows="3"
-                                      placeholder="Deskripsi proyek (opsional)"></textarea>
+                            <label class="form-label fw-bold">Deskripsi</label>
+                            <textarea class="form-control" name="description" rows="3" 
+                                      placeholder="Jelaskan tujuan proyek ini..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            <span class="spinner-border spinner-border-sm d-none" role="status"></span>
-                            Buat Proyek
-                        </button>
+                        <button type="submit" class="btn btn-primary">Buat Proyek</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        // New Project Form Handler
+        // New Project Form
         document.getElementById('newProjectForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const form = this;
             const submitBtn = form.querySelector('button[type="submit"]');
-            const spinner = submitBtn.querySelector('.spinner-border');
             const originalText = submitBtn.innerHTML;
             
-            // Show loading
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Membuat...';
             submitBtn.disabled = true;
-            spinner.classList.remove('d-none');
-            
-            const formData = new FormData(form);
             
             fetch(form.action, {
                 method: 'POST',
-                body: formData
+                body: new FormData(form)
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Close modal
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('newProjectModal'));
-                    modal.hide();
-                    
-                    // Show success message
-                    showToast('success', 'Proyek berhasil dibuat!');
-                    
-                    // Redirect to new project
-                    setTimeout(() => {
-                        if (data.project_id) {
-                            window.location.href = 'project.php?id=' + data.project_id;
-                        } else {
-                            location.reload();
-                        }
-                    }, 1500);
+                    bootstrap.Modal.getInstance(document.getElementById('newProjectModal')).hide();
+                    window.location.href = 'project.php?id=' + data.project_id;
                 } else {
-                    showToast('error', data.message || 'Gagal membuat proyek');
+                    alert('Error: ' + data.message);
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
-                showToast('error', 'Terjadi kesalahan');
-            })
-            .finally(() => {
-                // Reset button
-                submitBtn.disabled = false;
-                spinner.classList.add('d-none');
+                alert('Terjadi kesalahan');
                 submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
             });
         });
-
-        // Toast notification function
-        function showToast(type, message) {
-            // Create toast container if not exists
-            let toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            
-            // Create toast
-            const toastId = 'toast-' + Date.now();
-            const toast = document.createElement('div');
-            toast.id = toastId;
-            toast.className = `toast align-items-center text-white bg-${type} border-0`;
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            toast.setAttribute('aria-atomic', 'true');
-            
-            toast.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>
-            `;
-            
-            toastContainer.appendChild(toast);
-            
-            // Initialize and show toast
-            const bsToast = new bootstrap.Toast(toast, {
-                autohide: true,
-                delay: 3000
-            });
-            bsToast.show();
-            
-            // Remove toast after hiding
-            toast.addEventListener('hidden.bs.toast', function () {
-                toast.remove();
-            });
-        }
-
-        // Real-time notification updates
-        function updateNotificationCount() {
-            fetch('api/notifications.php?action=count')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const badge = document.querySelector('.notification-badge');
-                        if (badge) {
-                            if (data.count > 0) {
-                                badge.textContent = data.count;
-                                badge.style.display = 'inline-block';
-                            } else {
-                                badge.style.display = 'none';
-                            }
-                        }
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        }
-        
-        // Update every 30 seconds
-        setInterval(updateNotificationCount, 30000);
-        
-        // Initial update
-        updateNotificationCount();
     </script>
 </body>
 </html>
