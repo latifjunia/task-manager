@@ -12,6 +12,20 @@ if ($task['due_date'] && $task['column_status'] != 'done') {
     if ($diff < 0) $is_overdue = true;
     elseif ($days <= 2) $is_due_soon = true;
 }
+
+function getInitials($name) {
+    $words = explode(" ", $name);
+    $initials = "";
+    foreach ($words as $w) {
+        $initials .= mb_substr($w, 0, 1);
+    }
+    return strtoupper(substr($initials, 0, 2));
+}
+
+function getAvatarColor($name) {
+    $colors = ['#4f46e5', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
+    return $colors[strlen($name) % count($colors)];
+}
 ?>
 
 <div class="task-card priority-<?= $task['priority'] ?>" 
@@ -20,42 +34,67 @@ if ($task['due_date'] && $task['column_status'] != 'done') {
      onclick="showTaskDetail(<?= $task['id'] ?>)">
     
     <div class="d-flex justify-content-between align-items-start mb-2">
-        <h6 class="fw-bold mb-0" style="font-size: 0.95rem;">
-            <?= htmlspecialchars($task['title']) ?>
-        </h6>
+        <span class="priority-badge priority-<?= $task['priority'] ?>">
+            <?php 
+            $priorityLabels = [
+                'low' => 'Low',
+                'medium' => 'Medium',
+                'high' => 'High',
+                'urgent' => 'Urgent!'
+            ];
+            echo $priorityLabels[$task['priority']] ?? 'Medium';
+            ?>
+        </span>
+        
         <?php if ($task['priority'] == 'urgent'): ?>
-            <span class="badge bg-danger ms-2">!</span>
+            <i class="bi bi-exclamation-triangle-fill text-danger"></i>
         <?php endif; ?>
     </div>
     
+    <div class="task-title">
+        <?= htmlspecialchars($task['title']) ?>
+    </div>
+    
     <?php if (!empty($task['description'])): ?>
-        <p class="small text-muted mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
-            <?= htmlspecialchars(substr($task['description'], 0, 80)) ?>...
-        </p>
+        <div class="task-description">
+            <?= strip_tags(htmlspecialchars_decode($task['description'])) ?>
+        </div>
     <?php endif; ?>
     
-    <div class="d-flex justify-content-between align-items-center">
-        <div class="d-flex align-items-center">
-            <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-1" 
-                 style="width: 24px; height: 24px;">
-                <i class="bi bi-person text-muted small"></i>
-            </div>
-            <small class="text-muted">
-                <?= $task['assignee_name'] ? htmlspecialchars(explode(' ', $task['assignee_name'])[0]) : 'Unassigned' ?>
-            </small>
+    <div class="task-meta">
+        <div class="d-flex align-items-center gap-2">
+            <?php if ($task['assignee_name']): ?>
+                <div class="avatar avatar-sm" 
+                     style="background: <?= getAvatarColor($task['assignee_name']) ?>;"
+                     title="<?= htmlspecialchars($task['assignee_name']) ?>">
+                    <?= getInitials($task['assignee_name']) ?>
+                </div>
+                <small class="text-gray">
+                    <?= explode(' ', $task['assignee_name'])[0] ?>
+                </small>
+            <?php else: ?>
+                <div class="avatar avatar-sm bg-gray-soft text-gray" title="Belum ditugaskan">
+                    <i class="bi bi-person"></i>
+                </div>
+                <small class="text-gray">Unassigned</small>
+            <?php endif; ?>
         </div>
         
         <?php if ($task['due_date']): ?>
-            <small class="<?= $is_overdue ? 'text-danger fw-bold' : ($is_due_soon ? 'text-warning' : 'text-muted') ?>">
+            <div class="due-date <?= $is_overdue ? 'overdue' : ($is_due_soon ? 'soon' : '') ?>">
                 <i class="bi bi-calendar3"></i>
                 <?= date('d/m', strtotime($task['due_date'])) ?>
-            </small>
+            </div>
         <?php endif; ?>
     </div>
     
     <?php if ($is_overdue): ?>
-        <span class="position-absolute top-0 end-0 badge bg-danger m-2" style="font-size: 0.7rem;">Terlambat</span>
+        <span class="position-absolute top-0 end-0 badge bg-danger m-2" style="font-size: 0.65rem;">
+            Terlambat
+        </span>
     <?php elseif ($is_due_soon): ?>
-        <span class="position-absolute top-0 end-0 badge bg-warning m-2" style="font-size: 0.7rem;">Segera</span>
+        <span class="position-absolute top-0 end-0 badge bg-warning m-2" style="font-size: 0.65rem;">
+            Segera
+        </span>
     <?php endif; ?>
 </div>

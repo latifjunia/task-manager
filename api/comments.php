@@ -1,6 +1,11 @@
 <?php
-require_once '../includes/config.php';
-require_once '../includes/functions.php';
+// Pastikan display_errors KEMBALI KE 0 agar format JSON tidak rusak
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+header('Content-Type: application/json; charset=utf-8');
+
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/functions.php';
 
 if (!isLoggedIn()) {
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -11,13 +16,14 @@ $action = $_GET['action'] ?? '';
 
 switch ($action) {
     case 'add':
-        addComment();
+        handle_add_comment(); // <-- UBAH PEMANGGILAN FUNGSI DI SINI
         break;
     default:
         echo json_encode(['success' => false, 'message' => 'Invalid action']);
 }
 
-function addComment() {
+// <-- UBAH NAMA FUNGSI DI SINI (tambahkan handle_)
+function handle_add_comment() {
     global $pdo;
     
     $task_id = (int)($_POST['task_id'] ?? 0);
@@ -44,12 +50,14 @@ function addComment() {
         if ($task['assignee_id'] && $task['assignee_id'] != $_SESSION['user_id']) $users_to_notify[] = $task['assignee_id'];
         
         foreach (array_unique($users_to_notify) as $user_id) {
-            createNotification(
-                $user_id,
-                'Komentar Baru',
-                $_SESSION['full_name'] . ' mengomentari: ' . $task['title'],
-                'comment'
-            );
+            if (function_exists('createNotification')) {
+                createNotification(
+                    $user_id,
+                    'Komentar Baru',
+                    $_SESSION['full_name'] . ' mengomentari: ' . $task['title'],
+                    'comment'
+                );
+            }
         }
         
         echo json_encode(['success' => true, 'message' => 'Komentar berhasil ditambahkan']);
