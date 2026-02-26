@@ -28,10 +28,13 @@ if (!function_exists('getInitials')) {
         return strtoupper(substr($acronym, 0, 2));
     }
 }
+
+// Cek preferensi tema dari cookie
+$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="<?= $theme ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -46,11 +49,11 @@ if (!function_exists('getInitials')) {
     
     <style>
         :root {
-            /* Palette Terang Aestetik */
-            --primary: #6366f1; /* Indigo */
+            /* Light Mode Variables */
+            --primary: #6366f1;
             --primary-hover: #4f46e5;
             --primary-light: #e0e7ff;
-            --secondary: #ec4899; /* Pink */
+            --secondary: #ec4899;
             --success: #10b981;
             --success-light: #d1fae5;
             --warning: #f59e0b;
@@ -61,16 +64,61 @@ if (!function_exists('getInitials')) {
             --bg-body: #f8fafc;
             --bg-gradient: linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
             --surface: #ffffff;
+            --surface-hover: #f1f5f9;
             
             --text-dark: #0f172a;
             --text-main: #334155;
             --text-muted: #64748b;
             
             --border-color: rgba(226, 232, 240, 0.8);
+            --border-color-solid: #e2e8f0;
+            
             --radius-lg: 24px;
             --radius-md: 16px;
             --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03);
             --shadow-hover: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
+            
+            --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
+            --card-hover-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
+            
+            /* Welcome card - warna spesifik tidak menggunakan variable agar tetap cerah */
+            --welcome-gradient: linear-gradient(120deg, #4f46e5, #ec4899, #8b5cf6);
+        }
+
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --primary-light: #1e1b4b;
+            --secondary: #f472b6;
+            --success: #10b981;
+            --success-light: #064e3b;
+            --warning: #f59e0b;
+            --warning-light: #422006;
+            --danger: #ef4444;
+            --danger-light: #450a0a;
+            
+            --bg-body: #0f172a;
+            --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            
+            --text-dark: #f1f5f9;
+            --text-main: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            --border-color: rgba(51, 65, 85, 0.8);
+            --border-color-solid: #334155;
+            
+            --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
+            --card-hover-shadow: 0 20px 40px -10px rgba(129, 140, 248, 0.2);
+            
+            /* Welcome card - tetap cerah di dark mode */
+            --welcome-gradient: linear-gradient(120deg, #4f46e5, #db2777, #7c3aed);
+            
+            /* Scrollbar colors */
+            --scrollbar-thumb: #475569;
+            --scrollbar-track: transparent;
         }
 
         body {
@@ -79,20 +127,33 @@ if (!function_exists('getInitials')) {
             font-family: 'Outfit', sans-serif;
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* --- Navbar (Glassmorphism) --- */
         .navbar {
-            background: rgba(255, 255, 255, 0.75) !important;
+            background: rgba(var(--surface-rgb, 255,255,255), 0.75) !important;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid var(--border-color);
             padding: 1.25rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
+            transition: background 0.3s ease;
         }
-        .navbar-brand { font-weight: 700; font-size: 1.3rem; color: var(--text-dark) !important; letter-spacing: -0.5px;}
+        
+        [data-theme="dark"] .navbar {
+            background: rgba(30, 41, 59, 0.75) !important;
+        }
+        
+        .navbar-brand { 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            color: var(--text-dark) !important; 
+            letter-spacing: -0.5px;
+        }
+        
         .brand-icon {
             width: 38px; height: 38px;
             background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -101,17 +162,53 @@ if (!function_exists('getInitials')) {
             color: white; font-size: 1.2rem;
             box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
         }
-        .nav-link { font-weight: 500; color: var(--text-muted) !important; padding: 0.5rem 1rem !important; border-radius: 8px; transition: 0.3s; }
-        .nav-link:hover, .nav-link.active { color: var(--primary) !important; background: var(--primary-light); }
+        
+        .nav-link { 
+            font-weight: 500; 
+            color: var(--text-muted) !important; 
+            padding: 0.5rem 1rem !important; 
+            border-radius: 8px; 
+            transition: 0.3s; 
+        }
+        .nav-link:hover, .nav-link.active { 
+            color: var(--primary) !important; 
+            background: var(--primary-light); 
+        }
+
+        /* Theme Toggle Button */
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color-solid);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
 
         /* --- Global Cards --- */
         .card {
             background: var(--surface);
             border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-soft);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
             overflow: hidden;
+        }
+        
+        .card:hover {
+            box-shadow: var(--card-hover-shadow);
         }
         
         .card-header {
@@ -125,7 +222,7 @@ if (!function_exists('getInitials')) {
 
         /* --- Welcome Banner (Mesh Gradient) --- */
         .welcome-card {
-            background: linear-gradient(120deg, #4f46e5, #ec4899, #8b5cf6);
+            background: var(--welcome-gradient);
             background-size: 200% 200%;
             animation: gradientMove 10s ease infinite;
             color: white;
@@ -145,8 +242,19 @@ if (!function_exists('getInitials')) {
             background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
             border-radius: 50%;
         }
-        .welcome-title { font-weight: 700; font-size: 2rem; letter-spacing: -1px; margin-bottom: 0.5rem;}
-        .welcome-subtitle { font-weight: 300; font-size: 1.1rem; opacity: 0.9; }
+        .welcome-title { 
+            font-weight: 700; 
+            font-size: 2rem; 
+            letter-spacing: -1px; 
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+        .welcome-subtitle { 
+            font-weight: 300; 
+            font-size: 1.1rem; 
+            opacity: 0.9; 
+            color: rgba(255,255,255,0.9);
+        }
 
         /* --- Stats Cards --- */
         .stat-card {
@@ -155,7 +263,10 @@ if (!function_exists('getInitials')) {
             display: flex;
             align-items: center;
         }
-        .stat-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+        .stat-card:hover { 
+            transform: translateY(-5px); 
+            box-shadow: var(--card-hover-shadow); 
+        }
         .stat-icon {
             width: 60px; height: 60px;
             border-radius: 18px;
@@ -164,13 +275,37 @@ if (!function_exists('getInitials')) {
             margin-right: 1.25rem;
             flex-shrink: 0;
         }
-        .icon-purple { background: #f3e8ff; color: #6b21a8; }
-        .icon-orange { background: #fff7ed; color: #b45309; }
-        .icon-green { background: #f0fdf4; color: #15803d; }
-        .icon-red { background: #fef2f2; color: #b91c1c; }
+        .icon-purple { 
+            background: var(--primary-light); 
+            color: var(--primary); 
+        }
+        .icon-orange { 
+            background: var(--warning-light); 
+            color: var(--warning); 
+        }
+        .icon-green { 
+            background: var(--success-light); 
+            color: var(--success); 
+        }
+        .icon-red { 
+            background: var(--danger-light); 
+            color: var(--danger); 
+        }
         
-        .stat-info .label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.2rem;}
-        .stat-info .value { font-size: 2rem; font-weight: 700; color: var(--text-dark); line-height: 1; }
+        .stat-info .label { 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            margin-bottom: 0.2rem;
+        }
+        .stat-info .value { 
+            font-size: 2rem; 
+            font-weight: 700; 
+            color: var(--text-dark); 
+            line-height: 1; 
+        }
 
         /* --- Project Grid --- */
         .project-card {
@@ -181,17 +316,64 @@ if (!function_exists('getInitials')) {
             cursor: pointer;
             border-radius: var(--radius-md);
         }
-        .project-card:hover { border-color: var(--primary); box-shadow: var(--shadow-hover); transform: translateY(-4px); }
-        .project-title { font-weight: 700; color: var(--text-dark); font-size: 1.1rem; line-height: 1.3;}
-        .project-desc { font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin: 1rem 0;}
+        .project-card:hover { 
+            border-color: var(--primary); 
+            box-shadow: var(--card-hover-shadow); 
+            transform: translateY(-4px); 
+            background: var(--surface-hover);
+        }
+        .project-title { 
+            font-weight: 700; 
+            color: var(--text-dark); 
+            font-size: 1.1rem; 
+            line-height: 1.3;
+        }
+        .project-desc { 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            margin: 1rem 0;
+        }
         
-        .progress-wrapper { background: #f1f5f9; height: 8px; border-radius: 8px; overflow: hidden; margin-top: 0.5rem; }
-        .progress-fill { background: var(--primary); height: 100%; border-radius: 8px; transition: width 1s ease; }
+        .progress-wrapper { 
+            background: var(--border-color-solid); 
+            height: 8px; 
+            border-radius: 8px; 
+            overflow: hidden; 
+            margin-top: 0.5rem; 
+        }
+        .progress-fill { 
+            background: var(--primary); 
+            height: 100%; 
+            border-radius: 8px; 
+            transition: width 1s ease; 
+        }
         
-        .mini-stats { background: #f8fafc; padding: 0.75rem; border-radius: 12px; display: flex; justify-content: space-around; margin-top: 1.5rem; border: 1px solid var(--border-color);}
-        .mini-stat-item { text-align: center; }
-        .mini-stat-item span { display: block; font-size: 0.65rem; font-weight: 600; color: var(--text-muted); }
-        .mini-stat-item strong { font-size: 1rem; color: var(--text-dark); }
+        .mini-stats { 
+            background: var(--surface-hover); 
+            padding: 0.75rem; 
+            border-radius: 12px; 
+            display: flex; 
+            justify-content: space-around; 
+            margin-top: 1.5rem; 
+            border: 1px solid var(--border-color);
+        }
+        .mini-stat-item { 
+            text-align: center; 
+        }
+        .mini-stat-item span { 
+            display: block; 
+            font-size: 0.65rem; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+        }
+        .mini-stat-item strong { 
+            font-size: 1rem; 
+            color: var(--text-dark); 
+        }
 
         /* --- Lists (Activity & Deadline) --- */
         .list-group-item {
@@ -200,9 +382,14 @@ if (!function_exists('getInitials')) {
             padding: 1.25rem 1.5rem;
             transition: 0.2s;
             background: transparent;
+            color: var(--text-main);
         }
-        .list-group-item:hover { background: #f8fafc; }
-        .list-group-item:last-child { border-bottom: none; }
+        .list-group-item:hover { 
+            background: var(--surface-hover); 
+        }
+        .list-group-item:last-child { 
+            border-bottom: none; 
+        }
         
         .icon-circle-sm {
             width: 40px; height: 40px;
@@ -213,26 +400,192 @@ if (!function_exists('getInitials')) {
         }
 
         /* --- Buttons --- */
-        .btn { padding: 0.7rem 1.5rem; border-radius: 12px; font-weight: 600; transition: 0.3s; letter-spacing: 0.3px;}
-        .btn-primary { background: var(--primary); border: none; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); }
-        .btn-light { background: white; color: var(--primary); border: 1px solid white; }
-        .btn-light:hover { background: #f8fafc; color: var(--primary-hover); }
+        .btn { 
+            padding: 0.7rem 1.5rem; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            transition: 0.3s; 
+            letter-spacing: 0.3px;
+        }
+        .btn-primary { 
+            background: var(--primary); 
+            border: none; 
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); 
+            color: white;
+        }
+        .btn-primary:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.4); 
+        }
+        .btn-light { 
+            background: white; 
+            color: var(--primary); 
+            border: 1px solid white; 
+        }
+        .btn-light:hover { 
+            background: #f8fafc; 
+            color: var(--primary-hover); 
+        }
+        [data-theme="dark"] .btn-light {
+            background: var(--surface);
+            color: var(--primary);
+            border-color: var(--border-color);
+        }
+        [data-theme="dark"] .btn-light:hover {
+            background: var(--surface-hover);
+        }
+        
+        .btn-soft-primary {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+        }
+        .btn-soft-primary:hover {
+            background: var(--primary);
+            color: white;
+        }
 
         /* --- Utilities --- */
-        .badge { padding: 0.5em 0.8em; border-radius: 8px; font-weight: 600; font-size: 0.75rem; letter-spacing: 0.5px; }
-        .bg-light-primary { background: var(--primary-light); color: var(--primary); }
-        .text-truncate-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .badge { 
+            padding: 0.5em 0.8em; 
+            border-radius: 8px; 
+            font-weight: 600; 
+            font-size: 0.75rem; 
+            letter-spacing: 0.5px; 
+        }
+        .bg-light-primary { 
+            background: var(--primary-light); 
+            color: var(--primary); 
+        }
+        
+        .bg-danger-light {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+        
+        .text-truncate-2 { 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+        }
 
         /* Forms */
-        .form-control, .form-select { border-radius: 12px; padding: 0.8rem 1rem; border: 1px solid var(--border-color); background: #f8fafc;}
-        .form-control:focus, .form-select:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
+        .form-control, .form-select { 
+            border-radius: 12px; 
+            padding: 0.8rem 1rem; 
+            border: 1px solid var(--border-color); 
+            background: var(--surface-hover);
+            color: var(--text-dark);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus { 
+            background: var(--surface); 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); 
+            color: var(--text-dark);
+        }
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
         
         /* Modal */
-        .modal-content { border-radius: var(--radius-lg); border: none; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
-        .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.5rem 2rem; }
-        .modal-body { padding: 2rem; }
-        .modal-footer { border-top: 1px solid var(--border-color); padding: 1.5rem 2rem; background: #f8fafc; border-radius: 0 0 var(--radius-lg) var(--radius-lg);}
+        .modal-content { 
+            background: var(--surface);
+            border-color: var(--border-color);
+            border-radius: var(--radius-lg); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+        }
+        .modal-header { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+        }
+        .modal-header .modal-title {
+            color: var(--text-dark);
+        }
+        .modal-header .btn-close {
+            filter: var(--btn-close-filter, none);
+        }
+        [data-theme="dark"] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .modal-body { 
+            padding: 2rem; 
+        }
+        .modal-footer { 
+            border-top: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+            background: var(--surface-hover); 
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        /* Dropdown Menu */
+        .dropdown-menu {
+            background: var(--surface);
+            border-color: var(--border-color);
+            box-shadow: var(--card-hover-shadow);
+        }
+        
+        .dropdown-item {
+            color: var(--text-main);
+        }
+        
+        .dropdown-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+        
+        .dropdown-divider {
+            border-color: var(--border-color);
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--scrollbar-track);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--scrollbar-thumb);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-muted);
+        }
+
+        /* Toast */
+        .toast {
+            background: var(--surface) !important;
+            color: var(--text-dark) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .welcome-title {
+                font-size: 1.5rem;
+            }
+            
+            .stat-card {
+                padding: 1rem;
+            }
+            
+            .stat-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            
+            .stat-info .value {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -245,7 +598,7 @@ if (!function_exists('getInitials')) {
             </a>
             
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <i class="bi bi-list fs-1 text-dark"></i>
+                <i class="bi bi-list fs-1" style="color: var(--text-dark);"></i>
             </button>
             
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -257,6 +610,13 @@ if (!function_exists('getInitials')) {
                 </ul>
                 
                 <ul class="navbar-nav align-items-center gap-3">
+                    <!-- Theme Toggle -->
+                    <li class="nav-item">
+                        <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
+                            <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
+                        </div>
+                    </li>
+                    
                     <li class="nav-item d-none d-lg-block">
                         <button class="btn btn-primary btn-sm px-3 py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#newProjectModal">
                             <i class="bi bi-plus-lg me-1"></i> Proyek
@@ -265,7 +625,7 @@ if (!function_exists('getInitials')) {
 
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" style="padding: 0.5rem !important;">
-                            <div class="icon-circle-sm" style="background: #f1f5f9; color: var(--text-main);">
+                            <div class="icon-circle-sm" style="background: var(--surface-hover); color: var(--text-main);">
                                 <i class="bi bi-bell"></i>
                                 <?php if ($notif_count > 0): ?>
                                     <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" style="font-size: 0.65rem; transform: translate(-30%, 10%) !important;">
@@ -275,8 +635,8 @@ if (!function_exists('getInitials')) {
                             </div>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 350px; border-radius: 16px; padding: 0; overflow: hidden; margin-top: 10px;">
-                            <div class="bg-light p-3 border-bottom d-flex justify-content-between align-items-center">
-                                <h6 class="mb-0 fw-bold">Notifikasi</h6>
+                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="background: var(--surface);">
+                                <h6 class="mb-0 fw-bold" style="color: var(--text-dark);">Notifikasi</h6>
                                 <?php if ($notif_count > 0): ?><span class="badge bg-primary rounded-pill"><?= $notif_count ?> Baru</span><?php endif; ?>
                             </div>
                             <?php if (empty($notifications)): ?>
@@ -290,7 +650,7 @@ if (!function_exists('getInitials')) {
                                         <a class="dropdown-item d-flex p-3 border-bottom" href="#" style="white-space: normal;">
                                             <div class="me-3 mt-1">
                                                 <?php 
-                                                    $bg = 'bg-light'; $color = 'text-secondary'; $icon = 'bi-info-circle';
+                                                    $bg = 'var(--surface-hover)'; $color = 'var(--text-muted)'; $icon = 'bi-info-circle';
                                                     if ($notif['type'] == 'assignment') { $bg = 'var(--primary-light)'; $color = 'var(--primary)'; $icon = 'bi-person-check'; }
                                                     elseif ($notif['type'] == 'comment') { $bg = 'var(--success-light)'; $color = 'var(--success)'; $icon = 'bi-chat-dots'; }
                                                 ?>
@@ -299,7 +659,7 @@ if (!function_exists('getInitials')) {
                                                 </div>
                                             </div>
                                             <div>
-                                                <div class="fw-bold text-dark" style="font-size: 0.9rem; margin-bottom: 2px;"><?= htmlspecialchars($notif['title']) ?></div>
+                                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem; margin-bottom: 2px;"><?= htmlspecialchars($notif['title']) ?></div>
                                                 <div class="text-muted" style="font-size: 0.8rem; line-height: 1.4;"><?= htmlspecialchars($notif['message']) ?></div>
                                                 <small class="text-muted opacity-75 mt-1 d-block" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i><?= timeAgo($notif['created_at']) ?></small>
                                             </div>
@@ -313,16 +673,16 @@ if (!function_exists('getInitials')) {
                     <li class="nav-item dropdown">
                         <a class="nav-link d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown" style="padding: 0 !important;">
                             <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=0f172a&color=fff&size=40" 
-                                 class="rounded-circle border border-2 border-white shadow-sm">
+                                 class="rounded-circle border border-2" style="border-color: var(--border-color) !important;">
                             <div class="d-none d-xl-block text-start lh-1">
-                                <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
+                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
                                 <small class="text-muted" style="font-size: 0.75rem;"><?= $is_admin ? 'Administrator' : 'Anggota Tim' ?></small>
                             </div>
                             <i class="bi bi-chevron-down ms-1 text-muted d-none d-xl-block" style="font-size: 0.8rem;"></i>
                         </a>
                         <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-3 p-2" style="border-radius: 16px; min-width: 200px;">
                             <div class="d-xl-none p-3 border-bottom mb-2">
-                                <div class="fw-bold text-dark"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
+                                <div class="fw-bold" style="color: var(--text-dark);"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
                                 <small class="text-muted"><?= $is_admin ? 'Admin' : 'Member' ?></small>
                             </div>
                             <a class="dropdown-item py-2 px-3 rounded-3" href="profile.php"><i class="bi bi-person me-3 text-muted"></i>Profil Saya</a>
@@ -397,14 +757,14 @@ if (!function_exists('getInitials')) {
             
             <div class="col-xl-8">
                 <div class="d-flex justify-content-between align-items-center mb-4 px-1">
-                    <h4 class="fw-bold mb-0 text-dark">Proyek Aktif</h4>
-                    <a href="projects.php" class="btn btn-sm btn-soft-primary rounded-pill px-3">Lihat Semua</a>
+                    <h4 class="fw-bold mb-0" style="color: var(--text-dark);">Proyek Aktif</h4>
+                    <a href="projects.php" class="btn btn-soft-primary rounded-pill px-3">Lihat Semua</a>
                 </div>
                 
                 <?php if (empty($projects)): ?>
                     <div class="card p-5 text-center">
                         <img src="https://illustrations.popsy.co/amber/freelancer.svg" alt="Empty" style="height: 200px; opacity: 0.8; margin-bottom: 1rem;">
-                        <h4 class="fw-bold">Ruang kerja masih kosong</h4>
+                        <h4 class="fw-bold" style="color: var(--text-dark);">Ruang kerja masih kosong</h4>
                         <p class="text-muted mb-4">Buat proyek pertamamu untuk mulai berkolaborasi.</p>
                         <div>
                             <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newProjectModal">
@@ -431,8 +791,8 @@ if (!function_exists('getInitials')) {
                                     <div class="mt-auto">
                                         <div>
                                             <div class="d-flex justify-content-between align-items-end mb-1">
-                                                <span class="fw-bold text-dark" style="font-size: 0.8rem;">Progress</span>
-                                                <span class="fw-bold" style="font-size: 0.8rem; color: var(--primary);"><?= $p_stats['progress'] ?>%</span>
+                                                <span class="fw-bold" style="color: var(--text-dark); font-size: 0.8rem;">Progress</span>
+                                                <span class="fw-bold" style="color: var(--primary); font-size: 0.8rem;"><?= $p_stats['progress'] ?>%</span>
                                             </div>
                                             <div class="progress-wrapper">
                                                 <div class="progress-fill" style="width: <?= $p_stats['progress'] ?>%"></div>
@@ -477,7 +837,7 @@ if (!function_exists('getInitials')) {
                                 <div class="icon-circle-sm mx-auto mb-3" style="background: var(--success-light); color: var(--success); width: 60px; height: 60px; font-size: 2rem;">
                                     <i class="bi bi-emoji-smile"></i>
                                 </div>
-                                <h6 class="fw-bold">Santai Dulu!</h6>
+                                <h6 class="fw-bold" style="color: var(--text-dark);">Santai Dulu!</h6>
                                 <p class="text-muted small mb-0">Tidak ada tugas yang mendekati deadline.</p>
                             </div>
                         <?php else: ?>
@@ -494,7 +854,7 @@ if (!function_exists('getInitials')) {
                                             <i class="bi <?= $iconClass ?>"></i>
                                         </div>
                                         <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="fw-bold mb-1 text-truncate" style="font-size: 0.95rem;"><?= htmlspecialchars($task['title']) ?></h6>
+                                            <h6 class="fw-bold mb-1 text-truncate" style="color: var(--text-dark); font-size: 0.95rem;"><?= htmlspecialchars($task['title']) ?></h6>
                                             <div class="d-flex align-items-center gap-2">
                                                 <span class="badge bg-light text-muted border fw-normal text-truncate" style="max-width: 100px;">
                                                     <?= htmlspecialchars($task['project_name']) ?>
@@ -520,9 +880,9 @@ if (!function_exists('getInitials')) {
                             <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
                                 <?php foreach (array_slice($notifications, 0, 5) as $activity): ?>
                                     <div class="list-group-item d-flex gap-3">
-                                        <div class="mt-1 text-primary"><i class="bi bi-record-circle-fill" style="font-size: 0.8rem;"></i></div>
+                                        <div class="mt-1" style="color: var(--primary);"><i class="bi bi-record-circle-fill" style="font-size: 0.8rem;"></i></div>
                                         <div>
-                                            <div class="fw-bold text-dark" style="font-size: 0.9rem;"><?= htmlspecialchars($activity['title']) ?></div>
+                                            <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;"><?= htmlspecialchars($activity['title']) ?></div>
                                             <div class="text-muted mt-1" style="font-size: 0.85rem; line-height: 1.4;"><?= htmlspecialchars($activity['message']) ?></div>
                                             <div class="text-muted mt-2 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;"><?= strtoupper(timeAgo($activity['created_at'])) ?></div>
                                         </div>
@@ -541,7 +901,7 @@ if (!function_exists('getInitials')) {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h4 class="modal-title fw-bold text-dark">Buat Proyek Baru</h4>
+                    <h4 class="modal-title fw-bold" style="color: var(--text-dark);">Buat Proyek Baru</h4>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="newProjectForm" action="api/projects.php?action=create" method="POST">
@@ -556,7 +916,7 @@ if (!function_exists('getInitials')) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-link text-muted text-decoration-none fw-bold" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-link text-decoration-none fw-bold" data-bs-dismiss="modal" style="color: var(--text-muted);">Batal</button>
                         <button type="submit" class="btn btn-primary px-4 rounded-pill">
                             <span class="spinner-border spinner-border-sm d-none me-2"></span>Simpan Proyek
                         </button>
@@ -570,6 +930,35 @@ if (!function_exists('getInitials')) {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // Update HTML attribute
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update toggle button icon
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (themeIcon) {
+                themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
+            }
+            
+            // Save preference to cookie (expires in 30 days)
+            const date = new Date();
+            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+            document.cookie = `theme=${newTheme}; expires=${date.toUTCString()}; path=/`;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set default theme if not set
+            const html = document.documentElement;
+            if (!html.getAttribute('data-theme')) {
+                html.setAttribute('data-theme', 'light');
+            }
+        });
+
         // Toast Function
         function showToast(type, message) {
             const container = document.querySelector('.toast-container');

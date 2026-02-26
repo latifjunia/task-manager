@@ -47,10 +47,13 @@ function getAvatarColor($name) {
     $colors = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
     return $colors[strlen($name) % count($colors)];
 }
+
+// Cek preferensi tema dari session atau cookie
+$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 ?>
 
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-theme="<?= $theme ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
@@ -65,26 +68,80 @@ function getAvatarColor($name) {
     
     <style>
         :root {
-            /* Palette Seragam dengan Dashboard */
-            --primary: #6366f1; 
+            /* Light Mode Variables */
+            --primary: #6366f1;
             --primary-hover: #4f46e5;
             --primary-light: #e0e7ff;
-            --secondary: #ec4899; 
+            --secondary: #ec4899;
             
             --bg-body: #f8fafc;
             --bg-gradient: linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
             --surface: #ffffff;
+            --surface-hover: #f1f5f9;
             
             --text-dark: #0f172a;
             --text-main: #334155;
             --text-muted: #64748b;
             
             --border-color: rgba(226, 232, 240, 0.8);
+            --border-color-solid: #e2e8f0;
+            
+            --kanban-bg: rgba(241, 245, 249, 0.7);
+            --task-count-bg: white;
+            --task-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            --task-hover-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
+            
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --success: #10b981;
+            --warning: #f59e0b;
+            
             --radius-lg: 24px;
             --radius-md: 16px;
             --radius-sm: 12px;
             --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03);
             --shadow-hover: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
+            
+            /* Scrollbar colors */
+            --scrollbar-thumb: #cbd5e1;
+            --scrollbar-track: transparent;
+        }
+
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --primary: #818cf8;
+            --primary-hover: #6366f1;
+            --primary-light: #1e1b4b;
+            --secondary: #f472b6;
+            
+            --bg-body: #0f172a;
+            --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
+            --surface: #1e293b;
+            --surface-hover: #334155;
+            
+            --text-dark: #f1f5f9;
+            --text-main: #cbd5e1;
+            --text-muted: #94a3b8;
+            
+            --border-color: rgba(51, 65, 85, 0.8);
+            --border-color-solid: #334155;
+            
+            --kanban-bg: rgba(30, 41, 59, 0.7);
+            --task-count-bg: #1e293b;
+            --task-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            --task-hover-shadow: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
+            
+            --danger: #ef4444;
+            --danger-light: #450a0a;
+            --success: #10b981;
+            --warning: #f59e0b;
+            
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.2);
+            --shadow-hover: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
+            
+            /* Scrollbar colors for dark mode */
+            --scrollbar-thumb: #475569;
+            --scrollbar-track: transparent;
         }
 
         body {
@@ -93,21 +150,35 @@ function getAvatarColor($name) {
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
         }
 
         /* --- Navbar (Glassmorphism) --- */
         .navbar {
-            background: rgba(255, 255, 255, 0.75) !important;
+            background: rgba(var(--surface-rgb, 255,255,255), 0.75) !important;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            border-bottom: 1px solid var(--border-color);
             padding: 1rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
+            transition: background 0.3s ease;
         }
         
-        .navbar-brand { font-weight: 700; font-size: 1.3rem; color: var(--text-dark) !important; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;}
+        [data-theme="dark"] .navbar {
+            background: rgba(30, 41, 59, 0.75) !important;
+        }
+        
+        .navbar-brand { 
+            font-weight: 700; 
+            font-size: 1.3rem; 
+            color: var(--text-dark) !important; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            letter-spacing: -0.5px;
+        }
         
         .brand-icon {
             width: 38px; height: 38px;
@@ -118,24 +189,67 @@ function getAvatarColor($name) {
             box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-primary { background: var(--primary); border: none; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 12px; transition: all 0.3s; }
-        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); }
+        .btn-primary { 
+            background: var(--primary); 
+            border: none; 
+            font-weight: 600; 
+            padding: 0.6rem 1.2rem; 
+            border-radius: 12px; 
+            transition: all 0.3s; 
+            color: white;
+        }
+        .btn-primary:hover { 
+            background: var(--primary-hover); 
+            transform: translateY(-2px); 
+            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); 
+        }
 
-        /* --- Stats Cards (Mini Version) --- */
+        /* Theme Toggle Button */
+        .theme-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color-solid);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+        
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
+        /* --- Stats Cards --- */
         .stats-card {
             background: var(--surface);
             border-radius: var(--radius-md);
             padding: 1.25rem 1.5rem;
             border: 1px solid var(--border-color);
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s, background 0.3s ease;
             box-shadow: var(--shadow-soft);
         }
-        .stats-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); }
+        .stats-card:hover { 
+            transform: translateY(-3px); 
+            box-shadow: var(--shadow-hover);
+            background: var(--surface-hover);
+        }
         .stats-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .stats-value { font-size: 1.75rem; font-weight: 700; margin-top: 0.2rem; color: var(--text-dark); line-height: 1;}
 
         /* Progress Bar Modern */
-        .progress { height: 8px; border-radius: 8px; background: #f1f5f9; overflow: hidden; }
+        .progress { 
+            height: 8px; 
+            border-radius: 8px; 
+            background: var(--border-color-solid); 
+            overflow: hidden; 
+        }
         .progress-bar { background: var(--primary); border-radius: 8px; }
 
         /* --- Kanban Board Layout --- */
@@ -145,13 +259,15 @@ function getAvatarColor($name) {
             overflow-x: auto;
             padding-bottom: 2rem;
             min-height: 70vh;
-            /* Scrollbar styling */
             scrollbar-width: thin;
-            scrollbar-color: #cbd5e1 transparent;
+            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
         }
         .kanban-board-container::-webkit-scrollbar { height: 8px; }
-        .kanban-board-container::-webkit-scrollbar-track { background: transparent; }
-        .kanban-board-container::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .kanban-board-container::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        .kanban-board-container::-webkit-scrollbar-thumb { 
+            background-color: var(--scrollbar-thumb); 
+            border-radius: 20px;
+        }
 
         .kanban-column-wrapper {
             min-width: 320px;
@@ -161,13 +277,15 @@ function getAvatarColor($name) {
         }
 
         .kanban-column {
-            background: rgba(241, 245, 249, 0.7); /* Slate 100 with opacity */
+            background: var(--kanban-bg);
             border-radius: var(--radius-lg);
             padding: 1rem;
             display: flex;
             flex-direction: column;
-            border: 1px solid rgba(255,255,255,0.5);
+            border: 1px solid var(--border-color);
             height: 100%;
+            backdrop-filter: blur(8px);
+            transition: background 0.3s ease;
         }
 
         .column-header {
@@ -175,11 +293,23 @@ function getAvatarColor($name) {
             margin-bottom: 1rem; padding: 0.5rem;
         }
 
-        .column-title { font-weight: 700; font-size: 1.05rem; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .column-title { 
+            font-weight: 700; 
+            font-size: 1.05rem; 
+            color: var(--text-dark); 
+            display: flex; 
+            align-items: center; 
+            gap: 8px; 
+        }
         
         .task-count {
-            background: white; color: var(--primary); font-size: 0.75rem; font-weight: 700;
-            padding: 2px 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            background: var(--task-count-bg); 
+            color: var(--primary); 
+            font-size: 0.75rem; 
+            font-weight: 700;
+            padding: 2px 10px; 
+            border-radius: 12px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
         /* --- Task Cards --- */
@@ -190,27 +320,89 @@ function getAvatarColor($name) {
             border-radius: var(--radius-sm);
             padding: 1.25rem;
             margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            border: 1px solid rgba(226, 232, 240, 0.5);
+            box-shadow: var(--task-shadow);
+            border: 1px solid var(--border-color);
             cursor: grab;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 0.1);
             position: relative;
         }
-        .task-card:hover { box-shadow: var(--shadow-hover); border-color: var(--primary-light); transform: translateY(-2px); }
+        .task-card:hover { 
+            box-shadow: var(--task-hover-shadow); 
+            border-color: var(--primary); 
+            transform: translateY(-2px); 
+            background: var(--surface-hover);
+        }
         .task-card:active { cursor: grabbing; transform: scale(0.98); }
 
-        .task-title { font-weight: 600; font-size: 1rem; line-height: 1.3; margin-bottom: 0.5rem; color: var(--text-dark); }
-        .task-desc { color: var(--text-muted); font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1rem; }
+        .task-title { 
+            font-weight: 600; 
+            font-size: 1rem; 
+            line-height: 1.3; 
+            margin-bottom: 0.5rem; 
+            color: var(--text-dark); 
+        }
+        .task-desc { 
+            color: var(--text-muted); 
+            font-size: 0.85rem; 
+            display: -webkit-box; 
+            -webkit-line-clamp: 2; 
+            -webkit-box-orient: vertical; 
+            overflow: hidden; 
+            margin-bottom: 1rem; 
+        }
 
-        /* Meta Info (Bottom of card) */
-        .task-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+        .task-meta { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-top: 0.5rem; 
+        }
 
-        /* Soft Badges */
-        .badge-soft { padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px;}
-        .badge-priority-low { background: #dcfce7; color: #166534; }
-        .badge-priority-medium { background: #fef9c3; color: #854d0e; }
-        .badge-priority-high { background: #ffedd5; color: #9a3412; }
-        .badge-priority-urgent { background: #fee2e2; color: #991b1b; }
+        /* Badges with dark mode support */
+        .badge-soft { 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            font-size: 0.7rem; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+        }
+        
+        [data-theme="light"] .badge-priority-low { 
+            background: #dcfce7; 
+            color: #166534; 
+        }
+        [data-theme="dark"] .badge-priority-low { 
+            background: #14532d; 
+            color: #86efac; 
+        }
+        
+        [data-theme="light"] .badge-priority-medium { 
+            background: #fef9c3; 
+            color: #854d0e; 
+        }
+        [data-theme="dark"] .badge-priority-medium { 
+            background: #713f12; 
+            color: #fde047; 
+        }
+        
+        [data-theme="light"] .badge-priority-high { 
+            background: #ffedd5; 
+            color: #9a3412; 
+        }
+        [data-theme="dark"] .badge-priority-high { 
+            background: #7c2d12; 
+            color: #fdba74; 
+        }
+        
+        [data-theme="light"] .badge-priority-urgent { 
+            background: #fee2e2; 
+            color: #991b1b; 
+        }
+        [data-theme="dark"] .badge-priority-urgent { 
+            background: #7f1d1d; 
+            color: #fca5a5; 
+        }
 
         /* Avatar Circle */
         .avatar-circle {
@@ -219,28 +411,266 @@ function getAvatarColor($name) {
             display: flex; align-items: center; justify-content: center;
             color: white; font-size: 0.75rem; font-weight: 600;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
         }
         .avatar-group { display: flex; align-items: center; }
-        .avatar-group .avatar-circle { border: 2px solid white; margin-left: -10px; transition: 0.2s; }
-        .avatar-group .avatar-circle:hover { z-index: 10; transform: translateY(-2px); }
+        .avatar-group .avatar-circle { 
+            border: 2px solid var(--surface); 
+            margin-left: -10px; 
+            transition: 0.2s; 
+        }
+        .avatar-group .avatar-circle:hover { 
+            z-index: 10; 
+            transform: translateY(-2px); 
+        }
         .avatar-group .avatar-circle:first-child { margin-left: 0; }
 
-        .due-date { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 500;}
-        .due-date.overdue { color: var(--danger); font-weight: 600; background: var(--danger-light); padding: 2px 8px; border-radius: 6px;}
+        .due-date { 
+            font-size: 0.75rem; 
+            color: var(--text-muted); 
+            display: flex; 
+            align-items: center; 
+            gap: 4px; 
+            font-weight: 500;
+        }
+        .due-date.overdue { 
+            color: var(--danger); 
+            font-weight: 600; 
+            background: var(--danger-light); 
+            padding: 2px 8px; 
+            border-radius: 6px;
+        }
 
         /* Drag & Drop Visuals */
-        .sortable-ghost { opacity: 0.4; background: var(--primary-light); border: 2px dashed var(--primary); border-radius: var(--radius-sm); }
-        .sortable-chosen { background: var(--surface); box-shadow: 0 15px 30px rgba(0,0,0,0.1); }
+        .sortable-ghost { 
+            opacity: 0.4; 
+            background: var(--primary-light); 
+            border: 2px dashed var(--primary); 
+            border-radius: var(--radius-sm); 
+        }
+        .sortable-chosen { 
+            background: var(--surface); 
+            box-shadow: var(--shadow-hover); 
+        }
 
         /* --- Modals & Forms --- */
-        .modal-content { border-radius: var(--radius-lg); border: none; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
-        .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.5rem 2rem; background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
-        .modal-body { padding: 2rem; }
-        .modal-footer { border-top: 1px solid var(--border-color); padding: 1.5rem 2rem; background: #f8fafc; border-radius: 0 0 var(--radius-lg) var(--radius-lg);}
+        .modal-content { 
+            border-radius: var(--radius-lg); 
+            border: 1px solid var(--border-color);
+            background: var(--surface);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+        }
+        .modal-header { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+            background: var(--surface); 
+            border-radius: var(--radius-lg) var(--radius-lg) 0 0; 
+        }
+        .modal-header .modal-title { color: var(--text-dark); }
         
-        .form-control, .form-select { border-radius: 12px; padding: 0.8rem 1rem; border: 1px solid var(--border-color); background: #f8fafc; }
-        .form-control:focus, .form-select:focus { background: white; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
-        .form-label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        [data-theme="dark"] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        
+        .modal-body { padding: 2rem; }
+        .modal-footer { 
+            border-top: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+            background: var(--surface-hover); 
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+        
+        .form-control, .form-select { 
+            border-radius: 12px; 
+            padding: 0.8rem 1rem; 
+            border: 1px solid var(--border-color); 
+            background: var(--surface-hover);
+            color: var(--text-dark);
+            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+        .form-control:focus, .form-select:focus { 
+            background: var(--surface); 
+            border-color: var(--primary); 
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); 
+            color: var(--text-dark);
+        }
+        .form-control::placeholder {
+            color: var(--text-muted);
+        }
+        .form-label { 
+            font-weight: 600; 
+            font-size: 0.85rem; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        /* Dropdown menu */
+        .dropdown-menu {
+            background: var(--surface);
+            border-color: var(--border-color);
+        }
+        .dropdown-item {
+            color: var(--text-main);
+        }
+        .dropdown-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+
+        /* Toast notification */
+        .toast {
+            background: var(--surface) !important;
+            color: var(--text-dark) !important;
+            border: 1px solid var(--border-color) !important;
+        }
+
+        /* Divider */
+        .divider-vertical {
+            height: 30px;
+            width: 1px;
+            background: var(--border-color);
+            margin: 0 15px;
+        }
+
+        /* ===== PERBAIKAN DARK MODE UNTUK MODAL ===== */
+        [data-theme="dark"] .modal-content {
+            background: #1e293b;
+            border-color: #334155;
+        }
+
+        [data-theme="dark"] .modal-header {
+            background: #1e293b;
+            border-bottom-color: #334155;
+        }
+
+        [data-theme="dark"] .modal-header .modal-title {
+            color: #f1f5f9;
+        }
+
+        [data-theme="dark"] .modal-body {
+            color: #cbd5e1;
+        }
+
+        [data-theme="dark"] .modal-body .bg-light {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        [data-theme="dark"] .modal-body .text-dark {
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .modal-body .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] .modal-footer {
+            background: #1e293b !important;
+            border-top-color: #334155 !important;
+        }
+
+        [data-theme="dark"] .modal-footer .btn {
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .border-top,
+        [data-theme="dark"] .border-bottom {
+            border-top-color: #334155 !important;
+            border-bottom-color: #334155 !important;
+        }
+
+        /* Perbaikan untuk info cards di modal */
+        [data-theme="dark"] [style*="background: #f8fafc"],
+        [data-theme="dark"] [style*="background:#f8fafc"] {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        [data-theme="dark"] [style*="background: #f8fafc"] span,
+        [data-theme="dark"] [style*="background:#f8fafc"] span,
+        [data-theme="dark"] [style*="background: #f8fafc"] .fw-bold,
+        [data-theme="dark"] [style*="background:#f8fafc"] .fw-bold {
+            color: #f1f5f9 !important;
+        }
+
+        /* Perbaikan untuk badge */
+        [data-theme="dark"] .badge.bg-warning {
+            background-color: #fbbf24 !important;
+            color: #0f172a !important;
+        }
+
+        [data-theme="dark"] .badge.bg-info {
+            background-color: #38bdf8 !important;
+            color: #0f172a !important;
+        }
+
+        [data-theme="dark"] .badge.bg-danger {
+            background-color: #dc2626 !important;
+            color: white !important;
+        }
+
+        /* Perbaikan untuk teks di dark mode */
+        [data-theme="dark"] .text-dark {
+            color: #f1f5f9 !important;
+        }
+
+        [data-theme="dark"] .text-muted {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] .text-primary {
+            color: #818cf8 !important;
+        }
+
+        [data-theme="dark"] .text-success {
+            color: #34d399 !important;
+        }
+
+        [data-theme="dark"] .text-danger {
+            color: #f87171 !important;
+        }
+
+        [data-theme="dark"] .text-warning {
+            color: #fbbf24 !important;
+        }
+
+        /* Perbaikan untuk border */
+        [data-theme="dark"] .border,
+        [data-theme="dark"] .border-top,
+        [data-theme="dark"] .border-bottom,
+        [data-theme="dark"] .border-start,
+        [data-theme="dark"] .border-end {
+            border-color: #334155 !important;
+        }
+
+        /* Perbaikan untuk link */
+        [data-theme="dark"] a:not(.btn) {
+            color: #818cf8;
+        }
+
+        [data-theme="dark"] a:not(.btn):hover {
+            color: #a5b4fc;
+        }
+
+        /* Perbaikan untuk scrollbar di modal */
+        [data-theme="dark"] .modal-body::-webkit-scrollbar {
+            width: 6px;
+        }
+        [data-theme="dark"] .modal-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        [data-theme="dark"] .modal-body::-webkit-scrollbar-thumb {
+            background-color: #475569;
+            border-radius: 10px;
+        }
+
+        /* Animasi untuk task baru */
+        @keyframes highlight {
+            0% { transform: scale(1); background-color: var(--primary-light); }
+            50% { transform: scale(1.02); background-color: var(--primary-light); border-color: var(--primary); }
+            100% { transform: scale(1); background-color: var(--surface); }
+        }
     </style>
 </head>
 <body>
@@ -248,12 +678,19 @@ function getAvatarColor($name) {
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-lg-5">
             <a class="navbar-brand" href="index.php">
-                <i class="bi bi-arrow-left me-2 text-muted" style="font-size: 1.2rem; transition: 0.2s;" onmouseover="this.style.color='var(--primary)'" onmouseout="this.style.color='var(--text-muted)'"></i>
+                <i class="bi bi-arrow-left me-2" style="color: var(--text-muted); font-size: 1.2rem; transition: 0.2s;" 
+                   onmouseover="this.style.color='var(--primary)'" 
+                   onmouseout="this.style.color='var(--text-muted)'"></i>
                 <div class="brand-icon"><i class="bi bi-kanban"></i></div>
                 <?= htmlspecialchars($project['name']) ?>
             </a>
             
-            <div class="d-flex align-items-center ms-auto gap-4">
+            <div class="d-flex align-items-center ms-auto gap-3">
+                <!-- Theme Toggle Button -->
+                <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
+                    <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
+                </div>
+                
                 <div class="avatar-group d-none d-md-flex">
                     <?php 
                     $display_members = array_slice($members, 0, 4);
@@ -266,13 +703,13 @@ function getAvatarColor($name) {
                         </div>
                     <?php endforeach; ?>
                     <?php if(count($members) > 4): ?>
-                        <div class="avatar-circle bg-light text-muted" style="font-size: 0.65rem;">
+                        <div class="avatar-circle bg-light" style="color: var(--text-muted); font-size: 0.65rem;">
                             +<?= count($members) - 4 ?>
                         </div>
                     <?php endif; ?>
                 </div>
                 
-                <div class="d-none d-md-block" style="height: 30px; width: 1px; background: var(--border-color);"></div>
+                <div class="divider-vertical d-none d-md-block"></div>
 
                 <button class="btn btn-primary d-flex align-items-center gap-2" onclick="openNewTaskModal('todo')">
                     <i class="bi bi-plus-lg"></i> <span class="d-none d-sm-inline">Tugas Baru</span>
@@ -286,7 +723,7 @@ function getAvatarColor($name) {
         <div class="row g-4 mb-4">
             <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="stats-label text-primary">Progress Proyek</div>
+                    <div class="stats-label" style="color: var(--primary)">Progress Proyek</div>
                     <div class="d-flex align-items-end justify-content-between">
                         <div class="stats-value"><?= $stats['progress'] ?>%</div>
                     </div>
@@ -303,13 +740,13 @@ function getAvatarColor($name) {
             </div>
             <div class="col-6 col-md-3">
                 <div class="stats-card d-flex flex-column justify-content-center">
-                    <div class="stats-label text-primary">In Progress</div>
+                    <div class="stats-label" style="color: var(--primary)">In Progress</div>
                     <div class="stats-value"><?= $stats['in_progress'] ?></div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
                 <div class="stats-card d-flex flex-column justify-content-center">
-                    <div class="stats-label text-success">Selesai</div>
+                    <div class="stats-label" style="color: var(--success)">Selesai</div>
                     <div class="stats-value"><?= $stats['done'] ?></div>
                 </div>
             </div>
@@ -364,7 +801,8 @@ function getAvatarColor($name) {
                                             <?= date('d M', strtotime($task['due_date'])) ?>
                                         </div>
                                     <?php else: ?>
-                                        <div></div> <?php endif; ?>
+                                        <div></div>
+                                    <?php endif; ?>
 
                                     <div class="d-flex align-items-center">
                                         <?php if($task['assignee_name']): ?>
@@ -372,7 +810,9 @@ function getAvatarColor($name) {
                                                 <?= getInitials($task['assignee_name']) ?>
                                             </div>
                                         <?php else: ?>
-                                            <div class="avatar-circle bg-light text-muted border" style="width:26px; height:26px;" title="Belum ditugaskan"><i class="bi bi-person"></i></div>
+                                            <div class="avatar-circle bg-light" style="width:26px; height:26px; color: var(--text-muted);" title="Belum ditugaskan">
+                                                <i class="bi bi-person"></i>
+                                            </div>
                                         <?php endif; ?>
                                     </div>
                                 </div>
@@ -381,7 +821,7 @@ function getAvatarColor($name) {
                     </div>
                     
                     <?php if($key == 'todo'): ?>
-                        <button class="btn w-100 mt-2 text-muted fw-bold" style="background: transparent; border: 2px dashed var(--border-color);" onclick="openNewTaskModal('todo')">
+                        <button class="btn w-100 mt-2 fw-bold" style="background: transparent; border: 2px dashed var(--border-color); color: var(--text-muted);" onclick="openNewTaskModal('todo')">
                             <i class="bi bi-plus-lg me-1"></i> Tambah Tugas
                         </button>
                     <?php endif; ?>
@@ -395,8 +835,8 @@ function getAvatarColor($name) {
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold text-dark mb-0">Tugas Baru</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    <h5 class="modal-title fw-bold mb-0">Tugas Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form id="newTaskForm">
                     <input type="hidden" name="project_id" value="<?= $project_id ?>">
@@ -436,7 +876,7 @@ function getAvatarColor($name) {
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-link text-muted text-decoration-none fw-bold" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-link text-decoration-none fw-bold" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary px-4">Buat Tugas</button>
                     </div>
                 </form>
@@ -447,14 +887,39 @@ function getAvatarColor($name) {
     <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content" id="taskDetailContent">
-                </div>
+                <!-- Content will be loaded dynamically -->
+            </div>
         </div>
     </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container position-fixed top-0 end-0 p-4 mt-5" style="z-index: 9999;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
+        // Theme toggle functionality
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            // Update HTML attribute
+            html.setAttribute('data-theme', newTheme);
+            
+            // Update toggle button icon
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (themeIcon) {
+                themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
+            }
+            
+            // Save preference to cookie (expires in 30 days)
+            const date = new Date();
+            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
+            document.cookie = `theme=${newTheme}; expires=${date.toUTCString()}; path=/`;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // Setup Drag & Drop Kanban
             const columns = ['todo-list', 'progress-list', 'review-list', 'done-list'];
@@ -466,11 +931,12 @@ function getAvatarColor($name) {
                         animation: 150,
                         ghostClass: 'sortable-ghost',
                         dragClass: 'sortable-drag',
-                        delay: 100, // Cegah drag gak sengaja di HP
+                        delay: 100, 
                         delayOnTouchOnly: true,
                         onEnd: function(evt) {
                             const taskId = evt.item.dataset.taskId;
-                            const status = evt.to.id.replace('-list', '').replace('progress', 'in_progress'); 
+                            let status = evt.to.id.replace('-list', '');
+                            if (status === 'progress') status = 'in_progress';
                             updateTaskStatus(taskId, status);
                         }
                     });
@@ -481,7 +947,219 @@ function getAvatarColor($name) {
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('task_due_date');
             if(dateInput) dateInput.setAttribute('min', today);
+            
+            // Attach event listener to new task form
+            const newTaskForm = document.getElementById('newTaskForm');
+            if (newTaskForm) {
+                newTaskForm.addEventListener('submit', handleNewTaskSubmit);
+            }
         });
+
+        // ============================================
+        // FUNGSI UNTUK MENAMBAHKAN CARD SECARA LANGSUNG
+        // ============================================
+
+        // Fungsi untuk membuat elemen task card
+        function createTaskCardElement(task) {
+            const priorityClass = 'badge-priority-' + task.priority;
+            let priorityLabel = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
+            if (task.priority === 'urgent') priorityLabel = 'Urgent!';
+            
+            let dueDateHtml = '<div></div>';
+            if (task.due_date) {
+                const dueDate = new Date(task.due_date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const isOverdue = dueDate < today && task.column_status !== 'done';
+                
+                dueDateHtml = `
+                    <div class="due-date ${isOverdue ? 'overdue' : ''}">
+                        <i class="bi bi-calendar-event${isOverdue ? '-fill' : ''}"></i>
+                        ${dueDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+                    </div>
+                `;
+            }
+            
+            const assigneeHtml = task.assignee_name ?
+                `<div class="avatar-circle" style="background: ${getAvatarColor(task.assignee_name)}; width:26px; height:26px; font-size:0.65rem;" title="${escapeHtml(task.assignee_name)}">
+                    ${getInitials(task.assignee_name)}
+                </div>` :
+                `<div class="avatar-circle bg-light" style="width:26px; height:26px; color: var(--text-muted);" title="Belum ditugaskan">
+                    <i class="bi bi-person"></i>
+                </div>`;
+            
+            return `
+                <div class="task-card" data-task-id="${task.id}" onclick="showTaskDetail(${task.id})">
+                    <div class="mb-3">
+                        <span class="badge-soft ${priorityClass}">${priorityLabel}</span>
+                    </div>
+                    <div class="task-title">${escapeHtml(task.title)}</div>
+                    ${task.description ? `<div class="task-desc">${escapeHtml(task.description.substring(0, 100))}${task.description.length > 100 ? '...' : ''}</div>` : ''}
+                    <div class="task-meta">
+                        ${dueDateHtml}
+                        <div class="d-flex align-items-center">
+                            ${assigneeHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper function untuk escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Helper function untuk mendapatkan inisial
+        function getInitials(name) {
+            if (!name) return '??';
+            const words = name.split(" ");
+            let initials = "";
+            for (let w of words) {
+                if (w.length > 0) initials += w[0];
+            }
+            return initials.substring(0, 2).toUpperCase();
+        }
+
+        // Helper function untuk warna avatar
+        function getAvatarColor(name) {
+            if (!name) return '#6366f1';
+            const colors = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
+            return colors[name.length % colors.length];
+        }
+
+        // Handler untuk submit form tugas baru
+        function handleNewTaskSubmit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+            submitBtn.disabled = true;
+            
+            fetch('api/tasks.php?action=create', { 
+                method: 'POST', 
+                body: new FormData(form) 
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Ambil data tugas yang baru dibuat
+                    return fetch('api/tasks.php?action=get_simple&id=' + data.task_id)
+                        .then(response => response.json())
+                        .then(taskData => {
+                            if (taskData.success) {
+                                // Tambahkan card ke kolom yang sesuai
+                                addTaskCardToColumn(taskData.task);
+                                showNotification('Tugas berhasil dibuat', 'success');
+                                
+                                // Tutup modal dan reset form
+                                const modal = bootstrap.Modal.getInstance(document.getElementById('newTaskModal'));
+                                modal.hide();
+                                form.reset();
+                                
+                                // Set default status kembali ke todo
+                                document.getElementById('task_status').value = 'todo';
+                            } else {
+                                showNotification('Gagal mengambil data tugas', 'danger');
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        });
+                } else {
+                    showNotification(data.message || 'Terjadi kesalahan', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan koneksi', 'danger');
+            })
+            .finally(() => { 
+                submitBtn.innerHTML = originalText; 
+                submitBtn.disabled = false; 
+            });
+        }
+
+        // Fungsi untuk menambahkan card ke kolom
+        function addTaskCardToColumn(task) {
+            const columnId = task.column_status === 'in_progress' ? 'progress-list' : 
+                             (task.column_status === 'review' ? 'review-list' : 
+                             (task.column_status === 'done' ? 'done-list' : 'todo-list'));
+            
+            const column = document.getElementById(columnId);
+            if (!column) return;
+            
+            // Buat elemen card baru
+            const cardHtml = createTaskCardElement(task);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cardHtml;
+            const newCard = tempDiv.firstElementChild;
+            
+            // Tambahkan ke kolom
+            column.appendChild(newCard);
+            
+            // Update task count
+            updateTaskCounts();
+            
+            // Animasi highlight
+            newCard.style.animation = 'highlight 1s ease';
+            setTimeout(() => {
+                newCard.style.animation = '';
+            }, 1000);
+        }
+
+        // Fungsi untuk update jumlah task di setiap kolom
+        function updateTaskCounts() {
+            const columns = {
+                'todo-list': 'todo',
+                'progress-list': 'in_progress',
+                'review-list': 'review',
+                'done-list': 'done'
+            };
+            
+            for (const [columnId, status] of Object.entries(columns)) {
+                const column = document.getElementById(columnId);
+                if (column) {
+                    const count = column.children.length;
+                    const countElement = column.closest('.kanban-column').querySelector('.task-count');
+                    if (countElement) {
+                        countElement.textContent = count;
+                    }
+                }
+            }
+            
+            // Update stats cards juga
+            updateStatsCards();
+        }
+
+        // Fungsi untuk update stats cards
+        function updateStatsCards() {
+            const todoCount = document.getElementById('todo-list')?.children.length || 0;
+            const progressCount = document.getElementById('progress-list')?.children.length || 0;
+            const reviewCount = document.getElementById('review-list')?.children.length || 0;
+            const doneCount = document.getElementById('done-list')?.children.length || 0;
+            const totalTasks = todoCount + progressCount + reviewCount + doneCount;
+            
+            // Update stats cards
+            const statsCards = document.querySelectorAll('.stats-card .stats-value');
+            if (statsCards.length >= 4) {
+                // Progress
+                const progress = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
+                statsCards[0].textContent = progress + '%';
+                const progressBar = document.querySelector('.progress-bar');
+                if (progressBar) progressBar.style.width = progress + '%';
+                
+                // Todo
+                statsCards[1].textContent = todoCount;
+                // In Progress
+                statsCards[2].textContent = progressCount;
+                // Done
+                statsCards[3].textContent = doneCount;
+            }
+        }
 
         // --- CRUD FUNCTIONS ---
         function openNewTaskModal(status) {
@@ -490,35 +1168,14 @@ function getAvatarColor($name) {
             modal.show();
         }
 
-        document.getElementById('newTaskForm')?.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-            submitBtn.disabled = true;
-            
-            fetch('api/tasks.php?action=create', { method: 'POST', body: new FormData(form) })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showNotification('Tugas berhasil dibuat', 'success');
-                    bootstrap.Modal.getInstance(document.getElementById('newTaskModal')).hide();
-                    setTimeout(() => location.reload(), 500); 
-                } else {
-                    showNotification(data.message, 'danger');
-                }
-            })
-            .catch(error => showNotification('Terjadi kesalahan koneksi', 'danger'))
-            .finally(() => { submitBtn.innerHTML = originalText; submitBtn.disabled = false; });
-        });
-
         function showTaskDetail(taskId) {
             const modalContent = document.getElementById('taskDetailContent');
             const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
             
-            modalContent.innerHTML = `<div class="modal-body text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Memuat data...</p></div>`;
+            modalContent.innerHTML = `<div class="modal-body text-center py-5">
+                <div class="spinner-border" style="color: var(--primary)"></div>
+                <p class="mt-2" style="color: var(--text-muted)">Memuat data...</p>
+            </div>`;
             modal.show();
             
             fetch('api/tasks.php?action=get&id=' + taskId)
@@ -528,10 +1185,21 @@ function getAvatarColor($name) {
                         modalContent.innerHTML = data.html;
                         // Re-initialize Bootstrap Tabs
                         const triggerTabList = [].slice.call(modalContent.querySelectorAll('#taskTab button'));
-                        triggerTabList.forEach(function (triggerEl) { new bootstrap.Tab(triggerEl); });
+                        triggerTabList.forEach(function (triggerEl) { 
+                            new bootstrap.Tab(triggerEl); 
+                        });
                     } else {
-                        modalContent.innerHTML = `<div class="modal-body text-center text-danger py-5 fw-bold"><i class="bi bi-exclamation-triangle fs-1"></i><br>${data.message}</div>`;
+                        modalContent.innerHTML = `<div class="modal-body text-center py-5 fw-bold" style="color: var(--danger)">
+                            <i class="bi bi-exclamation-triangle fs-1"></i><br>
+                            ${data.message || 'Gagal memuat data'}
+                        </div>`;
                     }
+                })
+                .catch(error => {
+                    modalContent.innerHTML = `<div class="modal-body text-center py-5 fw-bold" style="color: var(--danger)">
+                        <i class="bi bi-exclamation-triangle fs-1"></i><br>
+                        Terjadi kesalahan koneksi
+                    </div>`;
                 });
         }
 
@@ -548,7 +1216,7 @@ function getAvatarColor($name) {
                     showNotification('Perubahan disimpan', 'success');
                     setTimeout(() => location.reload(), 500);
                 } else {
-                    showNotification(data.message, 'danger');
+                    showNotification(data.message || 'Terjadi kesalahan', 'danger');
                 }
             });
         }
@@ -562,8 +1230,8 @@ function getAvatarColor($name) {
             .then(response => response.json())
             .then(data => {
                 if (!data.success) {
-                    showNotification(data.message, 'danger');
-                    setTimeout(() => location.reload(), 1000); // Revert drag if failed
+                    showNotification(data.message || 'Gagal memperbarui status', 'danger');
+                    setTimeout(() => location.reload(), 1000);
                 }
             });
         }
@@ -573,8 +1241,14 @@ function getAvatarColor($name) {
             const formData = new FormData();
             formData.append('task_id', taskId);
             fetch('api/tasks.php?action=delete', { method: 'POST', body: formData })
-            .then(r => r.json()).then(d => {
-                if(d.success) { location.reload(); } else { showNotification(d.message, 'danger'); }
+            .then(r => r.json())
+            .then(d => {
+                if(d.success) { 
+                    showNotification('Tugas berhasil dihapus', 'success');
+                    setTimeout(() => location.reload(), 500); 
+                } else { 
+                    showNotification(d.message || 'Gagal menghapus tugas', 'danger'); 
+                }
             });
         }
 
@@ -599,35 +1273,123 @@ function getAvatarColor($name) {
             .then(data => {
                 if (data.success) {
                     contentInput.value = ''; 
-                    showTaskDetail(taskId); // Refresh detail modal
-                } else { showNotification(data.message, 'danger'); }
+                    showTaskDetail(taskId);
+                } else { 
+                    showNotification(data.message || 'Gagal menambahkan komentar', 'danger'); 
+                }
             })
             .catch(error => showNotification('Gagal terhubung ke server', 'danger'))
-            .finally(() => { submitBtn.innerHTML = originalHtml; submitBtn.disabled = false; });
+            .finally(() => { 
+                submitBtn.innerHTML = originalHtml; 
+                submitBtn.disabled = false; 
+            });
+        }
+
+        // --- UPLOAD LAMPIRAN ---
+        function uploadAttachment(taskId, inputElement) {
+            if (!inputElement.files || inputElement.files.length === 0) return;
+            
+            const file = inputElement.files[0];
+            const formData = new FormData();
+            formData.append('task_id', taskId);
+            formData.append('file', file);
+            
+            showNotification('Mengunggah file...', 'info'); 
+            
+            fetch('api/tasks.php?action=upload_attachment', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    showTaskDetail(taskId); 
+                } else {
+                    showNotification(data.message || 'Gagal mengunggah', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error(error);
+                showNotification('Terjadi kesalahan saat mengunggah', 'danger');
+            })
+            .finally(() => {
+                inputElement.value = ''; 
+            });
+        }
+
+        // --- HAPUS LAMPIRAN ---
+        function deleteAttachment(attachmentId, taskId) {
+            if (!confirm('Hapus lampiran ini? Tindakan ini tidak dapat dibatalkan.')) return;
+            
+            const formData = new FormData();
+            formData.append('attachment_id', attachmentId);
+            
+            fetch('api/tasks.php?action=delete_attachment', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    showTaskDetail(taskId); 
+                } else {
+                    showNotification(data.message || 'Gagal menghapus lampiran', 'danger');
+                }
+            })
+            .catch(error => showNotification('Terjadi kesalahan', 'danger'));
         }
 
         // --- NOTIFIKASI TOAST ---
         function showNotification(message, type = 'success') {
-            const toastContainer = document.querySelector('.toast-container') || (() => {
-                const container = document.createElement('div');
-                container.className = 'toast-container position-fixed top-0 end-0 p-4 mt-5';
-                container.style.zIndex = '9999';
-                document.body.appendChild(container);
-                return container;
-            })();
+            const toastContainer = document.querySelector('.toast-container');
+            if (!toastContainer) return;
 
             const toast = document.createElement('div');
-            const bgClass = type === 'success' ? 'bg-success' : 'bg-danger';
-            const iconClass = type === 'success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            let bgClass, iconClass;
+            
+            switch(type) {
+                case 'success':
+                    bgClass = 'bg-success';
+                    iconClass = 'bi-check-circle-fill';
+                    break;
+                case 'danger':
+                    bgClass = 'bg-danger';
+                    iconClass = 'bi-exclamation-triangle-fill';
+                    break;
+                case 'warning':
+                    bgClass = 'bg-warning';
+                    iconClass = 'bi-exclamation-circle-fill';
+                    break;
+                default:
+                    bgClass = 'bg-primary';
+                    iconClass = 'bi-info-circle-fill';
+            }
             
             toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
             toast.style.borderRadius = '12px';
-            toast.innerHTML = `<div class="d-flex p-2"><div class="toast-body fw-bold fs-6"><i class="bi ${iconClass} me-2 fs-5" style="vertical-align:-2px;"></i>${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            
+            toast.innerHTML = `
+                <div class="d-flex p-2">
+                    <div class="toast-body fw-bold fs-6">
+                        <i class="bi ${iconClass} me-2 fs-5" style="vertical-align:-2px;"></i>
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            `;
             
             toastContainer.appendChild(toast);
             const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
             bsToast.show();
-            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
         }
     </script>
 </body>
