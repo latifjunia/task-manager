@@ -4,12 +4,25 @@ Aplikasi manajemen tugas berbasis web yang memungkinkan tim untuk berkolaborasi 
 
 ## 🚀 Fitur Utama
 
-- ✅ **Manajemen Proyek** - Buat dan kelola beberapa proyek
-- 📋 **Kanban Board** - Drag & drop tugas antar kolom (To Do, In Progress, Review, Done)
-- 👥 **Kolaborasi Tim** - Tambah anggota, beri komentar, upload file
-- 🔔 **Notifikasi** - Pemberitahuan real-time
-- 🌓 **Dark Mode** - Tersedia tema gelap dan terang
-- 📱 **Responsive** - Bisa diakses dari HP dan desktop
+- 📊 **Dashboard**
+  - Menampilkan ringkasan proyek dan statistika tugas
+- ✅ **Manajemen Proyek**
+  - Buat dan kelola beberapa proyek
+- 📋 **Kanban Board**
+  - Drag & drop tugas antar kolom, kolom default: To do, In Progress, Review, dan Progress proyek dihitung otomatis
+- ⚠️ **Tugas Terlambat**
+  - Halaman khusus untuk melihat tugas yang melewati deadline
+  - Filter berdasarkan: Proyek, Prioritas, Status keterlambatan
+- 🎨 **Custom Kolom Kanban**
+  - Menambahkan kolom baru
+  - Memilih warna kolom
+  - Memilih icon kolom
+- 🔔 **Notifikasi**
+  - Pemberitahuan real-time
+- 🌓 **Dark Mode**
+  - Tersedia tema gelap dan terang
+- 📱 **Responsive**
+  - Bisa diakses dari HP dan desktop
 
 ## 🛠️ Teknologi
 
@@ -46,18 +59,9 @@ Username : admin
 Password : admin098
 Email : admin@taskmanager.com
 ### 👤 Member
-Username : john
-Password : jj1234
-Email : john@example.com
+Username : niaa
+Password : nia1234
+Email : nia@gmail.com
 
-## 📁 Struktur Folder
-task-manager/
-├── api/ # File API (attachments, comments, dll)
-├── assets/ # CSS, JavaScript
-├── includes/ # Config, functions, auth
-├── uploads/ # Folder untuk file upload
-├── index.php # Halaman utama
-├── login.php # Halaman login
-├── register.php # Halaman registrasi
-├── project.php # Detail proyek
-└── profile.php # Profil user
+
+
