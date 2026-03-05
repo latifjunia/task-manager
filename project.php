@@ -22,33 +22,8 @@ $user_role = getUserProjectRole($project_id, $user_id);
 $is_admin = isProjectAdmin($project_id, $user_id);
 $is_owner = isProjectOwner($project_id, $user_id);
 
-// Get tasks
-$todo_tasks = getTasksByStatus($project_id, 'todo');
-$in_progress_tasks = getTasksByStatus($project_id, 'in_progress');
-$review_tasks = getTasksByStatus($project_id, 'review');
-$done_tasks = getTasksByStatus($project_id, 'done');
-
 $stats = getProjectStats($project_id);
 
-// Helper function untuk UI Avatar
-if (!function_exists('getInitials')) {
-    function getInitials($name) {
-        $words = explode(" ", $name);
-        $acronym = "";
-        foreach ($words as $w) {
-            $acronym .= mb_substr($w, 0, 1);
-        }
-        return strtoupper(substr($acronym, 0, 2));
-    }
-}
-
-// Helper warna acak pastel untuk avatar
-function getAvatarColor($name) {
-    $colors = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
-    return $colors[strlen($name) % count($colors)];
-}
-
-// Cek preferensi tema dari session atau cookie
 $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 ?>
 
@@ -56,7 +31,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 <html lang="id" data-theme="<?= $theme ?>">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($project['name']) ?> - Task Manager</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,7 +43,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     
     <style>
         :root {
-            /* Light Mode Variables */
             --primary: #6366f1;
             --primary-hover: #4f46e5;
             --primary-light: #e0e7ff;
@@ -102,12 +76,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03);
             --shadow-hover: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
             
-            /* Scrollbar colors */
             --scrollbar-thumb: #cbd5e1;
             --scrollbar-track: transparent;
         }
 
-        /* Dark Mode Variables */
         [data-theme="dark"] {
             --primary: #818cf8;
             --primary-hover: #6366f1;
@@ -139,7 +111,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.2);
             --shadow-hover: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
             
-            /* Scrollbar colors for dark mode */
             --scrollbar-thumb: #475569;
             --scrollbar-track: transparent;
         }
@@ -153,9 +124,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             transition: background 0.3s ease, color 0.3s ease;
         }
 
-        /* --- Navbar (Glassmorphism) --- */
+        /* Navbar */
         .navbar {
-            background: rgba(var(--surface-rgb, 255,255,255), 0.75) !important;
+            background: rgba(255,255,255,0.75);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
@@ -167,7 +138,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         [data-theme="dark"] .navbar {
-            background: rgba(30, 41, 59, 0.75) !important;
+            background: rgba(30, 41, 59, 0.75);
         }
         
         .navbar-brand { 
@@ -204,7 +175,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); 
         }
 
-        /* Theme Toggle Button */
         .theme-toggle {
             width: 40px;
             height: 40px;
@@ -226,7 +196,50 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: var(--primary);
         }
 
-        /* --- Stats Cards --- */
+        .project-action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color-solid);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .project-action-btn:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
+            transform: rotate(90deg);
+        }
+
+        .members-btn {
+            background: var(--surface);
+            border: 1px solid var(--border-color-solid);
+            color: var(--text-main);
+            padding: 0.5rem 1rem;
+            border-radius: 30px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .members-btn:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .member-item {
+            transition: background 0.2s ease;
+            border-radius: 8px;
+        }
+        .member-item:hover {
+            background: var(--surface-hover) !important;
+        }
+
         .stats-card {
             background: var(--surface);
             border-radius: var(--radius-md);
@@ -243,7 +256,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .stats-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .stats-value { font-size: 1.75rem; font-weight: 700; margin-top: 0.2rem; color: var(--text-dark); line-height: 1;}
 
-        /* Progress Bar Modern */
         .progress { 
             height: 8px; 
             border-radius: 8px; 
@@ -252,7 +264,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         .progress-bar { background: var(--primary); border-radius: 8px; }
 
-        /* --- Kanban Board Layout --- */
+        /* Kanban Board */
         .kanban-board-container {
             display: flex;
             gap: 1.5rem;
@@ -289,8 +301,36 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         .column-header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 1rem; padding: 0.5rem;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            margin-bottom: 1rem; 
+            padding: 0.5rem;
+        }
+
+        .column-header-with-menu {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
+        .column-menu-btn {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            transition: all 0.2s;
+        }
+
+        .column-menu-btn:hover {
+            background: var(--surface-hover);
+            color: var(--primary);
         }
 
         .column-title { 
@@ -312,7 +352,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
 
-        /* --- Task Cards --- */
+        .custom-column-badge {
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--surface-hover);
+            color: var(--text-muted);
+            margin-left: 5px;
+        }
+
         .task-list { flex: 1; overflow-y: auto; padding: 4px; min-height: 150px; }
         
         .task-card {
@@ -358,7 +406,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             margin-top: 0.5rem; 
         }
 
-        /* Badges with dark mode support */
         .badge-soft { 
             padding: 4px 10px; 
             border-radius: 6px; 
@@ -368,43 +415,16 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             letter-spacing: 0.5px;
         }
         
-        [data-theme="light"] .badge-priority-low { 
-            background: #dcfce7; 
-            color: #166534; 
-        }
-        [data-theme="dark"] .badge-priority-low { 
-            background: #14532d; 
-            color: #86efac; 
-        }
+        [data-theme="light"] .badge-priority-low { background: #dcfce7; color: #166534; }
+        [data-theme="light"] .badge-priority-medium { background: #fef9c3; color: #854d0e; }
+        [data-theme="light"] .badge-priority-high { background: #ffedd5; color: #9a3412; }
+        [data-theme="light"] .badge-priority-urgent { background: #fee2e2; color: #991b1b; }
         
-        [data-theme="light"] .badge-priority-medium { 
-            background: #fef9c3; 
-            color: #854d0e; 
-        }
-        [data-theme="dark"] .badge-priority-medium { 
-            background: #713f12; 
-            color: #fde047; 
-        }
-        
-        [data-theme="light"] .badge-priority-high { 
-            background: #ffedd5; 
-            color: #9a3412; 
-        }
-        [data-theme="dark"] .badge-priority-high { 
-            background: #7c2d12; 
-            color: #fdba74; 
-        }
-        
-        [data-theme="light"] .badge-priority-urgent { 
-            background: #fee2e2; 
-            color: #991b1b; 
-        }
-        [data-theme="dark"] .badge-priority-urgent { 
-            background: #7f1d1d; 
-            color: #fca5a5; 
-        }
+        [data-theme="dark"] .badge-priority-low { background: #14532d; color: #86efac; }
+        [data-theme="dark"] .badge-priority-medium { background: #713f12; color: #fde047; }
+        [data-theme="dark"] .badge-priority-high { background: #7c2d12; color: #fdba74; }
+        [data-theme="dark"] .badge-priority-urgent { background: #7f1d1d; color: #fca5a5; }
 
-        /* Avatar Circle */
         .avatar-circle {
             width: 30px; height: 30px;
             border-radius: 50%;
@@ -423,7 +443,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             z-index: 10; 
             transform: translateY(-2px); 
         }
-        .avatar-group .avatar-circle:first-child { margin-left: 0; }
 
         .due-date { 
             font-size: 0.75rem; 
@@ -441,7 +460,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border-radius: 6px;
         }
 
-        /* Drag & Drop Visuals */
         .sortable-ghost { 
             opacity: 0.4; 
             background: var(--primary-light); 
@@ -453,12 +471,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             box-shadow: var(--shadow-hover); 
         }
 
-        /* --- Modals & Forms --- */
+        /* Modals */
         .modal-content { 
             border-radius: var(--radius-lg); 
             border: 1px solid var(--border-color);
             background: var(--surface);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
         }
         .modal-header { 
             border-bottom: 1px solid var(--border-color); 
@@ -505,27 +523,65 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             letter-spacing: 0.5px; 
         }
 
-        /* Dropdown menu */
+        /* Dropdown */
         .dropdown-menu {
             background: var(--surface);
             border-color: var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-hover);
+            padding: 0.5rem;
         }
+        
         .dropdown-item {
             color: var(--text-main);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
         }
+        
         .dropdown-item:hover {
             background: var(--surface-hover);
             color: var(--text-dark);
         }
+        
+        .dropdown-item.text-danger:hover {
+            background: var(--danger-light);
+            color: var(--danger) !important;
+        }
+        
+        .dropdown-divider {
+            border-color: var(--border-color);
+            margin: 0.5rem 0;
+        }
 
-        /* Toast notification */
+        .dropdown-header {
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.5rem 1rem;
+        }
+
+        /* Color Picker */
+        .color-option {
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        .color-option.selected {
+            border-color: var(--primary) !important;
+            transform: scale(1.1);
+        }
+
+        /* Toast */
         .toast {
             background: var(--surface) !important;
             color: var(--text-dark) !important;
             border: 1px solid var(--border-color) !important;
         }
 
-        /* Divider */
         .divider-vertical {
             height: 30px;
             width: 1px;
@@ -533,177 +589,183 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             margin: 0 15px;
         }
 
-        /* ===== PERBAIKAN DARK MODE UNTUK MODAL ===== */
-        [data-theme="dark"] .modal-content {
-            background: #1e293b;
-            border-color: #334155;
+        .search-input {
+            padding-left: 45px;
+            background: var(--surface-hover);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-dark);
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            background: var(--surface);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            outline: none;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            z-index: 10;
         }
 
-        [data-theme="dark"] .modal-header {
-            background: #1e293b;
-            border-bottom-color: #334155;
-        }
-
-        [data-theme="dark"] .modal-header .modal-title {
-            color: #f1f5f9;
-        }
-
-        [data-theme="dark"] .modal-body {
-            color: #cbd5e1;
-        }
-
-        [data-theme="dark"] .modal-body .bg-light {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .modal-body .text-dark {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="dark"] .modal-body .text-muted {
-            color: #94a3b8 !important;
-        }
-
-        [data-theme="dark"] .modal-footer {
-            background: #1e293b !important;
-            border-top-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .modal-footer .btn {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="dark"] .border-top,
-        [data-theme="dark"] .border-bottom {
-            border-top-color: #334155 !important;
-            border-bottom-color: #334155 !important;
-        }
-
-        /* Perbaikan untuk info cards di modal */
-        [data-theme="dark"] [style*="background: #f8fafc"],
-        [data-theme="dark"] [style*="background:#f8fafc"] {
-            background: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] [style*="background: #f8fafc"] span,
-        [data-theme="dark"] [style*="background:#f8fafc"] span,
-        [data-theme="dark"] [style*="background: #f8fafc"] .fw-bold,
-        [data-theme="dark"] [style*="background:#f8fafc"] .fw-bold {
-            color: #f1f5f9 !important;
-        }
-
-        /* Perbaikan untuk badge */
-        [data-theme="dark"] .badge.bg-warning {
-            background-color: #fbbf24 !important;
-            color: #0f172a !important;
-        }
-
-        [data-theme="dark"] .badge.bg-info {
-            background-color: #38bdf8 !important;
-            color: #0f172a !important;
-        }
-
-        [data-theme="dark"] .badge.bg-danger {
-            background-color: #dc2626 !important;
-            color: white !important;
-        }
-
-        /* Perbaikan untuk teks di dark mode */
-        [data-theme="dark"] .text-dark {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="dark"] .text-muted {
-            color: #94a3b8 !important;
-        }
-
-        [data-theme="dark"] .text-primary {
-            color: #818cf8 !important;
-        }
-
-        [data-theme="dark"] .text-success {
-            color: #34d399 !important;
-        }
-
-        [data-theme="dark"] .text-danger {
-            color: #f87171 !important;
-        }
-
-        [data-theme="dark"] .text-warning {
-            color: #fbbf24 !important;
-        }
-
-        /* Perbaikan untuk border */
-        [data-theme="dark"] .border,
-        [data-theme="dark"] .border-top,
-        [data-theme="dark"] .border-bottom,
-        [data-theme="dark"] .border-start,
-        [data-theme="dark"] .border-end {
-            border-color: #334155 !important;
-        }
-
-        /* Perbaikan untuk link */
-        [data-theme="dark"] a:not(.btn) {
-            color: #818cf8;
-        }
-
-        [data-theme="dark"] a:not(.btn):hover {
-            color: #a5b4fc;
-        }
-
-        /* Perbaikan untuk scrollbar di modal */
-        [data-theme="dark"] .modal-body::-webkit-scrollbar {
-            width: 6px;
-        }
-        [data-theme="dark"] .modal-body::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        [data-theme="dark"] .modal-body::-webkit-scrollbar-thumb {
-            background-color: #475569;
-            border-radius: 10px;
-        }
-
-        /* Animasi untuk task baru */
         @keyframes highlight {
             0% { transform: scale(1); background-color: var(--primary-light); }
             50% { transform: scale(1.02); background-color: var(--primary-light); border-color: var(--primary); }
             100% { transform: scale(1); background-color: var(--surface); }
         }
+
+        @media (max-width: 768px) {
+            .navbar-brand span:not(.brand-icon) {
+                display: none;
+            }
+            
+            .members-btn span {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar">
         <div class="container-fluid px-lg-5">
             <a class="navbar-brand" href="index.php">
-                <i class="bi bi-arrow-left me-2" style="color: var(--text-muted); font-size: 1.2rem; transition: 0.2s;" 
+                <i class="bi bi-arrow-left me-2" style="color: var(--text-muted);" 
                    onmouseover="this.style.color='var(--primary)'" 
                    onmouseout="this.style.color='var(--text-muted)'"></i>
                 <div class="brand-icon"><i class="bi bi-kanban"></i></div>
-                <?= htmlspecialchars($project['name']) ?>
+                <span><?= htmlspecialchars($project['name']) ?></span>
             </a>
             
             <div class="d-flex align-items-center ms-auto gap-3">
-                <!-- Theme Toggle Button -->
+                <!-- Theme Toggle -->
                 <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
                     <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
                 </div>
                 
+                <!-- Members Dropdown -->
+                <?php if ($is_admin): ?>
+                <div class="dropdown">
+                    <button class="members-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-people-fill"></i>
+                        <span>Anggota</span>
+                        <span class="badge bg-primary rounded-pill"><?= count($members) ?></span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;">
+                        <li>
+                            <h6 class="dropdown-header">Daftar Anggota</h6>
+                        </li>
+                        <li>
+                            <div class="px-2" style="max-height: 350px; overflow-y: auto;">
+                                <?php foreach ($members as $member): ?>
+                                    <div class="d-flex align-items-center justify-content-between p-2 rounded-3 member-item mb-1">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-circle" style="background: <?= getAvatarColor($member['full_name']) ?>; width: 36px; height: 36px;">
+                                                <?= getInitials($member['full_name']) ?>
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold small" style="color: var(--text-dark);"><?= htmlspecialchars($member['full_name']) ?></div>
+                                                <div class="d-flex align-items-center gap-1 mt-1">
+                                                    <span class="badge bg-<?= 
+                                                        $member['role'] == 'owner' ? 'danger' : 
+                                                        ($member['role'] == 'admin' ? 'warning' : 'secondary') 
+                                                    ?> rounded-pill" style="font-size: 0.6rem;">
+                                                        <?= ucfirst($member['role']) ?>
+                                                    </span>
+                                                    <?php if ($member['id'] == $_SESSION['user_id']): ?>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.6rem;">Anda</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <?php if ($is_owner && $member['id'] != $_SESSION['user_id'] && $member['role'] != 'owner'): ?>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm p-1" type="button" data-bs-toggle="dropdown">
+                                                    <i class="bi bi-three-dots-vertical" style="color: var(--text-muted);"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end p-1">
+                                                    <li>
+                                                        <button class="dropdown-item small py-2" onclick="updateMemberRole(<?= $member['id'] ?>, 'admin')">
+                                                            <i class="bi bi-star me-2 text-warning"></i> Jadikan Admin
+                                                        </button>
+                                                    </li>
+                                                    <li>
+                                                        <button class="dropdown-item small py-2" onclick="updateMemberRole(<?= $member['id'] ?>, 'member')">
+                                                            <i class="bi bi-person me-2 text-secondary"></i> Jadikan Member
+                                                        </button>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li>
+                                                        <button class="dropdown-item small py-2 text-danger" onclick="removeMember(<?= $member['id'] ?>)">
+                                                            <i class="bi bi-person-x me-2"></i> Hapus
+                                                        </button>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        <?php elseif ($is_admin && $member['id'] != $_SESSION['user_id'] && $member['role'] != 'owner'): ?>
+                                            <button class="btn btn-sm text-danger p-1" onclick="removeMember(<?= $member['id'] ?>)" title="Hapus">
+                                                <i class="bi bi-person-x"></i>
+                                            </button>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </li>
+                        
+                        <?php if ($is_admin): ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li class="p-2">
+                            <button class="btn btn-primary w-100" onclick="openAddMemberModal()">
+                                <i class="bi bi-person-plus me-2"></i>Tambah Anggota
+                            </button>
+                        </li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Project Actions -->
+                <?php if ($is_owner || $is_admin): ?>
+                <div class="dropdown">
+                    <button class="project-action-btn" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots-vertical"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <button class="dropdown-item" onclick="openEditProjectModal()">
+                                <i class="bi bi-pencil-square me-2 text-primary"></i> Edit Proyek
+                            </button>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <button class="dropdown-item text-danger" onclick="deleteProject()">
+                                <i class="bi bi-trash3 me-2"></i> Hapus Proyek
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <?php endif; ?>
+                
+                <!-- Avatar Group -->
                 <div class="avatar-group d-none d-md-flex">
                     <?php 
                     $display_members = array_slice($members, 0, 4);
                     foreach($display_members as $m): 
-                        $initials = getInitials($m['full_name']);
-                        $bg = getAvatarColor($m['full_name']);
                     ?>
-                        <div class="avatar-circle" style="background: <?= $bg ?>;" title="<?= htmlspecialchars($m['full_name']) ?>">
-                            <?= $initials ?>
+                        <div class="avatar-circle" style="background: <?= getAvatarColor($m['full_name']) ?>;" 
+                             title="<?= htmlspecialchars($m['full_name']) ?>">
+                            <?= getInitials($m['full_name']) ?>
                         </div>
                     <?php endforeach; ?>
                     <?php if(count($members) > 4): ?>
-                        <div class="avatar-circle bg-light" style="color: var(--text-muted); font-size: 0.65rem;">
+                        <div class="avatar-circle bg-light" style="color: var(--text-muted);">
                             +<?= count($members) - 4 ?>
                         </div>
                     <?php endif; ?>
@@ -720,138 +782,78 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
     <div class="container-fluid px-lg-5 py-4">
         
+        <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-6 col-md-3">
                 <div class="stats-card">
-                    <div class="stats-label" style="color: var(--primary)">Progress Proyek</div>
-                    <div class="d-flex align-items-end justify-content-between">
-                        <div class="stats-value"><?= $stats['progress'] ?>%</div>
-                    </div>
+                    <div class="stats-label" style="color: var(--primary)">Progress</div>
+                    <div class="stats-value"><?= $stats['progress'] ?>%</div>
                     <div class="progress mt-3">
                         <div class="progress-bar" style="width: <?= $stats['progress'] ?>%"></div>
                     </div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stats-card d-flex flex-column justify-content-center">
-                    <div class="stats-label text-muted">To Do</div>
+                <div class="stats-card">
+                    <div class="stats-label">To Do</div>
                     <div class="stats-value"><?= $stats['todo'] ?></div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stats-card d-flex flex-column justify-content-center">
-                    <div class="stats-label" style="color: var(--primary)">In Progress</div>
+                <div class="stats-card">
+                    <div class="stats-label">In Progress</div>
                     <div class="stats-value"><?= $stats['in_progress'] ?></div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
-                <div class="stats-card d-flex flex-column justify-content-center">
-                    <div class="stats-label" style="color: var(--success)">Selesai</div>
+                <div class="stats-card">
+                    <div class="stats-label">Selesai</div>
                     <div class="stats-value"><?= $stats['done'] ?></div>
                 </div>
             </div>
         </div>
 
-        <div class="kanban-board-container">
-            <?php 
-            $columns = [
-                'todo' => ['title' => 'To Do', 'icon' => 'bi-circle', 'color' => '#64748b', 'tasks' => $todo_tasks, 'id' => 'todo-list'],
-                'in_progress' => ['title' => 'In Progress', 'icon' => 'bi-arrow-repeat', 'color' => 'var(--primary)', 'tasks' => $in_progress_tasks, 'id' => 'progress-list'],
-                'review' => ['title' => 'Review', 'icon' => 'bi-eye', 'color' => 'var(--warning)', 'tasks' => $review_tasks, 'id' => 'review-list'],
-                'done' => ['title' => 'Done', 'icon' => 'bi-check2-circle', 'color' => 'var(--success)', 'tasks' => $done_tasks, 'id' => 'done-list']
-            ];
-            ?>
+        <!-- Kanban Board Header -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold" style="color: var(--text-dark);">Kanban Board</h5>
+            <?php if ($is_admin): ?>
+            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openAddColumnModal()">
+                <i class="bi bi-plus-lg me-1"></i>Tambah Kolom
+            </button>
+            <?php endif; ?>
+        </div>
 
-            <?php foreach($columns as $key => $col): ?>
-            <div class="kanban-column-wrapper">
-                <div class="kanban-column">
-                    <div class="column-header">
-                        <div class="column-title">
-                            <i class="bi <?= $col['icon'] ?>" style="color: <?= $col['color'] ?>; font-size: 1.1rem;"></i>
-                            <?= $col['title'] ?>
-                        </div>
-                        <span class="task-count"><?= count($col['tasks']) ?></span>
-                    </div>
-                    
-                    <div id="<?= $col['id'] ?>" class="task-list">
-                        <?php foreach($col['tasks'] as $task): ?>
-                            <div class="task-card" data-task-id="<?= $task['id'] ?>" onclick="showTaskDetail(<?= $task['id'] ?>)">
-                                
-                                <div class="mb-3">
-                                    <?php 
-                                    $prioClass = 'badge-priority-' . $task['priority'];
-                                    $prioLabel = ucfirst($task['priority']);
-                                    if($task['priority'] == 'urgent') $prioLabel = 'Urgent!';
-                                    ?>
-                                    <span class="badge-soft <?= $prioClass ?>"><?= $prioLabel ?></span>
-                                </div>
-
-                                <div class="task-title"><?= htmlspecialchars($task['title']) ?></div>
-                                
-                                <?php if(!empty($task['description'])): ?>
-                                    <div class="task-desc"><?= strip_tags(htmlspecialchars_decode($task['description'])) ?></div>
-                                <?php endif; ?>
-
-                                <div class="task-meta">
-                                    <?php if($task['due_date']): 
-                                        $isOverdue = strtotime($task['due_date']) < time() && $task['column_status'] != 'done';
-                                    ?>
-                                        <div class="due-date <?= $isOverdue ? 'overdue' : '' ?>">
-                                            <i class="bi bi-calendar-event<?= $isOverdue ? '-fill' : '' ?>"></i>
-                                            <?= date('d M', strtotime($task['due_date'])) ?>
-                                        </div>
-                                    <?php else: ?>
-                                        <div></div>
-                                    <?php endif; ?>
-
-                                    <div class="d-flex align-items-center">
-                                        <?php if($task['assignee_name']): ?>
-                                            <div class="avatar-circle" style="background: <?= getAvatarColor($task['assignee_name']) ?>; width:26px; height:26px; font-size:0.65rem;" title="<?= htmlspecialchars($task['assignee_name']) ?>">
-                                                <?= getInitials($task['assignee_name']) ?>
-                                            </div>
-                                        <?php else: ?>
-                                            <div class="avatar-circle bg-light" style="width:26px; height:26px; color: var(--text-muted);" title="Belum ditugaskan">
-                                                <i class="bi bi-person"></i>
-                                            </div>
-                                        <?php endif; ?>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                    
-                    <?php if($key == 'todo'): ?>
-                        <button class="btn w-100 mt-2 fw-bold" style="background: transparent; border: 2px dashed var(--border-color); color: var(--text-muted);" onclick="openNewTaskModal('todo')">
-                            <i class="bi bi-plus-lg me-1"></i> Tambah Tugas
-                        </button>
-                    <?php endif; ?>
-                </div>
+        <!-- Kanban Board Container -->
+        <div class="kanban-board-container" id="kanbanBoard">
+            <div class="text-center py-5 w-100">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Memuat board...</p>
             </div>
-            <?php endforeach; ?>
         </div>
     </div>
 
-    <div class="modal fade" id="newTaskModal" tabindex="-1" aria-hidden="true">
+    <!-- Modal New Task -->
+    <div class="modal fade" id="newTaskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title fw-bold mb-0">Tugas Baru</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <h5 class="modal-title fw-bold">Tugas Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <form id="newTaskForm">
                     <input type="hidden" name="project_id" value="<?= $project_id ?>">
                     <input type="hidden" name="column_status" id="task_status" value="todo">
                     <div class="modal-body">
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label">Judul Tugas</label>
                             <input type="text" class="form-control" name="title" required placeholder="Apa yang perlu diselesaikan?">
                         </div>
-                        <div class="mb-4">
+                        <div class="mb-3">
                             <label class="form-label">Deskripsi</label>
                             <textarea class="form-control" name="description" rows="3" placeholder="Tambahkan detail..."></textarea>
                         </div>
                         <div class="row">
-                            <div class="col-6 mb-4">
+                            <div class="col-6 mb-3">
                                 <label class="form-label">Prioritas</label>
                                 <select class="form-select" name="priority">
                                     <option value="low">Low</option>
@@ -860,10 +862,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                     <option value="urgent">Urgent</option>
                                 </select>
                             </div>
-                            <div class="col-6 mb-4">
+                            <div class="col-6 mb-3">
                                 <label class="form-label">Assign ke</label>
                                 <select class="form-select" name="assignee_id">
-                                    <option value="">-- Pilih Anggota --</option>
+                                    <option value="">-- Pilih --</option>
                                     <?php foreach ($members as $member): ?>
                                         <option value="<?= $member['id'] ?>"><?= htmlspecialchars($member['full_name']) ?></option>
                                     <?php endforeach; ?>
@@ -876,19 +878,209 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-link text-decoration-none fw-bold" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary px-4">Buat Tugas</button>
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Buat Tugas</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="taskDetailModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content" id="taskDetailContent">
-                <!-- Content will be loaded dynamically -->
+    <!-- Modal Edit Project -->
+    <div class="modal fade" id="editProjectModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Edit Proyek</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editProjectForm">
+                    <input type="hidden" name="project_id" value="<?= $project_id ?>">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Proyek</label>
+                            <input type="text" class="form-control" name="name" 
+                                   value="<?= htmlspecialchars($project['name']) ?>" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Deskripsi</label>
+                            <textarea class="form-control" name="description" rows="4"><?= htmlspecialchars($project['description']) ?></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Add Column -->
+    <div class="modal fade" id="columnModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold" id="columnModalTitle">Tambah Kolom Baru</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="columnForm">
+                    <input type="hidden" name="project_id" value="<?= $project_id ?>">
+                    <input type="hidden" name="column_id" id="columnId" value="">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nama Kolom</label>
+                            <input type="text" class="form-control" name="title" id="columnTitle" 
+                                   placeholder="Contoh: Testing, Backlog, dsb" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Warna</label>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <?php 
+                                $colors = [
+                                    '#64748b', '#6366f1', '#ec4899', '#ef4444', 
+                                    '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'
+                                ];
+                                foreach ($colors as $code): 
+                                ?>
+                                <div class="color-option" onclick="selectColor('<?= $code ?>')" 
+                                     style="width: 40px; height: 40px; background: <?= $code ?>; border-radius: 50%; cursor: pointer; border: 3px solid transparent;"
+                                     data-color="<?= $code ?>"></div>
+                                <?php endforeach; ?>
+                            </div>
+                            <input type="hidden" name="color" id="selectedColor" value="#64748b">
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Icon</label>
+                            <select class="form-select" name="icon" id="columnIcon">
+                                <option value="bi-circle">○ Circle</option>
+                                <option value="bi-square">□ Square</option>
+                                <option value="bi-triangle">△ Triangle</option>
+                                <option value="bi-star">★ Star</option>
+                                <option value="bi-flag">🏁 Flag</option>
+                                <option value="bi-heart">❤️ Heart</option>
+                                <option value="bi-bookmark">🔖 Bookmark</option>
+                                <option value="bi-pin">📌 Pin</option>
+                                <option value="bi-clock">⏰ Clock</option>
+                                <option value="bi-calendar">📅 Calendar</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Column -->
+    <div class="modal fade" id="editColumnModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Kelola Kolom</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Nama Kolom</label>
+                        <input type="text" class="form-control" id="editColumnTitle" placeholder="Nama kolom">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Warna</label>
+                        <div class="d-flex gap-2 flex-wrap" id="editColorOptions"></div>
+                        <input type="hidden" id="editSelectedColor">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Icon</label>
+                        <select class="form-select" id="editColumnIcon">
+                            <option value="bi-circle">○ Circle</option>
+                            <option value="bi-square">□ Square</option>
+                            <option value="bi-triangle">△ Triangle</option>
+                            <option value="bi-star">★ Star</option>
+                            <option value="bi-flag">🏁 Flag</option>
+                            <option value="bi-heart">❤️ Heart</option>
+                            <option value="bi-bookmark">🔖 Bookmark</option>
+                            <option value="bi-pin">📌 Pin</option>
+                            <option value="bi-clock">⏰ Clock</option>
+                            <option value="bi-calendar">📅 Calendar</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Container untuk tombol reset default column -->
+                    <div id="resetDefaultColumnContainer" style="display: none;" class="mt-3">
+                        <hr>
+                        <button type="button" class="btn btn-outline-warning w-100" onclick="resetDefaultColumn()">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Kembalikan ke Default
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-danger" onclick="deleteCurrentColumn()" id="deleteColumnBtn">
+                        <i class="bi bi-trash3 me-2"></i>Hapus Kolom
+                    </button>
+                    <div class="ms-auto">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary" onclick="updateCurrentColumn()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Add Member -->
+    <div class="modal fade" id="addMemberModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">
+                        <i class="bi bi-person-plus me-2" style="color: var(--primary);"></i>
+                        Tambah Anggota
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Cari Pengguna</label>
+                        <div class="position-relative">
+                            <i class="bi bi-search search-icon"></i>
+                            <input type="text" class="form-control search-input" id="searchUserInput" 
+                                   placeholder="Ketik nama atau username..." onkeyup="searchUsers()">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Role</label>
+                        <select class="form-select" id="memberRole">
+                            <option value="member">Member</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                    </div>
+                    
+                    <div id="searchResults" class="mt-3" style="max-height: 300px; overflow-y: auto;">
+                        <div class="text-center text-muted py-4">
+                            <i class="bi bi-search fs-1 d-block mb-2 opacity-50"></i>
+                            <small>Cari pengguna untuk ditambahkan</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Task Detail -->
+    <div class="modal fade" id="taskDetailModal" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content" id="taskDetailContent"></div>
         </div>
     </div>
 
@@ -899,67 +1091,262 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
 
     <script>
-        // Theme toggle functionality
+        // Theme Toggle
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            // Update HTML attribute
             html.setAttribute('data-theme', newTheme);
             
-            // Update toggle button icon
             const themeIcon = document.querySelector('.theme-toggle i');
             if (themeIcon) {
                 themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
             }
             
-            // Save preference to cookie (expires in 30 days)
-            const date = new Date();
-            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
-            document.cookie = `theme=${newTheme}; expires=${date.toUTCString()}; path=/`;
+            document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
         }
 
+        // State
+        let currentEditingColumnId = null;
+        let currentEditingIsDefault = false;
+        let searchTimeout;
+
+        // Load columns on page load
         document.addEventListener('DOMContentLoaded', function() {
-            // Setup Drag & Drop Kanban
-            const columns = ['todo-list', 'progress-list', 'review-list', 'done-list'];
-            columns.forEach(columnId => {
-                const el = document.getElementById(columnId);
-                if (el) {
-                    new Sortable(el, {
-                        group: 'tasks',
-                        animation: 150,
-                        ghostClass: 'sortable-ghost',
-                        dragClass: 'sortable-drag',
-                        delay: 100, 
-                        delayOnTouchOnly: true,
-                        onEnd: function(evt) {
-                            const taskId = evt.item.dataset.taskId;
-                            let status = evt.to.id.replace('-list', '');
-                            if (status === 'progress') status = 'in_progress';
-                            updateTaskStatus(taskId, status);
-                        }
-                    });
-                }
-            });
+            loadColumns();
             
-            // Set minimal tanggal untuk Date Picker
             const today = new Date().toISOString().split('T')[0];
             const dateInput = document.getElementById('task_due_date');
             if(dateInput) dateInput.setAttribute('min', today);
             
-            // Attach event listener to new task form
             const newTaskForm = document.getElementById('newTaskForm');
             if (newTaskForm) {
                 newTaskForm.addEventListener('submit', handleNewTaskSubmit);
             }
+            
+            const editProjectForm = document.getElementById('editProjectForm');
+            if (editProjectForm) {
+                editProjectForm.addEventListener('submit', handleEditProjectSubmit);
+            }
+            
+            const columnForm = document.getElementById('columnForm');
+            if (columnForm) {
+                columnForm.addEventListener('submit', handleColumnSubmit);
+            }
         });
 
-        // ============================================
-        // FUNGSI UNTUK MENAMBAHKAN CARD SECARA LANGSUNG
-        // ============================================
+        // ========== KOLOM FUNCTIONS ==========
 
-        // Fungsi untuk membuat elemen task card
+        function loadColumns() {
+            fetch(`api/columns.php?action=list&project_id=<?= $project_id ?>`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Cek apakah board sudah ada
+                        const existingColumns = document.querySelectorAll('.kanban-column-wrapper[data-column-id]');
+                        
+                        if (existingColumns.length === 0) {
+                            // Jika belum ada, render semua
+                            renderKanbanBoard(data.columns);
+                        } else {
+                            // Jika sudah ada, hanya tambah kolom baru
+                            appendNewColumns(data.columns);
+                        }
+                    } else {
+                        showNotification('Gagal memuat kolom', 'danger');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    showNotification('Terjadi kesalahan', 'danger');
+                });
+        }
+
+        function appendNewColumns(columns) {
+            const container = document.getElementById('kanbanBoard');
+            const existingColumnIds = Array.from(document.querySelectorAll('.kanban-column-wrapper[data-column-id]'))
+                .map(el => el.dataset.columnId);
+            
+            // Filter kolom yang belum ada
+            const newColumns = columns.filter(col => {
+                const colId = col.is_default ? col.id : 'custom_' + col.db_id;
+                return !existingColumnIds.includes(colId);
+            });
+            
+            if (newColumns.length === 0) return;
+            
+            // Hapus tombol "Tambah Kolom" sementara
+            const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
+            if (addButtonColumn) {
+                addButtonColumn.closest('.kanban-column-wrapper').remove();
+            }
+            
+            // Tambah kolom baru
+            newColumns.forEach(column => {
+                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
+                const isDefault = column.is_default;
+                const isCustomized = column.is_customized || false;
+                
+                const columnHtml = `
+                    <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position}">
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <div class="column-header-with-menu">
+                                    <div class="column-title">
+                                        <i class="bi ${column.icon}" style="color: ${column.color};"></i>
+                                        ${column.title}
+                                        ${!isDefault ? '<span class="custom-column-badge">Kustom</span>' : (isCustomized ? '<span class="custom-column-badge">Diedit</span>' : '')}
+                                    </div>
+                                    ${<?= $is_admin ? 'true' : 'false' ?> ? `
+                                        <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <span class="task-count" id="count-${columnId}">0</span>
+                            </div>
+                            
+                            <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
+                            
+                            ${columnId === 'todo' ? `
+                                <button class="btn w-100 mt-2 fw-bold" style="background: transparent; border: 2px dashed var(--border-color); color: var(--text-muted);" onclick="openNewTaskModal('todo')">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Tugas
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+                
+                container.insertAdjacentHTML('beforeend', columnHtml);
+                
+                // Load tasks untuk kolom baru
+                loadTasksForColumn(columnId);
+            });
+            
+            // Tambah kembali tombol "Tambah Kolom" jika admin
+            <?php if ($is_admin): ?>
+            const addButtonHtml = `
+                <div class="kanban-column-wrapper" style="min-width: 280px;">
+                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
+                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', addButtonHtml);
+            <?php endif; ?>
+            
+            setupDragAndDrop();
+        }
+
+        function renderKanbanBoard(columns) {
+            const container = document.getElementById('kanbanBoard');
+            if (!container) return;
+            
+            let html = '';
+            
+            columns.forEach(column => {
+                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
+                const isDefault = column.is_default;
+                const isCustomized = column.is_customized || false;
+                
+                html += `
+                    <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position}">
+                        <div class="kanban-column">
+                            <div class="column-header">
+                                <div class="column-header-with-menu">
+                                    <div class="column-title">
+                                        <i class="bi ${column.icon}" style="color: ${column.color};"></i>
+                                        ${column.title}
+                                        ${!isDefault ? '<span class="custom-column-badge">Kustom</span>' : (isCustomized ? '<span class="custom-column-badge">Diedit</span>' : '')}
+                                    </div>
+                                    ${<?= $is_admin ? 'true' : 'false' ?> ? `
+                                        <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                                <span class="task-count" id="count-${columnId}">0</span>
+                            </div>
+                            
+                            <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
+                            
+                            ${columnId === 'todo' ? `
+                                <button class="btn w-100 mt-2 fw-bold" style="background: transparent; border: 2px dashed var(--border-color); color: var(--text-muted);" onclick="openNewTaskModal('todo')">
+                                    <i class="bi bi-plus-lg me-1"></i> Tambah Tugas
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            <?php if ($is_admin): ?>
+            html += `
+                <div class="kanban-column-wrapper" style="min-width: 280px;">
+                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
+                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
+                        </button>
+                    </div>
+                </div>
+            `;
+            <?php endif; ?>
+            
+            container.innerHTML = html;
+            
+            columns.forEach(column => {
+                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
+                loadTasksForColumn(columnId);
+            });
+            
+            setupDragAndDrop();
+        }
+
+        function loadTasksForColumn(columnId) {
+            const listElement = document.getElementById(`list-${columnId}`);
+            if (!listElement) return;
+            
+            listElement.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div></div>';
+            
+            fetch(`api/tasks.php?action=list_by_column&project_id=<?= $project_id ?>&column=${columnId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        renderTasksInColumn(columnId, data.tasks);
+                    } else {
+                        listElement.innerHTML = '<div class="text-center text-muted py-3">Gagal memuat</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    listElement.innerHTML = '<div class="text-center text-muted py-3">Error</div>';
+                });
+        }
+
+        function renderTasksInColumn(columnId, tasks) {
+            const listElement = document.getElementById(`list-${columnId}`);
+            const countElement = document.getElementById(`count-${columnId}`);
+            
+            if (!listElement) return;
+            
+            if (tasks.length === 0) {
+                listElement.innerHTML = '<div class="text-center text-muted py-3 small">Belum ada tugas</div>';
+                if (countElement) countElement.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            tasks.forEach(task => {
+                html += createTaskCardElement(task);
+            });
+            
+            listElement.innerHTML = html;
+            if (countElement) countElement.textContent = tasks.length;
+        }
+
         function createTaskCardElement(task) {
             const priorityClass = 'badge-priority-' + task.priority;
             let priorityLabel = task.priority.charAt(0).toUpperCase() + task.priority.slice(1);
@@ -981,7 +1368,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             }
             
             const assigneeHtml = task.assignee_name ?
-                `<div class="avatar-circle" style="background: ${getAvatarColor(task.assignee_name)}; width:26px; height:26px; font-size:0.65rem;" title="${escapeHtml(task.assignee_name)}">
+                `<div class="avatar-circle" style="background: ${getAvatarColor(task.assignee_name)}; width:26px; height:26px;" title="${escapeHtml(task.assignee_name)}">
                     ${getInitials(task.assignee_name)}
                 </div>` :
                 `<div class="avatar-circle bg-light" style="width:26px; height:26px; color: var(--text-muted);" title="Belum ditugaskan">
@@ -1005,33 +1392,759 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             `;
         }
 
-        // Helper function untuk escape HTML
-        function escapeHtml(text) {
-            if (!text) return '';
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
-        // Helper function untuk mendapatkan inisial
-        function getInitials(name) {
-            if (!name) return '??';
-            const words = name.split(" ");
-            let initials = "";
-            for (let w of words) {
-                if (w.length > 0) initials += w[0];
+        function setupDragAndDrop() {
+            // Destroy existing Sortable instances
+            if (window.columnSortable) {
+                window.columnSortable.destroy();
             }
-            return initials.substring(0, 2).toUpperCase();
+            
+            // Setup column drag & drop for admin
+            <?php if ($is_admin): ?>
+            const boardContainer = document.getElementById('kanbanBoard');
+            if (boardContainer) {
+                window.columnSortable = new Sortable(boardContainer, {
+                    animation: 150,
+                    handle: '.kanban-column-wrapper',
+                    draggable: '.kanban-column-wrapper',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: function() {
+                        updateColumnPositions();
+                    }
+                });
+            }
+            <?php endif; ?>
+            
+            // Setup task drag & drop for each column
+            document.querySelectorAll('.task-list').forEach(list => {
+                if (list.sortable) {
+                    list.sortable.destroy();
+                }
+                
+                new Sortable(list, {
+                    group: 'tasks',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    dragClass: 'sortable-drag',
+                    onEnd: function(evt) {
+                        const taskId = evt.item.dataset.taskId;
+                        const targetColumn = evt.to.dataset.column;
+                        moveTask(taskId, targetColumn);
+                    }
+                });
+            });
         }
 
-        // Helper function untuk warna avatar
-        function getAvatarColor(name) {
-            if (!name) return '#6366f1';
-            const colors = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
-            return colors[name.length % colors.length];
+        function updateColumnPositions() {
+            const columns = document.querySelectorAll('.kanban-column-wrapper[data-column-id]');
+            const positions = [];
+            
+            columns.forEach((col, index) => {
+                const columnId = col.dataset.columnId;
+                if (columnId) {
+                    positions.push({
+                        id: columnId,
+                        position: index
+                    });
+                }
+            });
+            
+            fetch('api/columns.php?action=update_positions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `project_id=<?= $project_id ?>&positions=${encodeURIComponent(JSON.stringify(positions))}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Posisi kolom diperbarui', 'success');
+                }
+            });
         }
 
-        // Handler untuk submit form tugas baru
+        function moveTask(taskId, targetColumn) {
+            const formData = new FormData();
+            formData.append('task_id', taskId);
+            formData.append('target_column', targetColumn);
+            formData.append('project_id', <?= $project_id ?>);
+            
+            fetch('api/tasks.php?action=move_to_column', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    showNotification('Gagal memindahkan tugas', 'danger');
+                    loadColumns(); // Reload to revert
+                }
+            });
+        }
+
+        // ========== CRUD KOLOM ==========
+
+        function openAddColumnModal() {
+            document.getElementById('columnModalTitle').textContent = 'Tambah Kolom Baru';
+            document.getElementById('columnId').value = '';
+            document.getElementById('columnTitle').value = '';
+            document.getElementById('selectedColor').value = '#64748b';
+            document.getElementById('columnIcon').value = 'bi-circle';
+            
+            // Reset selected color
+            document.querySelectorAll('#columnModal .color-option').forEach(opt => {
+                opt.style.borderColor = 'transparent';
+                if (opt.dataset.color === '#64748b') {
+                    opt.style.borderColor = 'var(--primary)';
+                }
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('columnModal'));
+            modal.show();
+        }
+
+        function openColumnMenu(columnId, title, color, icon, isDefault, isCustomized) {
+            // Pastikan columnId disimpan dengan benar
+            currentEditingColumnId = columnId;
+            currentEditingIsDefault = isDefault;
+            
+            // Set nilai di form edit
+            document.getElementById('editColumnTitle').value = title;
+            document.getElementById('editSelectedColor').value = color;
+            document.getElementById('editColumnIcon').value = icon;
+            
+            const resetBtnContainer = document.getElementById('resetDefaultColumnContainer');
+            const deleteBtn = document.getElementById('deleteColumnBtn');
+            
+            if (isDefault) {
+                // Untuk default column
+                document.querySelector('#editColumnModal .modal-title').textContent = 'Edit Kolom Default';
+                resetBtnContainer.style.display = isCustomized ? 'block' : 'none';
+                deleteBtn.style.display = 'none';
+            } else {
+                // Untuk custom column
+                document.querySelector('#editColumnModal .modal-title').textContent = 'Edit Kolom Kustom';
+                resetBtnContainer.style.display = 'none';
+                deleteBtn.style.display = 'block';
+            }
+            
+            // Generate color options
+            const colorOptions = document.getElementById('editColorOptions');
+            const colors = ['#64748b', '#6366f1', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
+            
+            let colorHtml = '';
+            colors.forEach(c => {
+                colorHtml += `<div class="color-option ${c === color ? 'selected' : ''}" 
+                                   onclick="selectEditColor('${c}')" 
+                                   style="width: 40px; height: 40px; background: ${c}; border-radius: 50%; cursor: pointer; border: 3px solid ${c === color ? 'var(--primary)' : 'transparent'};"
+                                   data-color="${c}"></div>`;
+            });
+            colorOptions.innerHTML = colorHtml;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editColumnModal'));
+            modal.show();
+        }
+
+        function selectColor(color) {
+            document.getElementById('selectedColor').value = color;
+            document.querySelectorAll('#columnModal .color-option').forEach(opt => {
+                opt.style.borderColor = 'transparent';
+                if (opt.dataset.color === color) {
+                    opt.style.borderColor = 'var(--primary)';
+                }
+            });
+        }
+
+        function selectEditColor(color) {
+            document.getElementById('editSelectedColor').value = color;
+            document.querySelectorAll('#editColorOptions .color-option').forEach(opt => {
+                opt.style.borderColor = 'transparent';
+                if (opt.dataset.color === color) {
+                    opt.style.borderColor = 'var(--primary)';
+                }
+            });
+        }
+
+        function handleColumnSubmit(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const columnId = document.getElementById('columnId').value;
+            const isEdit = columnId !== '';
+            const action = isEdit ? 'update' : 'create';
+            
+            // Tampilkan loading
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+            submitBtn.disabled = true;
+            
+            fetch(`api/columns.php?action=${action}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('columnModal'));
+                    modal.hide();
+                    showNotification(data.message, 'success');
+                    
+                    if (action === 'create' && data.column) {
+                        // Tambah kolom baru tanpa reload semua
+                        addNewColumnToBoard(data.column);
+                    } else if (action === 'update') {
+                        // Untuk update, update kolom yang diedit saja tanpa reload semua
+                        updateColumnInBoard(columnId, {
+                            title: formData.get('title'),
+                            color: formData.get('color'),
+                            icon: formData.get('icon')
+                        });
+                    }
+                } else {
+                    showNotification(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            })
+            .finally(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        }
+
+        function addNewColumnToBoard(column) {
+            const container = document.getElementById('kanbanBoard');
+            
+            // Hapus tombol "Tambah Kolom" sementara
+            const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
+            if (addButtonColumn) {
+                addButtonColumn.closest('.kanban-column-wrapper').remove();
+            }
+            
+            // Pastikan column.id sudah dalam format yang benar
+            const columnId = column.id; // sudah dalam format 'custom_xx'
+            const position = column.position || (document.querySelectorAll('.kanban-column-wrapper[data-column-id]').length);
+            
+            // Tambah kolom baru
+            const columnHtml = `
+                <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${position}">
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="column-header-with-menu">
+                                <div class="column-title">
+                                    <i class="bi ${column.icon}" style="color: ${column.color};"></i>
+                                    ${column.title}
+                                    <span class="custom-column-badge">Kustom</span>
+                                </div>
+                                ${<?= $is_admin ? 'true' : 'false' ?> ? `
+                                    <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', false, false)">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <span class="task-count" id="count-${columnId}">0</span>
+                        </div>
+                        
+                        <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', columnHtml);
+            
+            // Load tasks untuk kolom baru (kosong)
+            const listElement = document.getElementById(`list-${columnId}`);
+            if (listElement) {
+                listElement.innerHTML = '<div class="text-center text-muted py-3 small">Belum ada tugas</div>';
+            }
+            document.getElementById(`count-${columnId}`).textContent = '0';
+            
+            // Tambah kembali tombol "Tambah Kolom" jika admin
+            <?php if ($is_admin): ?>
+            const addButtonHtml = `
+                <div class="kanban-column-wrapper" style="min-width: 280px;">
+                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
+                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', addButtonHtml);
+            <?php endif; ?>
+            
+            setupDragAndDrop();
+            
+            // Update posisi kolom
+            setTimeout(() => {
+                updateColumnPositions();
+            }, 100);
+        }
+
+        function updateColumnInBoard(columnId, newData) {
+            // Cari kolom berdasarkan ID
+            const columnWrapper = document.querySelector(`.kanban-column-wrapper[data-column-id="${columnId}"]`);
+            if (!columnWrapper) return;
+            
+            // Update judul kolom
+            const titleElement = columnWrapper.querySelector('.column-title');
+            if (titleElement) {
+                // Update icon
+                const iconElement = titleElement.querySelector('i');
+                if (iconElement) {
+                    iconElement.className = `bi ${newData.icon}`;
+                    iconElement.style.color = newData.color;
+                }
+                
+                // Update text (ambil teks tanpa badge)
+                const textNode = titleElement.childNodes[titleElement.childNodes.length - 1];
+                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                    textNode.textContent = ' ' + newData.title;
+                } else {
+                    // Fallback
+                    const badge = titleElement.querySelector('.custom-column-badge, .custom-column-badge');
+                    if (badge) {
+                        titleElement.innerHTML = `<i class="bi ${newData.icon}" style="color: ${newData.color};"></i> ${newData.title} `;
+                        titleElement.appendChild(badge);
+                    } else {
+                        titleElement.innerHTML = `<i class="bi ${newData.icon}" style="color: ${newData.color};"></i> ${newData.title}`;
+                    }
+                }
+            }
+            
+            // Update data atribut untuk menu (agar openColumnMenu mendapatkan data terbaru)
+            const menuBtn = columnWrapper.querySelector('.column-menu-btn');
+            if (menuBtn) {
+                const onclickAttr = menuBtn.getAttribute('onclick');
+                if (onclickAttr) {
+                    // Parse existing onclick
+                    const match = onclickAttr.match(/openColumnMenu\('([^']+)',\s*'([^']*)',\s*'([^']*)',\s*'([^']*)',\s*([^,]+),\s*([^)]+)\)/);
+                    if (match) {
+                        const isDefault = match[5] === 'true';
+                        const isCustomized = match[6] === 'true';
+                        const newOnClick = `openColumnMenu('${columnId}', '${newData.title.replace(/'/g, "\\'")}', '${newData.color}', '${newData.icon}', ${isDefault}, ${isCustomized})`;
+                        menuBtn.setAttribute('onclick', `event.stopPropagation(); ${newOnClick}`);
+                    }
+                }
+            }
+            
+            showNotification('Kolom berhasil diperbarui', 'success');
+        }
+
+        function updateCurrentColumn() {
+            const title = document.getElementById('editColumnTitle').value.trim();
+            const color = document.getElementById('editSelectedColor').value;
+            const icon = document.getElementById('editColumnIcon').value;
+            
+            if (!title) {
+                showNotification('Nama kolom tidak boleh kosong', 'warning');
+                return;
+            }
+            
+            // Tampilkan loading di tombol simpan
+            const saveBtn = document.querySelector('#editColumnModal .btn-primary');
+            const originalText = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+            saveBtn.disabled = true;
+            
+            if (currentEditingIsDefault) {
+                // Update default column
+                const formData = new FormData();
+                formData.append('project_id', <?= $project_id ?>);
+                formData.append('column_name', currentEditingColumnId);
+                formData.append('title', title);
+                formData.append('color', color);
+                formData.append('icon', icon);
+                
+                fetch('api/columns.php?action=update_default', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
+                        modal.hide();
+                        
+                        // Update kolom di board
+                        updateColumnInBoard(currentEditingColumnId, { title, color, icon });
+                        
+                        showNotification('Kolom berhasil diperbarui', 'success');
+                    } else {
+                        showNotification(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Terjadi kesalahan', 'danger');
+                })
+                .finally(() => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+            } else {
+                // Update custom column
+                const formData = new FormData();
+                formData.append('column_id', currentEditingColumnId.replace('custom_', ''));
+                formData.append('title', title);
+                formData.append('color', color);
+                formData.append('icon', icon);
+                
+                fetch('api/columns.php?action=update', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
+                        modal.hide();
+                        
+                        // Update kolom di board
+                        updateColumnInBoard(currentEditingColumnId, { title, color, icon });
+                        
+                        showNotification('Kolom berhasil diperbarui', 'success');
+                    } else {
+                        showNotification(data.message, 'danger');
+                    }
+                })
+                .catch(error => {
+                    showNotification('Terjadi kesalahan', 'danger');
+                })
+                .finally(() => {
+                    saveBtn.innerHTML = originalText;
+                    saveBtn.disabled = false;
+                });
+            }
+        }
+
+        function deleteCurrentColumn() {
+            if (currentEditingIsDefault) {
+                showNotification('Kolom default tidak dapat dihapus', 'warning');
+                return;
+            }
+            
+            if (!confirm('Yakin ingin menghapus kolom ini? Semua tugas akan dipindahkan ke To Do.')) return;
+            
+            // Tampilkan loading di tombol delete
+            const deleteBtn = document.getElementById('deleteColumnBtn');
+            const originalText = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menghapus...';
+            deleteBtn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('column_id', currentEditingColumnId.replace('custom_', ''));
+            
+            fetch('api/columns.php?action=delete', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Tutup modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
+                    modal.hide();
+                    
+                    // Hapus kolom dari board tanpa reload
+                    removeColumnFromBoard(currentEditingColumnId);
+                    
+                    showNotification('Kolom berhasil dihapus', 'success');
+                } else {
+                    showNotification(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            })
+            .finally(() => {
+                deleteBtn.innerHTML = originalText;
+                deleteBtn.disabled = false;
+            });
+        }
+
+        function removeColumnFromBoard(columnId) {
+            const columnWrapper = document.querySelector(`.kanban-column-wrapper[data-column-id="${columnId}"]`);
+            if (columnWrapper) {
+                columnWrapper.remove();
+                
+                // Update posisi kolom yang tersisa
+                setTimeout(() => {
+                    updateColumnPositions();
+                }, 100);
+            }
+        }
+
+        function resetDefaultColumn() {
+            if (!confirm('Kembalikan kolom ke pengaturan default?')) return;
+            
+            // Tampilkan loading
+            const resetBtn = document.querySelector('#resetDefaultColumnContainer .btn');
+            const originalText = resetBtn.innerHTML;
+            resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mereset...';
+            resetBtn.disabled = true;
+            
+            const formData = new FormData();
+            formData.append('project_id', <?= $project_id ?>);
+            formData.append('column_name', currentEditingColumnId);
+            
+            fetch('api/columns.php?action=reset_default', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
+                    modal.hide();
+                    
+                    // Load ulang kolom untuk mendapatkan data default
+                    // Untuk default column, lebih aman reload karena perlu reset ke nilai awal
+                    loadColumns();
+                    
+                    showNotification('Kolom dikembalikan ke default', 'success');
+                } else {
+                    showNotification(data.message, 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            })
+            .finally(() => {
+                resetBtn.innerHTML = originalText;
+                resetBtn.disabled = false;
+            });
+        }
+
+        // ========== PROYEK FUNCTIONS ==========
+
+        function openEditProjectModal() {
+            const modal = new bootstrap.Modal(document.getElementById('editProjectModal'));
+            modal.show();
+        }
+
+        function handleEditProjectSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+    
+    const formData = new FormData(form);
+    formData.append('action', 'update'); // Tambahkan action
+    
+    fetch('api/projects.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
+            modal.hide();
+            showNotification(data.message, 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showNotification(data.message || 'Gagal memperbarui proyek', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Terjadi kesalahan: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+        function deleteProject() {
+    if (!confirm('Yakin ingin menghapus proyek ini? Semua tugas akan ikut terhapus!')) return;
+    
+    const formData = new FormData();
+    formData.append('project_id', <?= $project_id ?>);
+    formData.append('action', 'delete'); // Tambahkan action
+    
+    fetch('api/projects.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            setTimeout(() => window.location.href = 'index.php', 1500);
+        } else {
+            showNotification(data.message || 'Gagal menghapus proyek', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('Terjadi kesalahan: ' + error.message, 'danger');
+    });
+}
+
+        // ========== ANGGOTA FUNCTIONS ==========
+
+        function openAddMemberModal() {
+            document.getElementById('searchResults').innerHTML = `
+                <div class="text-center text-muted py-4">
+                    <i class="bi bi-search fs-1 d-block mb-2 opacity-50"></i>
+                    <small>Cari pengguna untuk ditambahkan</small>
+                </div>
+            `;
+            document.getElementById('searchUserInput').value = '';
+            const modal = new bootstrap.Modal(document.getElementById('addMemberModal'));
+            modal.show();
+        }
+
+        function searchUsers() {
+            clearTimeout(searchTimeout);
+            const query = document.getElementById('searchUserInput').value.trim();
+            
+            if (query.length < 2) {
+                document.getElementById('searchResults').innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="bi bi-search fs-1 d-block mb-2 opacity-50"></i>
+                        <small>Minimal 2 karakter</small>
+                    </div>
+                `;
+                return;
+            }
+            
+            searchTimeout = setTimeout(() => {
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '<div class="text-center py-3"><div class="spinner-border spinner-border-sm text-primary"></div> Mencari...</div>';
+                
+                fetch(`api/project_members.php?action=search_users&project_id=<?= $project_id ?>&q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success && data.users.length > 0) {
+                            let html = '';
+                            data.users.forEach(user => {
+                                html += `
+                                    <div class="d-flex align-items-center justify-content-between p-3 rounded-3 mb-2" 
+                                         style="background: var(--surface-hover); border: 1px solid var(--border-color);">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="avatar-circle" style="background: ${user.avatar_color}; width: 40px; height: 40px;">
+                                                ${user.initials}
+                                            </div>
+                                            <div>
+                                                <div class="fw-bold" style="color: var(--text-dark);">${escapeHtml(user.full_name)}</div>
+                                                <small class="text-muted">@${escapeHtml(user.username)}</small>
+                                            </div>
+                                        </div>
+                                        <button class="btn btn-sm btn-primary rounded-pill px-3" onclick="addMemberToProject(${user.id})">
+                                            <i class="bi bi-person-plus me-1"></i>Tambah
+                                        </button>
+                                    </div>
+                                `;
+                            });
+                            resultsDiv.innerHTML = html;
+                        } else {
+                            resultsDiv.innerHTML = `
+                                <div class="text-center text-muted py-4">
+                                    <i class="bi bi-person-x fs-1 d-block mb-2 opacity-50"></i>
+                                    <small>Tidak ada pengguna ditemukan</small>
+                                </div>
+                            `;
+                        }
+                    })
+                    .catch(error => {
+                        resultsDiv.innerHTML = '<div class="text-center text-danger py-3">Terjadi kesalahan</div>';
+                    });
+            }, 500);
+        }
+
+        function addMemberToProject(userId) {
+            const role = document.getElementById('memberRole').value;
+            const formData = new FormData();
+            formData.append('project_id', <?= $project_id ?>);
+            formData.append('user_id', userId);
+            formData.append('role', role);
+            
+            fetch('api/project_members.php?action=add', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addMemberModal'));
+                    modal.hide();
+                    showNotification('Anggota berhasil ditambahkan', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Gagal menambahkan anggota', 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            });
+        }
+
+        function removeMember(userId) {
+            if (!confirm('Yakin ingin menghapus anggota ini?')) return;
+            
+            const formData = new FormData();
+            formData.append('project_id', <?= $project_id ?>);
+            formData.append('user_id', userId);
+            
+            fetch('api/project_members.php?action=remove', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Anggota berhasil dihapus', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Gagal menghapus anggota', 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            });
+        }
+
+        function updateMemberRole(userId, newRole) {
+            const roleText = newRole === 'admin' ? 'Admin' : 'Member';
+            if (!confirm(`Ubah role menjadi ${roleText}?`)) return;
+            
+            const formData = new FormData();
+            formData.append('project_id', <?= $project_id ?>);
+            formData.append('user_id', userId);
+            formData.append('role', newRole);
+            
+            fetch('api/project_members.php?action=update_role', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Role berhasil diperbarui', 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Gagal memperbarui role', 'danger');
+                }
+            })
+            .catch(error => {
+                showNotification('Terjadi kesalahan', 'danger');
+            });
+        }
+
+        // ========== TUGAS FUNCTIONS ==========
+
+        function openNewTaskModal(status) {
+            document.getElementById('task_status').value = status;
+            const modal = new bootstrap.Modal(document.getElementById('newTaskModal'));
+            modal.show();
+        }
+
         function handleNewTaskSubmit(e) {
             e.preventDefault();
             const form = e.target;
@@ -1048,33 +2161,19 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Ambil data tugas yang baru dibuat
-                    return fetch('api/tasks.php?action=get_simple&id=' + data.task_id)
-                        .then(response => response.json())
-                        .then(taskData => {
-                            if (taskData.success) {
-                                // Tambahkan card ke kolom yang sesuai
-                                addTaskCardToColumn(taskData.task);
-                                showNotification('Tugas berhasil dibuat', 'success');
-                                
-                                // Tutup modal dan reset form
-                                const modal = bootstrap.Modal.getInstance(document.getElementById('newTaskModal'));
-                                modal.hide();
-                                form.reset();
-                                
-                                // Set default status kembali ke todo
-                                document.getElementById('task_status').value = 'todo';
-                            } else {
-                                showNotification('Gagal mengambil data tugas', 'danger');
-                                setTimeout(() => location.reload(), 1000);
-                            }
-                        });
+                    showNotification('Tugas berhasil dibuat', 'success');
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('newTaskModal'));
+                    modal.hide();
+                    form.reset();
+                    document.getElementById('task_status').value = 'todo';
+                    
+                    // Reload hanya kolom yang berubah
+                    loadTasksForColumn('todo');
                 } else {
                     showNotification(data.message || 'Terjadi kesalahan', 'danger');
                 }
             })
             .catch(error => {
-                console.error('Error:', error);
                 showNotification('Terjadi kesalahan koneksi', 'danger');
             })
             .finally(() => { 
@@ -1083,98 +2182,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             });
         }
 
-        // Fungsi untuk menambahkan card ke kolom
-        function addTaskCardToColumn(task) {
-            const columnId = task.column_status === 'in_progress' ? 'progress-list' : 
-                             (task.column_status === 'review' ? 'review-list' : 
-                             (task.column_status === 'done' ? 'done-list' : 'todo-list'));
-            
-            const column = document.getElementById(columnId);
-            if (!column) return;
-            
-            // Buat elemen card baru
-            const cardHtml = createTaskCardElement(task);
-            const tempDiv = document.createElement('div');
-            tempDiv.innerHTML = cardHtml;
-            const newCard = tempDiv.firstElementChild;
-            
-            // Tambahkan ke kolom
-            column.appendChild(newCard);
-            
-            // Update task count
-            updateTaskCounts();
-            
-            // Animasi highlight
-            newCard.style.animation = 'highlight 1s ease';
-            setTimeout(() => {
-                newCard.style.animation = '';
-            }, 1000);
-        }
-
-        // Fungsi untuk update jumlah task di setiap kolom
-        function updateTaskCounts() {
-            const columns = {
-                'todo-list': 'todo',
-                'progress-list': 'in_progress',
-                'review-list': 'review',
-                'done-list': 'done'
-            };
-            
-            for (const [columnId, status] of Object.entries(columns)) {
-                const column = document.getElementById(columnId);
-                if (column) {
-                    const count = column.children.length;
-                    const countElement = column.closest('.kanban-column').querySelector('.task-count');
-                    if (countElement) {
-                        countElement.textContent = count;
-                    }
-                }
-            }
-            
-            // Update stats cards juga
-            updateStatsCards();
-        }
-
-        // Fungsi untuk update stats cards
-        function updateStatsCards() {
-            const todoCount = document.getElementById('todo-list')?.children.length || 0;
-            const progressCount = document.getElementById('progress-list')?.children.length || 0;
-            const reviewCount = document.getElementById('review-list')?.children.length || 0;
-            const doneCount = document.getElementById('done-list')?.children.length || 0;
-            const totalTasks = todoCount + progressCount + reviewCount + doneCount;
-            
-            // Update stats cards
-            const statsCards = document.querySelectorAll('.stats-card .stats-value');
-            if (statsCards.length >= 4) {
-                // Progress
-                const progress = totalTasks > 0 ? Math.round((doneCount / totalTasks) * 100) : 0;
-                statsCards[0].textContent = progress + '%';
-                const progressBar = document.querySelector('.progress-bar');
-                if (progressBar) progressBar.style.width = progress + '%';
-                
-                // Todo
-                statsCards[1].textContent = todoCount;
-                // In Progress
-                statsCards[2].textContent = progressCount;
-                // Done
-                statsCards[3].textContent = doneCount;
-            }
-        }
-
-        // --- CRUD FUNCTIONS ---
-        function openNewTaskModal(status) {
-            document.getElementById('task_status').value = status;
-            const modal = new bootstrap.Modal(document.getElementById('newTaskModal'));
-            modal.show();
-        }
-
         function showTaskDetail(taskId) {
             const modalContent = document.getElementById('taskDetailContent');
             const modal = new bootstrap.Modal(document.getElementById('taskDetailModal'));
             
             modalContent.innerHTML = `<div class="modal-body text-center py-5">
-                <div class="spinner-border" style="color: var(--primary)"></div>
-                <p class="mt-2" style="color: var(--text-muted)">Memuat data...</p>
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2 text-muted">Memuat data...</p>
             </div>`;
             modal.show();
             
@@ -1183,29 +2197,87 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 .then(data => {
                     if (data.success) {
                         modalContent.innerHTML = data.html;
-                        // Re-initialize Bootstrap Tabs
+                        // Re-initialize tabs
                         const triggerTabList = [].slice.call(modalContent.querySelectorAll('#taskTab button'));
-                        triggerTabList.forEach(function (triggerEl) { 
-                            new bootstrap.Tab(triggerEl); 
-                        });
+                        triggerTabList.forEach(el => new bootstrap.Tab(el));
                     } else {
-                        modalContent.innerHTML = `<div class="modal-body text-center py-5 fw-bold" style="color: var(--danger)">
-                            <i class="bi bi-exclamation-triangle fs-1"></i><br>
-                            ${data.message || 'Gagal memuat data'}
+                        modalContent.innerHTML = `<div class="modal-body text-center py-5">
+                            <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                            <p class="mt-2">${data.message || 'Gagal memuat data'}</p>
                         </div>`;
                     }
                 })
                 .catch(error => {
-                    modalContent.innerHTML = `<div class="modal-body text-center py-5 fw-bold" style="color: var(--danger)">
-                        <i class="bi bi-exclamation-triangle fs-1"></i><br>
-                        Terjadi kesalahan koneksi
+                    modalContent.innerHTML = `<div class="modal-body text-center py-5">
+                        <i class="bi bi-exclamation-triangle fs-1 text-danger"></i>
+                        <p class="mt-2">Terjadi kesalahan koneksi</p>
                     </div>`;
                 });
         }
 
-        function updateTask(taskId) {
+        // ========== HELPER FUNCTIONS ==========
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function getInitials(name) {
+            if (!name) return '?';
+            return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        }
+
+        function getAvatarColor(name) {
+            const colors = ['#6366f1', '#ec4899', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981'];
+            return colors[(name?.length || 0) % colors.length];
+        }
+
+        function showNotification(message, type = 'success') {
+            const container = document.querySelector('.toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            let bgClass, iconClass;
+            
+            switch(type) {
+                case 'success':
+                    bgClass = 'bg-success';
+                    iconClass = 'bi-check-circle-fill';
+                    break;
+                case 'danger':
+                    bgClass = 'bg-danger';
+                    iconClass = 'bi-exclamation-triangle-fill';
+                    break;
+                default:
+                    bgClass = 'bg-primary';
+                    iconClass = 'bi-info-circle-fill';
+            }
+            
+            toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
+            toast.style.borderRadius = '12px';
+            toast.setAttribute('role', 'alert');
+            toast.innerHTML = `
+                <div class="d-flex p-2">
+                    <div class="toast-body fw-bold fs-6">
+                        <i class="bi ${iconClass} me-2 fs-5"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+            bsToast.show();
+            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+        }
+
+        // Task detail functions (will be called from modal)
+        window.updateTask = function(taskId) {
             const form = document.getElementById('editTaskForm');
             if (!form) return;
+            
             const formData = new FormData(form);
             formData.append('task_id', taskId);
             
@@ -1219,27 +2291,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     showNotification(data.message || 'Terjadi kesalahan', 'danger');
                 }
             });
-        }
+        };
 
-        function updateTaskStatus(taskId, newStatus) {
-            const formData = new FormData();
-            formData.append('task_id', taskId);
-            formData.append('status', newStatus);
-
-            fetch('api/tasks.php?action=update_status', { method: 'POST', body: formData })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    showNotification(data.message || 'Gagal memperbarui status', 'danger');
-                    setTimeout(() => location.reload(), 1000);
-                }
-            });
-        }
-
-        function deleteTask(taskId) {
+        window.deleteTask = function(taskId) {
             if (!confirm('Yakin ingin menghapus tugas ini?')) return;
+            
             const formData = new FormData();
             formData.append('task_id', taskId);
+            
             fetch('api/tasks.php?action=delete', { method: 'POST', body: formData })
             .then(r => r.json())
             .then(d => {
@@ -1250,19 +2309,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     showNotification(d.message || 'Gagal menghapus tugas', 'danger'); 
                 }
             });
-        }
+        };
 
-        // --- KOMENTAR ---
-        function addComment(taskId, form) {
+        window.addComment = function(taskId, form) {
             const contentInput = form.querySelector('input[name="content"]');
             const content = contentInput.value.trim();
             if (!content) return;
-            
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const originalHtml = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-            submitBtn.disabled = true;
             
             const formData = new FormData();
             formData.append('task_id', taskId);
@@ -1278,15 +2330,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     showNotification(data.message || 'Gagal menambahkan komentar', 'danger'); 
                 }
             })
-            .catch(error => showNotification('Gagal terhubung ke server', 'danger'))
-            .finally(() => { 
-                submitBtn.innerHTML = originalHtml; 
-                submitBtn.disabled = false; 
-            });
-        }
+            .catch(error => showNotification('Gagal terhubung ke server', 'danger'));
+        };
 
-        // --- UPLOAD LAMPIRAN ---
-        function uploadAttachment(taskId, inputElement) {
+        window.uploadAttachment = function(taskId, inputElement) {
             if (!inputElement.files || inputElement.files.length === 0) return;
             
             const file = inputElement.files[0];
@@ -1310,17 +2357,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 }
             })
             .catch(error => {
-                console.error(error);
                 showNotification('Terjadi kesalahan saat mengunggah', 'danger');
             })
             .finally(() => {
                 inputElement.value = ''; 
             });
-        }
+        };
 
-        // --- HAPUS LAMPIRAN ---
-        function deleteAttachment(attachmentId, taskId) {
-            if (!confirm('Hapus lampiran ini? Tindakan ini tidak dapat dibatalkan.')) return;
+        window.deleteAttachment = function(attachmentId, taskId) {
+            if (!confirm('Hapus lampiran ini?')) return;
             
             const formData = new FormData();
             formData.append('attachment_id', attachmentId);
@@ -1337,60 +2382,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 } else {
                     showNotification(data.message || 'Gagal menghapus lampiran', 'danger');
                 }
-            })
-            .catch(error => showNotification('Terjadi kesalahan', 'danger'));
-        }
-
-        // --- NOTIFIKASI TOAST ---
-        function showNotification(message, type = 'success') {
-            const toastContainer = document.querySelector('.toast-container');
-            if (!toastContainer) return;
-
-            const toast = document.createElement('div');
-            let bgClass, iconClass;
-            
-            switch(type) {
-                case 'success':
-                    bgClass = 'bg-success';
-                    iconClass = 'bi-check-circle-fill';
-                    break;
-                case 'danger':
-                    bgClass = 'bg-danger';
-                    iconClass = 'bi-exclamation-triangle-fill';
-                    break;
-                case 'warning':
-                    bgClass = 'bg-warning';
-                    iconClass = 'bi-exclamation-circle-fill';
-                    break;
-                default:
-                    bgClass = 'bg-primary';
-                    iconClass = 'bi-info-circle-fill';
-            }
-            
-            toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
-            toast.style.borderRadius = '12px';
-            toast.setAttribute('role', 'alert');
-            toast.setAttribute('aria-live', 'assertive');
-            toast.setAttribute('aria-atomic', 'true');
-            
-            toast.innerHTML = `
-                <div class="d-flex p-2">
-                    <div class="toast-body fw-bold fs-6">
-                        <i class="bi ${iconClass} me-2 fs-5" style="vertical-align:-2px;"></i>
-                        ${message}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            `;
-            
-            toastContainer.appendChild(toast);
-            const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
-            bsToast.show();
-            
-            toast.addEventListener('hidden.bs.toast', () => {
-                toast.remove();
             });
-        }
+        };
     </script>
 </body>
 </html>

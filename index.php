@@ -1,7 +1,6 @@
 <?php
 require_once 'includes/config.php';
 require_once 'includes/functions.php';
-require_once 'includes/auth.php';
 
 if (!isLoggedIn()) {
     redirect('login.php');
@@ -12,22 +11,14 @@ $is_admin = isAdmin();
 
 // Get data based on role
 $projects = $is_admin ? getAllProjects() : getUserProjects($user_id);
-$notifications = getNotifications($user_id);
+$notifications = getUnreadNotifications($user_id);
 $stats = getUserStatistics($user_id);
 $deadlines = getUpcomingDeadlines($user_id);
 $notif_count = getNotificationCount($user_id);
+$overdue_count = getOverdueTasksCount($user_id);
 
-// Helper function untuk inisial
-if (!function_exists('getInitials')) {
-    function getInitials($name) {
-        $words = explode(" ", $name);
-        $acronym = "";
-        foreach ($words as $w) {
-            $acronym .= mb_substr($w, 0, 1);
-        }
-        return strtoupper(substr($acronym, 0, 2));
-    }
-}
+// Get recent activities
+$recent_activities = getRecentActivities($user_id, 5);
 
 // Cek preferensi tema dari cookie
 $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
@@ -75,14 +66,18 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             
             --radius-lg: 24px;
             --radius-md: 16px;
+            --radius-sm: 12px;
             --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03);
             --shadow-hover: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
             
             --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.03);
             --card-hover-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.15);
             
-            /* Welcome card - warna spesifik tidak menggunakan variable agar tetap cerah */
             --welcome-gradient: linear-gradient(120deg, #4f46e5, #ec4899, #8b5cf6);
+            
+            /* Scrollbar */
+            --scrollbar-thumb: #cbd5e1;
+            --scrollbar-track: transparent;
         }
 
         /* Dark Mode Variables */
@@ -113,10 +108,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --card-shadow: 0 10px 40px -10px rgba(0,0,0,0.2);
             --card-hover-shadow: 0 20px 40px -10px rgba(129, 140, 248, 0.2);
             
-            /* Welcome card - tetap cerah di dark mode */
             --welcome-gradient: linear-gradient(120deg, #4f46e5, #db2777, #7c3aed);
             
-            /* Scrollbar colors */
             --scrollbar-thumb: #475569;
             --scrollbar-track: transparent;
         }
@@ -128,11 +121,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: var(--text-main);
             -webkit-font-smoothing: antialiased;
             transition: background 0.3s ease, color 0.3s ease;
+            margin: 0;
+            padding: 0;
         }
 
-        /* --- Navbar (Glassmorphism) --- */
+        /* Navbar */
         .navbar {
-            background: rgba(var(--surface-rgb, 255,255,255), 0.75) !important;
+            background: rgba(255,255,255,0.75) !important;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
@@ -152,6 +147,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             font-size: 1.3rem; 
             color: var(--text-dark) !important; 
             letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .brand-icon {
@@ -175,7 +173,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             background: var(--primary-light); 
         }
 
-        /* Theme Toggle Button */
+        /* Theme Toggle */
         .theme-toggle {
             width: 40px;
             height: 40px;
@@ -197,7 +195,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: var(--primary);
         }
 
-        /* --- Global Cards --- */
+        /* Cards */
         .card {
             background: var(--surface);
             border: 1px solid var(--border-color);
@@ -220,7 +218,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             font-size: 1.1rem;
         }
 
-        /* --- Welcome Banner (Mesh Gradient) --- */
+        /* Welcome Banner */
         .welcome-card {
             background: var(--welcome-gradient);
             background-size: 200% 200%;
@@ -229,12 +227,16 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border: none;
             padding: 2.5rem 2rem;
             position: relative;
+            border-radius: var(--radius-lg);
+            margin-bottom: 2rem;
         }
+        
         @keyframes gradientMove {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
             100% { background-position: 0% 50%; }
         }
+        
         .welcome-card::before {
             content: '';
             position: absolute; right: -5%; top: -20%;
@@ -242,30 +244,41 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
             border-radius: 50%;
         }
+        
         .welcome-title { 
             font-weight: 700; 
             font-size: 2rem; 
             letter-spacing: -1px; 
             margin-bottom: 0.5rem;
             color: white;
+            position: relative;
+            z-index: 1;
         }
+        
         .welcome-subtitle { 
             font-weight: 300; 
             font-size: 1.1rem; 
             opacity: 0.9; 
-            color: rgba(255,255,255,0.9);
+            color: white;
+            position: relative;
+            z-index: 1;
         }
 
-        /* --- Stats Cards --- */
+        /* Stats Cards */
         .stat-card {
             padding: 1.5rem;
             height: 100%;
             display: flex;
             align-items: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            transition: all 0.3s ease;
         }
         .stat-card:hover { 
             transform: translateY(-5px); 
             box-shadow: var(--card-hover-shadow); 
+            background: var(--surface-hover);
         }
         .stat-icon {
             width: 60px; height: 60px;
@@ -307,7 +320,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             line-height: 1; 
         }
 
-        /* --- Project Grid --- */
+        /* Project Cards */
         .project-card {
             padding: 1.5rem;
             height: 100%;
@@ -315,6 +328,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             flex-direction: column;
             cursor: pointer;
             border-radius: var(--radius-md);
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
         }
         .project-card:hover { 
             border-color: var(--primary); 
@@ -327,6 +343,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: var(--text-dark); 
             font-size: 1.1rem; 
             line-height: 1.3;
+            margin-bottom: 0.5rem;
         }
         .project-desc { 
             font-size: 0.85rem; 
@@ -335,7 +352,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             -webkit-line-clamp: 2; 
             -webkit-box-orient: vertical; 
             overflow: hidden; 
-            margin: 1rem 0;
+            margin: 0.5rem 0 1rem 0;
         }
         
         .progress-wrapper { 
@@ -343,7 +360,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             height: 8px; 
             border-radius: 8px; 
             overflow: hidden; 
-            margin-top: 0.5rem; 
+            margin: 0.75rem 0; 
         }
         .progress-fill { 
             background: var(--primary); 
@@ -358,7 +375,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border-radius: 12px; 
             display: flex; 
             justify-content: space-around; 
-            margin-top: 1.5rem; 
+            margin-top: 1rem; 
             border: 1px solid var(--border-color);
         }
         .mini-stat-item { 
@@ -375,7 +392,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: var(--text-dark); 
         }
 
-        /* --- Lists (Activity & Deadline) --- */
+        /* List Items */
         .list-group-item {
             border: none;
             border-bottom: 1px solid var(--border-color);
@@ -399,7 +416,17 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             flex-shrink: 0;
         }
 
-        /* --- Buttons --- */
+        /* Badge Overdue */
+        .badge-overdue {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 20px;
+            margin-left: 5px;
+        }
+
+        /* Buttons */
         .btn { 
             padding: 0.7rem 1.5rem; 
             border-radius: 12px; 
@@ -446,32 +473,71 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: white;
         }
 
-        /* --- Utilities --- */
-        .badge { 
-            padding: 0.5em 0.8em; 
-            border-radius: 8px; 
-            font-weight: 600; 
-            font-size: 0.75rem; 
-            letter-spacing: 0.5px; 
-        }
-        .bg-light-primary { 
-            background: var(--primary-light); 
-            color: var(--primary); 
-        }
-        
-        .bg-danger-light {
+        .btn-danger-soft {
             background: var(--danger-light);
             color: var(--danger);
+            border: none;
         }
-        
-        .text-truncate-2 { 
-            display: -webkit-box; 
-            -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
+        .btn-danger-soft:hover {
+            background: var(--danger);
+            color: white;
         }
 
-        /* Forms */
+        /* Dropdown */
+        .dropdown-menu {
+            background: var(--surface);
+            border-color: var(--border-color);
+            box-shadow: var(--card-hover-shadow);
+            border-radius: 12px;
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            color: var(--text-main);
+            border-radius: 8px;
+            padding: 0.6rem 1rem;
+            transition: all 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+        
+        .dropdown-divider {
+            border-color: var(--border-color);
+        }
+
+        /* Modal */
+        .modal-content { 
+            background: var(--surface);
+            border-color: var(--border-color);
+            border-radius: var(--radius-lg); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+        }
+        .modal-header { 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+            background: var(--surface); 
+        }
+        .modal-header .modal-title {
+            color: var(--text-dark);
+        }
+        [data-theme="dark"] .btn-close {
+            filter: invert(1) grayscale(100%) brightness(200%);
+        }
+        .modal-body { 
+            padding: 2rem; 
+            color: var(--text-main);
+        }
+        .modal-footer { 
+            border-top: 1px solid var(--border-color); 
+            padding: 1.5rem 2rem; 
+            background: var(--surface-hover); 
+            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+        }
+
+        /* Form Controls */
         .form-control, .form-select { 
             border-radius: 12px; 
             padding: 0.8rem 1rem; 
@@ -485,62 +551,35 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border-color: var(--primary); 
             box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); 
             color: var(--text-dark);
+            outline: none;
         }
         .form-control::placeholder {
             color: var(--text-muted);
-        }
-        
-        /* Modal */
-        .modal-content { 
-            background: var(--surface);
-            border-color: var(--border-color);
-            border-radius: var(--radius-lg); 
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
-        }
-        .modal-header { 
-            border-bottom: 1px solid var(--border-color); 
-            padding: 1.5rem 2rem; 
-        }
-        .modal-header .modal-title {
-            color: var(--text-dark);
-        }
-        .modal-header .btn-close {
-            filter: var(--btn-close-filter, none);
-        }
-        [data-theme="dark"] .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%);
-        }
-        .modal-body { 
-            padding: 2rem; 
-        }
-        .modal-footer { 
-            border-top: 1px solid var(--border-color); 
-            padding: 1.5rem 2rem; 
-            background: var(--surface-hover); 
-            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+            opacity: 0.6;
         }
 
-        /* Dropdown Menu */
-        .dropdown-menu {
-            background: var(--surface);
-            border-color: var(--border-color);
-            box-shadow: var(--card-hover-shadow);
-        }
-        
-        .dropdown-item {
-            color: var(--text-main);
-        }
-        
-        .dropdown-item:hover {
-            background: var(--surface-hover);
-            color: var(--text-dark);
-        }
-        
-        .dropdown-divider {
-            border-color: var(--border-color);
+        /* Toast */
+        .toast {
+            background: var(--surface) !important;
+            color: var(--text-dark) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 12px !important;
         }
 
-        /* Scrollbar Styling */
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1.5rem;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            color: var(--text-muted);
+            opacity: 0.5;
+            margin-bottom: 1rem;
+        }
+
+        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -557,13 +596,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         
         ::-webkit-scrollbar-thumb:hover {
             background: var(--text-muted);
-        }
-
-        /* Toast */
-        .toast {
-            background: var(--surface) !important;
-            color: var(--text-dark) !important;
-            border: 1px solid var(--border-color) !important;
         }
 
         /* Responsive */
@@ -585,16 +617,21 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .stat-info .value {
                 font-size: 1.5rem;
             }
+            
+            .navbar-nav .nav-link {
+                padding: 0.5rem !important;
+            }
         }
     </style>
 </head>
 <body>
 
+    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container-fluid px-lg-5">
-            <a class="navbar-brand d-flex align-items-center gap-3" href="index.php">
+            <a class="navbar-brand" href="index.php">
                 <div class="brand-icon"><i class="bi bi-layers-half"></i></div>
-                <span>TaskFlow</span>
+                <span>Task Manager</span>
             </a>
             
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -603,10 +640,29 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto ps-lg-4 gap-1">
-                    <li class="nav-item"><a class="nav-link active" href="index.php"><i class="bi bi-grid-1x2 me-2"></i>Dashboard</a></li>
-                    <?php if ($is_admin): ?>
-                    <li class="nav-item"><a class="nav-link" href="admin.php"><i class="bi bi-shield-check me-2"></i>Admin</a></li>
-                    <?php endif; ?>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="index.php">
+                            <i class="bi bi-grid-1x2 me-2"></i>Dashboard
+                        </a>
+                    </li>
+                    
+                    <!-- OVERDUE MENU -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="overdue.php" id="overdueLink">
+                            <i class="bi bi-exclamation-triangle me-2" style="color: var(--danger);"></i>
+                            Terlambat
+                            <span class="badge bg-danger ms-2" id="overdueCountBadge" style="display: <?= $overdue_count > 0 ? 'inline-block' : 'none' ?>;">
+                                <?= $overdue_count ?>
+                            </span>
+                        </a>
+                    </li>
+                    
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="projects.php">
+                            <i class="bi bi-folder me-2"></i>Semua Proyek
+                        </a>
+                    </li>
                 </ul>
                 
                 <ul class="navbar-nav align-items-center gap-3">
@@ -618,26 +674,29 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     </li>
                     
                     <li class="nav-item d-none d-lg-block">
-                        <button class="btn btn-primary btn-sm px-3 py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                            <i class="bi bi-plus-lg me-1"></i> Proyek
+                        <button class="btn btn-primary btn-sm px-3 py-2 rounded-pill" onclick="openNewProjectModal()">
+                            <i class="bi bi-plus-lg me-1"></i> Proyek Baru
                         </button>
                     </li>
 
+                    <!-- Notifications Dropdown -->
                     <li class="nav-item dropdown">
                         <a class="nav-link position-relative" href="#" data-bs-toggle="dropdown" style="padding: 0.5rem !important;">
                             <div class="icon-circle-sm" style="background: var(--surface-hover); color: var(--text-main);">
                                 <i class="bi bi-bell"></i>
                                 <?php if ($notif_count > 0): ?>
-                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" style="font-size: 0.65rem; transform: translate(-30%, 10%) !important;">
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">
                                         <?= $notif_count ?>
                                     </span>
                                 <?php endif; ?>
                             </div>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 350px; border-radius: 16px; padding: 0; overflow: hidden; margin-top: 10px;">
+                        <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 350px; border-radius: 16px; padding: 0; overflow: hidden;">
                             <div class="p-3 border-bottom d-flex justify-content-between align-items-center" style="background: var(--surface);">
                                 <h6 class="mb-0 fw-bold" style="color: var(--text-dark);">Notifikasi</h6>
-                                <?php if ($notif_count > 0): ?><span class="badge bg-primary rounded-pill"><?= $notif_count ?> Baru</span><?php endif; ?>
+                                <?php if ($notif_count > 0): ?>
+                                    <span class="badge bg-primary rounded-pill"><?= $notif_count ?> Baru</span>
+                                <?php endif; ?>
                             </div>
                             <?php if (empty($notifications)): ?>
                                 <div class="text-center py-5">
@@ -650,33 +709,62 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                         <a class="dropdown-item d-flex p-3 border-bottom" href="#" style="white-space: normal;">
                                             <div class="me-3 mt-1">
                                                 <?php 
-                                                    $bg = 'var(--surface-hover)'; $color = 'var(--text-muted)'; $icon = 'bi-info-circle';
-                                                    if ($notif['type'] == 'assignment') { $bg = 'var(--primary-light)'; $color = 'var(--primary)'; $icon = 'bi-person-check'; }
-                                                    elseif ($notif['type'] == 'comment') { $bg = 'var(--success-light)'; $color = 'var(--success)'; $icon = 'bi-chat-dots'; }
+                                                    $bg = 'var(--surface-hover)'; 
+                                                    $color = 'var(--text-muted)'; 
+                                                    $icon = 'bi-info-circle';
+                                                    if ($notif['type'] == 'assignment') { 
+                                                        $bg = 'var(--primary-light)'; 
+                                                        $color = 'var(--primary)'; 
+                                                        $icon = 'bi-person-check'; 
+                                                    }
+                                                    elseif ($notif['type'] == 'comment') { 
+                                                        $bg = 'var(--success-light)'; 
+                                                        $color = 'var(--success)'; 
+                                                        $icon = 'bi-chat-dots'; 
+                                                    }
+                                                    elseif ($notif['type'] == 'deadline') { 
+                                                        $bg = 'var(--warning-light)'; 
+                                                        $color = 'var(--warning)'; 
+                                                        $icon = 'bi-clock'; 
+                                                    }
                                                 ?>
                                                 <div class="icon-circle-sm" style="background: <?= $bg ?>; color: <?= $color ?>; width: 36px; height: 36px; font-size: 1rem;">
                                                     <i class="bi <?= $icon ?>"></i>
                                                 </div>
                                             </div>
                                             <div>
-                                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem; margin-bottom: 2px;"><?= htmlspecialchars($notif['title']) ?></div>
-                                                <div class="text-muted" style="font-size: 0.8rem; line-height: 1.4;"><?= htmlspecialchars($notif['message']) ?></div>
-                                                <small class="text-muted opacity-75 mt-1 d-block" style="font-size: 0.7rem;"><i class="bi bi-clock me-1"></i><?= timeAgo($notif['created_at']) ?></small>
+                                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem; margin-bottom: 2px;">
+                                                    <?= htmlspecialchars($notif['title']) ?>
+                                                </div>
+                                                <div class="text-muted" style="font-size: 0.8rem; line-height: 1.4;">
+                                                    <?= htmlspecialchars($notif['message']) ?>
+                                                </div>
+                                                <small class="text-muted opacity-75 mt-1 d-block" style="font-size: 0.7rem;">
+                                                    <i class="bi bi-clock me-1"></i><?= timeAgo($notif['created_at']) ?>
+                                                </small>
                                             </div>
                                         </a>
                                     <?php endforeach; ?>
+                                </div>
+                                <div class="p-2 text-center border-top">
+                                    <a href="#" class="text-decoration-none small" style="color: var(--primary);" onclick="markAllNotificationsRead()">Tandai semua dibaca</a>
                                 </div>
                             <?php endif; ?>
                         </div>
                     </li>
 
+                    <!-- User Menu -->
                     <li class="nav-item dropdown">
                         <a class="nav-link d-flex align-items-center gap-2" href="#" data-bs-toggle="dropdown" style="padding: 0 !important;">
                             <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=0f172a&color=fff&size=40" 
-                                 class="rounded-circle border border-2" style="border-color: var(--border-color) !important;">
+                                 class="rounded-circle border border-2" style="border-color: var(--border-color) !important; width: 40px; height: 40px;">
                             <div class="d-none d-xl-block text-start lh-1">
-                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
-                                <small class="text-muted" style="font-size: 0.75rem;"><?= $is_admin ? 'Administrator' : 'Anggota Tim' ?></small>
+                                <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;">
+                                    <?= htmlspecialchars($_SESSION['full_name']) ?>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.75rem;">
+                                    <?= $is_admin ? 'Administrator' : 'Anggota Tim' ?>
+                                </small>
                             </div>
                             <i class="bi bi-chevron-down ms-1 text-muted d-none d-xl-block" style="font-size: 0.8rem;"></i>
                         </a>
@@ -685,10 +773,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                 <div class="fw-bold" style="color: var(--text-dark);"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
                                 <small class="text-muted"><?= $is_admin ? 'Admin' : 'Member' ?></small>
                             </div>
-                            <a class="dropdown-item py-2 px-3 rounded-3" href="profile.php"><i class="bi bi-person me-3 text-muted"></i>Profil Saya</a>
-                            <a class="dropdown-item py-2 px-3 rounded-3" href="#"><i class="bi bi-gear me-3 text-muted"></i>Pengaturan</a>
+                            <a class="dropdown-item py-2 px-3 rounded-3" href="profile.php">
+                                <i class="bi bi-person me-3 text-muted"></i>Profil Saya
+                            </a>
                             <div class="dropdown-divider my-2"></div>
-                            <a class="dropdown-item py-2 px-3 rounded-3 text-danger" href="logout.php"><i class="bi bi-box-arrow-right me-3"></i>Keluar</a>
+                            <a class="dropdown-item py-2 px-3 rounded-3 text-danger" href="logout.php">
+                                <i class="bi bi-box-arrow-right me-3"></i>Keluar
+                            </a>
                         </div>
                     </li>
                 </ul>
@@ -696,27 +787,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </nav>
 
+    <!-- Main Content -->
     <div class="container-fluid px-lg-5 py-4 pb-5">
         
-        <div class="card welcome-card mb-5">
-            <div class="row align-items-center position-relative z-index-1">
-                <div class="col-md-8">
-                    <h1 class="welcome-title">Selamat datang kembali, <?= htmlspecialchars($_SESSION['full_name']) ?>!</h1>
-                    <p class="welcome-subtitle">
-                        <?= $is_admin ? 'Berikut adalah ringkasan performa seluruh proyek tim hari ini.' : 'Sudah siap menyelesaikan tugas-tugas hebatmu hari ini?' ?>
-                    </p>
-                </div>
-                <div class="col-md-4 text-md-end mt-4 mt-md-0">
-                    <button class="btn btn-light rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newProjectModal">
-                        <i class="bi bi-plus-circle-fill me-2"></i>Mulai Proyek Baru
-                    </button>
-                </div>
-            </div>
-        </div>
 
+        <!-- Statistics Cards -->
         <div class="row g-4 mb-5">
             <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card">
+                <div class="stat-card">
                     <div class="stat-icon icon-purple"><i class="bi bi-briefcase"></i></div>
                     <div class="stat-info">
                         <div class="label">Total Proyek</div>
@@ -725,7 +803,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card">
+                <div class="stat-card">
                     <div class="stat-icon icon-orange"><i class="bi bi-kanban"></i></div>
                     <div class="stat-info">
                         <div class="label">Tugas Aktif</div>
@@ -734,7 +812,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card">
+                <div class="stat-card">
                     <div class="stat-icon icon-green"><i class="bi bi-check2-all"></i></div>
                     <div class="stat-info">
                         <div class="label">Diselesaikan</div>
@@ -743,7 +821,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 </div>
             </div>
             <div class="col-xl-3 col-sm-6">
-                <div class="card stat-card">
+                <div class="stat-card">
                     <div class="stat-icon icon-red"><i class="bi bi-fire"></i></div>
                     <div class="stat-info">
                         <div class="label">Mendekati Deadline</div>
@@ -753,8 +831,33 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             </div>
         </div>
 
+        <!-- Overdue Alert Card (hanya muncul jika ada tugas terlambat) -->
+        <?php if ($overdue_count > 0): ?>
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card" style="border-left: 4px solid var(--danger); background: var(--danger-light);">
+                    <div class="card-body d-flex align-items-center justify-content-between p-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="icon-circle-sm" style="background: var(--danger); color: white; width: 48px; height: 48px; font-size: 1.5rem;">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-bold mb-1" style="color: var(--text-dark);">Ada <?= $overdue_count ?> tugas terlambat</h5>
+                                <p class="mb-0 text-muted">Tugas-tugas ini melewati batas waktu dan perlu segera diselesaikan.</p>
+                            </div>
+                        </div>
+                        <a href="overdue.php" class="btn btn-danger-soft rounded-pill px-4">
+                            <i class="bi bi-eye me-2"></i>Lihat Semua
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php endif; ?>
+
         <div class="row g-4">
             
+            <!-- Projects Section -->
             <div class="col-xl-8">
                 <div class="d-flex justify-content-between align-items-center mb-4 px-1">
                     <h4 class="fw-bold mb-0" style="color: var(--text-dark);">Proyek Aktif</h4>
@@ -767,7 +870,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <h4 class="fw-bold" style="color: var(--text-dark);">Ruang kerja masih kosong</h4>
                         <p class="text-muted mb-4">Buat proyek pertamamu untuk mulai berkolaborasi.</p>
                         <div>
-                            <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#newProjectModal">
+                            <button class="btn btn-primary rounded-pill px-4" onclick="openNewProjectModal()">
                                 <i class="bi bi-plus-lg me-2"></i>Buat Proyek
                             </button>
                         </div>
@@ -777,46 +880,66 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <?php foreach (array_slice($projects, 0, 4) as $project): ?>
                             <?php $p_stats = getProjectStats($project['id']); ?>
                             <div class="col-md-6">
-                                <div class="card project-card mb-0" onclick="window.location.href='project.php?id=<?= $project['id'] ?>'">
+                                <div class="project-card" onclick="window.location.href='project.php?id=<?= $project['id'] ?>'">
                                     
                                     <div class="d-flex justify-content-between align-items-start">
-                                        <h5 class="project-title text-truncate pe-3"><?= htmlspecialchars($project['name']) ?></h5>
-                                        <?php if ($is_admin): ?>
-                                            <span class="badge bg-light text-muted border"><i class="bi bi-people-fill me-1"></i><?= $project['total_members'] ?? 0 ?></span>
+                                        <h5 class="project-title"><?= htmlspecialchars($project['name']) ?></h5>
+                                        <?php if ($is_admin && isset($project['total_members'])): ?>
+                                            <span class="badge bg-light text-muted border">
+                                                <i class="bi bi-people-fill me-1"></i><?= $project['total_members'] ?>
+                                            </span>
                                         <?php endif; ?>
                                     </div>
                                     
-                                    <p class="project-desc"><?= htmlspecialchars($project['description'] ?: 'Tidak ada deskripsi detail untuk proyek ini.') ?></p>
+                                    <p class="project-desc">
+                                        <?= htmlspecialchars($project['description'] ?: 'Tidak ada deskripsi') ?>
+                                    </p>
                                     
+                                    <!-- Progress Bar -->
                                     <div class="mt-auto">
-                                        <div>
-                                            <div class="d-flex justify-content-between align-items-end mb-1">
-                                                <span class="fw-bold" style="color: var(--text-dark); font-size: 0.8rem;">Progress</span>
-                                                <span class="fw-bold" style="color: var(--primary); font-size: 0.8rem;"><?= $p_stats['progress'] ?>%</span>
-                                            </div>
-                                            <div class="progress-wrapper">
-                                                <div class="progress-fill" style="width: <?= $p_stats['progress'] ?>%"></div>
-                                            </div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <small class="text-muted">Progress</small>
+                                            <small class="fw-bold" style="color: var(--primary);"><?= $p_stats['progress'] ?>%</small>
                                         </div>
-                                        
-                                        <div class="mini-stats">
-                                            <div class="mini-stat-item">
-                                                <span>TO DO</span>
-                                                <strong><?= $p_stats['todo'] ?></strong>
-                                            </div>
-                                            <div style="width: 1px; background: var(--border-color);"></div>
-                                            <div class="mini-stat-item">
-                                                <span>ON GOING</span>
-                                                <strong style="color: var(--warning);"><?= $p_stats['in_progress'] ?></strong>
-                                            </div>
-                                            <div style="width: 1px; background: var(--border-color);"></div>
-                                            <div class="mini-stat-item">
-                                                <span>DONE</span>
-                                                <strong style="color: var(--success);"><?= $p_stats['done'] ?></strong>
-                                            </div>
+                                        <div class="progress-wrapper">
+                                            <div class="progress-fill" style="width: <?= $p_stats['progress'] ?>%"></div>
                                         </div>
                                     </div>
-
+                                    
+                                    <!-- Mini Stats -->
+                                    <div class="mini-stats">
+                                        <div class="mini-stat-item">
+                                            <span>To Do</span>
+                                            <strong><?= $p_stats['todo'] ?></strong>
+                                        </div>
+                                        <div style="width: 1px; background: var(--border-color);"></div>
+                                        <div class="mini-stat-item">
+                                            <span>Progress</span>
+                                            <strong style="color: var(--warning);"><?= $p_stats['in_progress'] ?></strong>
+                                        </div>
+                                        <div style="width: 1px; background: var(--border-color);"></div>
+                                        <div class="mini-stat-item">
+                                            <span>Selesai</span>
+                                            <strong style="color: var(--success);"><?= $p_stats['done'] ?></strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Creator Info (untuk admin) -->
+                                    <?php if ($is_admin && isset($project['creator_name'])): ?>
+                                        <div class="small text-muted mt-2">
+                                            <i class="bi bi-person"></i> Dibuat oleh: <?= htmlspecialchars($project['creator_name']) ?>
+                                        </div>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Overdue Badge -->
+                                    <?php if ($p_stats['overdue'] > 0): ?>
+                                        <div class="mt-2">
+                                            <span class="badge bg-danger">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                <?= $p_stats['overdue'] ?> tugas terlambat
+                                            </span>
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         <?php endforeach; ?>
@@ -824,12 +947,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 <?php endif; ?>
             </div>
             
+            <!-- Right Column: Deadlines & Activities -->
             <div class="col-xl-4 d-flex flex-column gap-4">
                 
+                <!-- Upcoming Deadlines -->
                 <div class="card flex-fill mb-0">
                     <div class="card-header d-flex justify-content-between align-items-center">
-                        <span>Pekerjaan Mendesak</span>
-                        <span class="badge bg-danger-light text-danger rounded-pill"><?= count($deadlines) ?></span>
+                        <span><i class="bi bi-calendar-check me-2" style="color: var(--warning);"></i>Deadline Mendatang</span>
+                        <span class="badge bg-warning rounded-pill"><?= count($deadlines) ?></span>
                     </div>
                     <div class="card-body p-0">
                         <?php if (empty($deadlines)): ?>
@@ -843,24 +968,25 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <?php else: ?>
                             <div class="list-group list-group-flush" style="max-height: 350px; overflow-y: auto;">
                                 <?php foreach ($deadlines as $task): ?>
+                                    <?php 
+                                        $days_left = ceil((strtotime($task['due_date']) - time()) / 86400);
+                                        $is_critical = $days_left <= 2;
+                                    ?>
                                     <div class="list-group-item d-flex align-items-center gap-3">
-                                        <?php 
-                                            $is_late = strtotime($task['due_date']) < time();
-                                            $iconBg = $is_late ? 'var(--danger-light)' : 'var(--warning-light)';
-                                            $iconCol = $is_late ? 'var(--danger)' : 'var(--warning)';
-                                            $iconClass = $is_late ? 'bi-exclamation-triangle' : 'bi-hourglass-split';
-                                        ?>
-                                        <div class="icon-circle-sm" style="background: <?= $iconBg ?>; color: <?= $iconCol ?>;">
-                                            <i class="bi <?= $iconClass ?>"></i>
+                                        <div class="icon-circle-sm" style="background: <?= $is_critical ? 'var(--danger-light)' : 'var(--warning-light)' ?>; color: <?= $is_critical ? 'var(--danger)' : 'var(--warning)' ?>;">
+                                            <i class="bi bi-hourglass-split"></i>
                                         </div>
                                         <div class="flex-grow-1 overflow-hidden">
-                                            <h6 class="fw-bold mb-1 text-truncate" style="color: var(--text-dark); font-size: 0.95rem;"><?= htmlspecialchars($task['title']) ?></h6>
+                                            <h6 class="fw-bold mb-1 text-truncate" style="color: var(--text-dark); font-size: 0.95rem;">
+                                                <?= htmlspecialchars($task['title']) ?>
+                                            </h6>
                                             <div class="d-flex align-items-center gap-2">
                                                 <span class="badge bg-light text-muted border fw-normal text-truncate" style="max-width: 100px;">
                                                     <?= htmlspecialchars($task['project_name']) ?>
                                                 </span>
-                                                <small class="fw-bold <?= $is_late ? 'text-danger' : 'text-warning' ?>">
+                                                <small class="fw-bold <?= $is_critical ? 'text-danger' : 'text-warning' ?>">
                                                     <?= date('d M', strtotime($task['due_date'])) ?>
+                                                    (<?= $days_left ?> hari)
                                                 </small>
                                             </div>
                                         </div>
@@ -871,20 +997,31 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     </div>
                 </div>
 
+                <!-- Recent Activities -->
                 <div class="card flex-fill mb-0">
-                    <div class="card-header">Aktivitas Terkini</div>
+                    <div class="card-header">
+                        <i class="bi bi-clock-history me-2" style="color: var(--primary);"></i>Aktivitas Terkini
+                    </div>
                     <div class="card-body p-0">
-                        <?php if (empty($notifications)): ?>
+                        <?php if (empty($recent_activities)): ?>
                             <div class="p-4 text-center text-muted small">Belum ada aktivitas.</div>
                         <?php else: ?>
                             <div class="list-group list-group-flush" style="max-height: 300px; overflow-y: auto;">
-                                <?php foreach (array_slice($notifications, 0, 5) as $activity): ?>
+                                <?php foreach ($recent_activities as $activity): ?>
                                     <div class="list-group-item d-flex gap-3">
-                                        <div class="mt-1" style="color: var(--primary);"><i class="bi bi-record-circle-fill" style="font-size: 0.8rem;"></i></div>
+                                        <div class="mt-1" style="color: var(--primary);">
+                                            <i class="bi bi-record-circle-fill" style="font-size: 0.8rem;"></i>
+                                        </div>
                                         <div>
-                                            <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;"><?= htmlspecialchars($activity['title']) ?></div>
-                                            <div class="text-muted mt-1" style="font-size: 0.85rem; line-height: 1.4;"><?= htmlspecialchars($activity['message']) ?></div>
-                                            <div class="text-muted mt-2 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;"><?= strtoupper(timeAgo($activity['created_at'])) ?></div>
+                                            <div class="fw-bold" style="color: var(--text-dark); font-size: 0.9rem;">
+                                                <?= htmlspecialchars($activity['title']) ?>
+                                            </div>
+                                            <div class="text-muted mt-1" style="font-size: 0.85rem; line-height: 1.4;">
+                                                <?= htmlspecialchars($activity['message']) ?>
+                                            </div>
+                                            <div class="text-muted mt-2 fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                                                <?= strtoupper(timeAgo($activity['created_at'])) ?>
+                                            </div>
                                         </div>
                                     </div>
                                 <?php endforeach; ?>
@@ -897,76 +1034,174 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </div>
 
-    <div class="modal fade" id="newProjectModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h4 class="modal-title fw-bold" style="color: var(--text-dark);">Buat Proyek Baru</h4>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <form id="newProjectForm" action="api/projects.php?action=create" method="POST">
-                    <div class="modal-body">
-                        <div class="mb-4">
-                            <label class="form-label text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Nama Proyek</label>
-                            <input type="text" class="form-control form-control-lg fs-6" name="name" required placeholder="Contoh: Redesign Aplikasi Mobile">
-                        </div>
-                        <div class="mb-2">
-                            <label class="form-label text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Deskripsi Opsional</label>
-                            <textarea class="form-control form-control-lg fs-6" name="description" rows="3" placeholder="Tujuan singkat proyek..."></textarea>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-link text-decoration-none fw-bold" data-bs-dismiss="modal" style="color: var(--text-muted);">Batal</button>
-                        <button type="submit" class="btn btn-primary px-4 rounded-pill">
-                            <span class="spinner-border spinner-border-sm d-none me-2"></span>Simpan Proyek
-                        </button>
-                    </div>
-                </form>
+    <!-- New Project Modal -->
+<div class="modal fade" id="newProjectModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title fw-bold" style="color: var(--text-dark);">Buat Proyek Baru</h4>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
+            <form id="newProjectForm" method="POST">
+                <div class="modal-body">
+                    <div class="mb-4">
+                        <label class="form-label text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">
+                            Nama Proyek
+                        </label>
+                        <input type="text" class="form-control form-control-lg fs-6" name="name" 
+                               required placeholder="Contoh: Redesign Aplikasi Mobile">
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label text-muted text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">
+                            Deskripsi Opsional
+                        </label>
+                        <textarea class="form-control form-control-lg fs-6" name="description" 
+                                  rows="3" placeholder="Tujuan singkat proyek..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-link text-decoration-none fw-bold" data-bs-dismiss="modal" style="color: var(--text-muted);">
+                        Batal
+                    </button>
+                    <button type="submit" class="btn btn-primary px-4 rounded-pill">
+                        <span class="spinner-border spinner-border-sm d-none me-2"></span>Simpan Proyek
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
+    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-4 mt-5" style="z-index: 9999;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script>
-        // Theme toggle functionality
+        // Theme Toggle
         function toggleTheme() {
             const html = document.documentElement;
             const currentTheme = html.getAttribute('data-theme');
             const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
             
-            // Update HTML attribute
             html.setAttribute('data-theme', newTheme);
             
-            // Update toggle button icon
             const themeIcon = document.querySelector('.theme-toggle i');
             if (themeIcon) {
                 themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
             }
             
-            // Save preference to cookie (expires in 30 days)
-            const date = new Date();
-            date.setTime(date.getTime() + (30 * 24 * 60 * 60 * 1000));
-            document.cookie = `theme=${newTheme}; expires=${date.toUTCString()}; path=/`;
+            document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set default theme if not set
-            const html = document.documentElement;
-            if (!html.getAttribute('data-theme')) {
-                html.setAttribute('data-theme', 'light');
-            }
+        // ========== OVERDUE COUNT FUNCTIONS ==========
+        function updateOverdueCount() {
+            fetch('api/overdue.php?action=count')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const badge = document.getElementById('overdueCountBadge');
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'inline-block';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(error => console.error('Error updating overdue count:', error));
+        }
+
+        // ========== NOTIFICATION FUNCTIONS ==========
+        function markAllNotificationsRead() {
+            fetch('api/notifications.php?action=mark_all_read', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                }
+            });
+        }
+
+        // ========== PROJECT FUNCTIONS ==========
+        function openNewProjectModal() {
+            const modal = new bootstrap.Modal(document.getElementById('newProjectModal'));
+            modal.show();
+        }
+
+        // New Project Form Submit
+document.getElementById('newProjectForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const form = this;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const spinner = submitBtn.querySelector('.spinner-border');
+    const originalText = submitBtn.innerHTML;
+    
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    
+    const formData = new FormData(form);
+    formData.append('action', 'create'); // Tambahkan action
+    
+    fetch('api/projects.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('newProjectModal')).hide();
+            showToast('Proyek berhasil dibuat!', 'success');
+            setTimeout(() => { window.location.href = 'project.php?id=' + data.project_id; }, 1000);
+        } else {
+            showToast(data.message || 'Gagal membuat proyek', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('Terjadi kesalahan sistem', 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+        submitBtn.innerHTML = originalText;
+    });
+});
+
+// Reset Modal on Hide
+document.getElementById('newProjectModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('newProjectForm').reset();
+});
+
+        // Reset Modal on Hide
+        document.getElementById('newProjectModal').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('newProjectForm').reset();
         });
 
-        // Toast Function
-        function showToast(type, message) {
+        // ========== TOAST NOTIFICATION ==========
+        function showToast(message, type = 'success') {
             const container = document.querySelector('.toast-container');
+            if (!container) return;
+
             const toast = document.createElement('div');
+            let bgClass, iconClass;
             
-            const isSuccess = type === 'success';
-            const bgClass = isSuccess ? 'bg-success' : 'bg-danger';
-            const iconClass = isSuccess ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill';
+            switch(type) {
+                case 'success':
+                    bgClass = 'bg-success';
+                    iconClass = 'bi-check-circle-fill';
+                    break;
+                case 'danger':
+                    bgClass = 'bg-danger';
+                    iconClass = 'bi-exclamation-triangle-fill';
+                    break;
+                default:
+                    bgClass = 'bg-primary';
+                    iconClass = 'bi-info-circle-fill';
+            }
             
             toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
             toast.style.borderRadius = '12px';
@@ -974,55 +1209,25 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             toast.innerHTML = `
                 <div class="d-flex p-2">
                     <div class="toast-body fw-bold fs-6">
-                        <i class="bi ${iconClass} me-2 fs-5" style="vertical-align: -2px;"></i>${message}
+                        <i class="bi ${iconClass} me-2 fs-5"></i>${message}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
             `;
+            
             container.appendChild(toast);
             const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
             bsToast.show();
             toast.addEventListener('hidden.bs.toast', () => toast.remove());
         }
 
-        // Form Submit
-        document.getElementById('newProjectForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = this;
-            const submitBtn = form.querySelector('button[type="submit"]');
-            const spinner = submitBtn.querySelector('.spinner-border');
-            const originalText = submitBtn.innerText;
-            
-            submitBtn.disabled = true;
-            spinner.classList.remove('d-none');
-            
-            fetch(form.action, {
-                method: 'POST',
-                body: new FormData(form)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('newProjectModal')).hide();
-                    showToast('success', 'Proyek berhasil dibuat!');
-                    setTimeout(() => { window.location.href = 'project.php?id=' + data.project_id; }, 1000);
-                } else {
-                    showToast('danger', data.message || 'Gagal membuat proyek');
-                    submitBtn.disabled = false;
-                    spinner.classList.add('d-none');
-                }
-            })
-            .catch(error => {
-                showToast('danger', 'Terjadi kesalahan sistem');
-                submitBtn.disabled = false;
-                spinner.classList.add('d-none');
-            });
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateOverdueCount();
         });
 
-        // Reset Modal
-        document.getElementById('newProjectModal').addEventListener('hidden.bs.modal', function () {
-            document.getElementById('newProjectForm').reset();
-        });
+        // Update overdue count every 5 minutes
+        setInterval(updateOverdueCount, 300000);
     </script>
 </body>
 </html>
