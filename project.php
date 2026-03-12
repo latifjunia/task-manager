@@ -11,11 +11,11 @@ $user_id = $_SESSION['user_id'];
 
 if (!hasProjectAccess($project_id, $user_id)) {
     $_SESSION['error'] = 'Anda tidak memiliki akses ke proyek ini';
-    redirect('index.php');
+    redirect('dashboard.php');
 }
 
 $project = getProjectById($project_id);
-if (!$project) redirect('index.php');
+if (!$project) redirect('dashboard.php');
 
 $members = getProjectMembers($project_id);
 $user_role = getUserProjectRole($project_id, $user_id);
@@ -43,591 +43,153 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     
     <style>
         :root {
-            --primary: #6366f1;
-            --primary-hover: #4f46e5;
-            --primary-light: #e0e7ff;
-            --secondary: #ec4899;
-            
-            --bg-body: #f8fafc;
-            --bg-gradient: linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
-            --surface: #ffffff;
-            --surface-hover: #f1f5f9;
-            
-            --text-dark: #0f172a;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            
-            --border-color: rgba(226, 232, 240, 0.8);
-            --border-color-solid: #e2e8f0;
-            
-            --kanban-bg: rgba(241, 245, 249, 0.7);
-            --task-count-bg: white;
-            --task-shadow: 0 2px 8px rgba(0,0,0,0.04);
-            --task-hover-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
-            
-            --danger: #ef4444;
-            --danger-light: #fee2e2;
-            --success: #10b981;
-            --warning: #f59e0b;
-            
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
-            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03);
-            --shadow-hover: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
-            
-            --scrollbar-thumb: #cbd5e1;
-            --scrollbar-track: transparent;
+            --primary: #6366f1; --primary-hover: #4f46e5; --primary-light: #e0e7ff; --secondary: #ec4899;
+            --bg-body: #f8fafc; --bg-gradient: linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
+            --surface: #ffffff; --surface-hover: #f1f5f9; --text-dark: #0f172a; --text-main: #334155; --text-muted: #64748b;
+            --border-color: rgba(226, 232, 240, 0.8); --border-color-solid: #e2e8f0;
+            --kanban-bg: rgba(241, 245, 249, 0.7); --task-count-bg: white;
+            --task-shadow: 0 2px 8px rgba(0,0,0,0.04); --task-hover-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
+            --danger: #ef4444; --danger-light: #fee2e2; --success: #10b981; --warning: #f59e0b;
+            --radius-lg: 24px; --radius-md: 16px; --radius-sm: 12px;
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.03); --shadow-hover: 0 15px 30px -10px rgba(99, 102, 241, 0.15);
+            --scrollbar-thumb: #cbd5e1; --scrollbar-track: transparent;
         }
 
         [data-theme="dark"] {
-            --primary: #818cf8;
-            --primary-hover: #6366f1;
-            --primary-light: #1e1b4b;
-            --secondary: #f472b6;
-            
-            --bg-body: #0f172a;
-            --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
-            --surface: #1e293b;
-            --surface-hover: #334155;
-            
-            --text-dark: #f1f5f9;
-            --text-main: #cbd5e1;
-            --text-muted: #94a3b8;
-            
-            --border-color: rgba(51, 65, 85, 0.8);
-            --border-color-solid: #334155;
-            
-            --kanban-bg: rgba(30, 41, 59, 0.7);
-            --task-count-bg: #1e293b;
-            --task-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            --task-hover-shadow: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
-            
-            --danger: #ef4444;
-            --danger-light: #450a0a;
-            --success: #10b981;
-            --warning: #f59e0b;
-            
-            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.2);
-            --shadow-hover: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
-            
-            --scrollbar-thumb: #475569;
-            --scrollbar-track: transparent;
+            --primary: #818cf8; --primary-hover: #6366f1; --primary-light: #1e1b4b; --secondary: #f472b6;
+            --bg-body: #0f172a; --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
+            --surface: #1e293b; --surface-hover: #334155; --text-dark: #f1f5f9; --text-main: #cbd5e1; --text-muted: #94a3b8;
+            --border-color: rgba(51, 65, 85, 0.8); --border-color-solid: #334155;
+            --kanban-bg: rgba(30, 41, 59, 0.7); --task-count-bg: #1e293b;
+            --task-shadow: 0 2px 8px rgba(0,0,0,0.2); --task-hover-shadow: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
+            --danger: #ef4444; --danger-light: #450a0a; --success: #10b981; --warning: #f59e0b;
+            --shadow-soft: 0 10px 40px -10px rgba(0,0,0,0.2); --shadow-hover: 0 15px 30px -10px rgba(129, 140, 248, 0.2);
+            --scrollbar-thumb: #475569; --scrollbar-track: transparent;
         }
 
-        body {
-            background: var(--bg-gradient);
-            font-family: 'Outfit', sans-serif;
-            color: var(--text-main);
-            -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-            transition: background 0.3s ease, color 0.3s ease;
-        }
-
+        body { background: var(--bg-gradient); font-family: 'Outfit', sans-serif; color: var(--text-main); -webkit-font-smoothing: antialiased; overflow-x: hidden; transition: background 0.3s ease, color 0.3s ease; }
+        
         /* Navbar */
-        .navbar {
-            background: rgba(255,255,255,0.75);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            transition: background 0.3s ease;
-        }
-        
-        [data-theme="dark"] .navbar {
-            background: rgba(30, 41, 59, 0.75);
-        }
-        
-        .navbar-brand { 
-            font-weight: 700; 
-            font-size: 1.3rem; 
-            color: var(--text-dark) !important; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-            letter-spacing: -0.5px;
-        }
-        
-        .brand-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.2rem;
-            box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3);
-        }
+        .navbar { background: rgba(var(--surface-rgb, 255,255,255), 0.75); backdrop-filter: blur(16px); border-bottom: 1px solid var(--border-color); padding: 1rem 0; position: sticky; top: 0; z-index: 1000; transition: background 0.3s ease; }
+        [data-theme="dark"] .navbar { background: rgba(30, 41, 59, 0.75); }
+        .navbar-brand { font-weight: 700; font-size: 1.3rem; color: var(--text-dark) !important; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px; }
+        .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, var(--primary), var(--secondary)); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.2rem; box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3); }
 
-        .btn-primary { 
-            background: var(--primary); 
-            border: none; 
-            font-weight: 600; 
-            padding: 0.6rem 1.2rem; 
-            border-radius: 12px; 
-            transition: all 0.3s; 
-            color: white;
-        }
-        .btn-primary:hover { 
-            background: var(--primary-hover); 
-            transform: translateY(-2px); 
-            box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); 
-        }
+        .btn-primary { background: var(--primary); border: none; font-weight: 600; padding: 0.6rem 1.2rem; border-radius: 12px; transition: all 0.3s; color: white; }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 6px 15px rgba(99, 102, 241, 0.3); color:white; }
 
-        .theme-toggle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface);
-            border: 1px solid var(--border-color-solid);
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-        }
-        
-        .theme-toggle:hover {
-            transform: rotate(15deg);
-            background: var(--primary-light);
-            color: var(--primary);
-        }
+        .theme-toggle { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border-color-solid); color: var(--text-main); cursor: pointer; transition: all 0.3s ease; margin-right: 10px; }
+        .theme-toggle:hover { transform: rotate(15deg); background: var(--primary-light); color: var(--primary); }
 
-        .project-action-btn {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface);
-            border: 1px solid var(--border-color-solid);
-            color: var(--text-muted);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .project-action-btn:hover {
-            background: var(--surface-hover);
-            color: var(--primary);
-            transform: rotate(90deg);
-        }
+        .project-action-btn { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--surface); border: 1px solid var(--border-color-solid); color: var(--text-muted); cursor: pointer; transition: all 0.3s ease; }
+        .project-action-btn:hover { background: var(--surface-hover); color: var(--primary); transform: rotate(90deg); }
 
-        .members-btn {
-            background: var(--surface);
-            border: 1px solid var(--border-color-solid);
-            color: var(--text-main);
-            padding: 0.5rem 1rem;
-            border-radius: 30px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-        
-        .members-btn:hover {
-            background: var(--primary-light);
-            color: var(--primary);
-            border-color: var(--primary);
-        }
+        .members-btn { background: var(--surface); border: 1px solid var(--border-color-solid); color: var(--text-main); padding: 0.5rem 1rem; border-radius: 30px; font-weight: 500; transition: all 0.3s ease; }
+        .members-btn:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+        .member-item { transition: background 0.2s ease; border-radius: 8px; }
+        .member-item:hover { background: var(--surface-hover) !important; }
 
-        .member-item {
-            transition: background 0.2s ease;
-            border-radius: 8px;
-        }
-        .member-item:hover {
-            background: var(--surface-hover) !important;
-        }
-
-        .stats-card {
-            background: var(--surface);
-            border-radius: var(--radius-md);
-            padding: 1.25rem 1.5rem;
-            border: 1px solid var(--border-color);
-            transition: transform 0.2s, box-shadow 0.2s, background 0.3s ease;
-            box-shadow: var(--shadow-soft);
-        }
-        .stats-card:hover { 
-            transform: translateY(-3px); 
-            box-shadow: var(--shadow-hover);
-            background: var(--surface-hover);
-        }
+        .stats-card { background: var(--surface); border-radius: var(--radius-md); padding: 1.25rem 1.5rem; border: 1px solid var(--border-color); transition: transform 0.2s, box-shadow 0.2s, background 0.3s ease; box-shadow: var(--shadow-soft); }
+        .stats-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-hover); background: var(--surface-hover); }
         .stats-label { color: var(--text-muted); font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
         .stats-value { font-size: 1.75rem; font-weight: 700; margin-top: 0.2rem; color: var(--text-dark); line-height: 1;}
-
-        .progress { 
-            height: 8px; 
-            border-radius: 8px; 
-            background: var(--border-color-solid); 
-            overflow: hidden; 
-        }
+        .progress { height: 8px; border-radius: 8px; background: var(--border-color-solid); overflow: hidden; }
         .progress-bar { background: var(--primary); border-radius: 8px; }
 
-        /* Kanban Board */
-        .kanban-board-container {
-            display: flex;
-            gap: 1.5rem;
-            overflow-x: auto;
-            padding-bottom: 2rem;
-            min-height: 70vh;
-            scrollbar-width: thin;
-            scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+        /* Filter Section */
+        .filter-section {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-soft);
         }
+        .input-group-text {
+            background: var(--surface-hover);
+            border-color: var(--border-color);
+            color: var(--text-muted);
+        }
+
+        /* Kanban Board */
+        .kanban-board-container { display: flex; gap: 1.5rem; overflow-x: auto; padding-bottom: 2rem; min-height: 70vh; scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
         .kanban-board-container::-webkit-scrollbar { height: 8px; }
         .kanban-board-container::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-        .kanban-board-container::-webkit-scrollbar-thumb { 
-            background-color: var(--scrollbar-thumb); 
-            border-radius: 20px;
-        }
-
-        .kanban-column-wrapper {
-            min-width: 320px;
-            max-width: 320px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .kanban-column {
-            background: var(--kanban-bg);
-            border-radius: var(--radius-lg);
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            border: 1px solid var(--border-color);
-            height: 100%;
-            backdrop-filter: blur(8px);
-            transition: background 0.3s ease;
-        }
-
-        .column-header {
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            margin-bottom: 1rem; 
-            padding: 0.5rem;
-        }
-
-        .column-header-with-menu {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .column-menu-btn {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            transition: all 0.2s;
-        }
-
-        .column-menu-btn:hover {
-            background: var(--surface-hover);
-            color: var(--primary);
-        }
-
-        .column-title { 
-            font-weight: 700; 
-            font-size: 1.05rem; 
-            color: var(--text-dark); 
-            display: flex; 
-            align-items: center; 
-            gap: 8px; 
-        }
-        
-        .task-count {
-            background: var(--task-count-bg); 
-            color: var(--primary); 
-            font-size: 0.75rem; 
-            font-weight: 700;
-            padding: 2px 10px; 
-            border-radius: 12px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        .custom-column-badge {
-            font-size: 0.6rem;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: var(--surface-hover);
-            color: var(--text-muted);
-            margin-left: 5px;
-        }
+        .kanban-board-container::-webkit-scrollbar-thumb { background-color: var(--scrollbar-thumb); border-radius: 20px; }
+        .kanban-column-wrapper { min-width: 320px; max-width: 320px; display: flex; flex-direction: column; }
+        .kanban-column { background: var(--kanban-bg); border-radius: var(--radius-lg); padding: 1rem; display: flex; flex-direction: column; border: 1px solid var(--border-color); height: 100%; backdrop-filter: blur(8px); transition: background 0.3s ease; }
+        .column-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0.5rem; }
+        .column-header-with-menu { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .column-menu-btn { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: var(--text-muted); transition: all 0.2s; }
+        .column-menu-btn:hover { background: var(--surface-hover); color: var(--primary); }
+        .column-title { font-weight: 700; font-size: 1.05rem; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .task-count { background: var(--task-count-bg); color: var(--primary); font-size: 0.75rem; font-weight: 700; padding: 2px 10px; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .custom-column-badge { font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; background: var(--surface-hover); color: var(--text-muted); margin-left: 5px; }
 
         .task-list { flex: 1; overflow-y: auto; padding: 4px; min-height: 150px; }
         
-        .task-card {
-            background: var(--surface);
-            border-radius: var(--radius-sm);
-            padding: 1.25rem;
-            margin-bottom: 1rem;
-            box-shadow: var(--task-shadow);
-            border: 1px solid var(--border-color);
-            cursor: grab;
-            transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 0.1);
-            position: relative;
-        }
-        .task-card:hover { 
-            box-shadow: var(--task-hover-shadow); 
-            border-color: var(--primary); 
-            transform: translateY(-2px); 
-            background: var(--surface-hover);
-        }
+        .task-card { background: var(--surface); border-radius: var(--radius-sm); padding: 1.25rem; margin-bottom: 1rem; box-shadow: var(--task-shadow); border: 1px solid var(--border-color); cursor: grab; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 0.1); position: relative; }
+        .task-card:hover { box-shadow: var(--task-hover-shadow); border-color: var(--primary); transform: translateY(-2px); background: var(--surface-hover); }
         .task-card:active { cursor: grabbing; transform: scale(0.98); }
-
-        .task-title { 
-            font-weight: 600; 
-            font-size: 1rem; 
-            line-height: 1.3; 
-            margin-bottom: 0.5rem; 
-            color: var(--text-dark); 
-        }
-        .task-desc { 
-            color: var(--text-muted); 
-            font-size: 0.85rem; 
-            display: -webkit-box; 
-            -webkit-line-clamp: 2; 
-            -webkit-box-orient: vertical; 
-            overflow: hidden; 
-            margin-bottom: 1rem; 
-        }
-
-        .task-meta { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center; 
-            margin-top: 0.5rem; 
-        }
-
-        .badge-soft { 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            font-size: 0.7rem; 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px;
-        }
         
+        .task-title { font-weight: 600; font-size: 1rem; line-height: 1.3; margin-bottom: 0.5rem; color: var(--text-dark); }
+        .task-desc { color: var(--text-muted); font-size: 0.85rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 1rem; }
+        .task-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+
+        .badge-soft { padding: 4px 10px; border-radius: 6px; font-weight: 600; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; }
         [data-theme="light"] .badge-priority-low { background: #dcfce7; color: #166534; }
         [data-theme="light"] .badge-priority-medium { background: #fef9c3; color: #854d0e; }
         [data-theme="light"] .badge-priority-high { background: #ffedd5; color: #9a3412; }
         [data-theme="light"] .badge-priority-urgent { background: #fee2e2; color: #991b1b; }
-        
         [data-theme="dark"] .badge-priority-low { background: #14532d; color: #86efac; }
         [data-theme="dark"] .badge-priority-medium { background: #713f12; color: #fde047; }
         [data-theme="dark"] .badge-priority-high { background: #7c2d12; color: #fdba74; }
         [data-theme="dark"] .badge-priority-urgent { background: #7f1d1d; color: #fca5a5; }
 
-        .avatar-circle {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 0.75rem; font-weight: 600;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-        }
+        .avatar-circle { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: 600; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.2s; }
         .avatar-group { display: flex; align-items: center; }
-        .avatar-group .avatar-circle { 
-            border: 2px solid var(--surface); 
-            margin-left: -10px; 
-            transition: 0.2s; 
-        }
-        .avatar-group .avatar-circle:hover { 
-            z-index: 10; 
-            transform: translateY(-2px); 
-        }
+        .avatar-group .avatar-circle { border: 2px solid var(--surface); margin-left: -10px; transition: 0.2s; }
+        .avatar-group .avatar-circle:hover { z-index: 10; transform: translateY(-2px); }
 
-        .due-date { 
-            font-size: 0.75rem; 
-            color: var(--text-muted); 
-            display: flex; 
-            align-items: center; 
-            gap: 4px; 
-            font-weight: 500;
-        }
-        .due-date.overdue { 
-            color: var(--danger); 
-            font-weight: 600; 
-            background: var(--danger-light); 
-            padding: 2px 8px; 
-            border-radius: 6px;
-        }
+        .due-date { font-size: 0.75rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; font-weight: 500; }
+        .due-date.overdue { color: var(--danger); font-weight: 600; background: var(--danger-light); padding: 2px 8px; border-radius: 6px; }
 
-        .sortable-ghost { 
-            opacity: 0.4; 
-            background: var(--primary-light); 
-            border: 2px dashed var(--primary); 
-            border-radius: var(--radius-sm); 
-        }
-        .sortable-chosen { 
-            background: var(--surface); 
-            box-shadow: var(--shadow-hover); 
-        }
+        .sortable-ghost { opacity: 0.4; background: var(--primary-light); border: 2px dashed var(--primary); border-radius: var(--radius-sm); }
+        .sortable-chosen { background: var(--surface); box-shadow: var(--shadow-hover); }
 
-        /* Modals */
-        .modal-content { 
-            border-radius: var(--radius-lg); 
-            border: 1px solid var(--border-color);
-            background: var(--surface);
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
-        }
-        .modal-header { 
-            border-bottom: 1px solid var(--border-color); 
-            padding: 1.5rem 2rem; 
-            background: var(--surface); 
-            border-radius: var(--radius-lg) var(--radius-lg) 0 0; 
-        }
+        /* Modals & Form Controls */
+        .modal-content { border-radius: var(--radius-lg); border: 1px solid var(--border-color); background: var(--surface); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); }
+        .modal-header { border-bottom: 1px solid var(--border-color); padding: 1.5rem 2rem; background: var(--surface); border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
         .modal-header .modal-title { color: var(--text-dark); }
-        
-        [data-theme="dark"] .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%);
-        }
-        
+        [data-theme="dark"] .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
         .modal-body { padding: 2rem; }
-        .modal-footer { 
-            border-top: 1px solid var(--border-color); 
-            padding: 1.5rem 2rem; 
-            background: var(--surface-hover); 
-            border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-        }
+        .modal-footer { border-top: 1px solid var(--border-color); padding: 1.5rem 2rem; background: var(--surface-hover); border-radius: 0 0 var(--radius-lg) var(--radius-lg); }
         
-        .form-control, .form-select { 
-            border-radius: 12px; 
-            padding: 0.8rem 1rem; 
-            border: 1px solid var(--border-color); 
-            background: var(--surface-hover);
-            color: var(--text-dark);
-            transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
-        }
-        .form-control:focus, .form-select:focus { 
-            background: var(--surface); 
-            border-color: var(--primary); 
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); 
-            color: var(--text-dark);
-        }
-        .form-control::placeholder {
-            color: var(--text-muted);
-        }
-        .form-label { 
-            font-weight: 600; 
-            font-size: 0.85rem; 
-            color: var(--text-muted); 
-            text-transform: uppercase; 
-            letter-spacing: 0.5px; 
-        }
+        .form-control, .form-select { border-radius: 12px; padding: 0.8rem 1rem; border: 1px solid var(--border-color); background: var(--surface-hover); color: var(--text-dark); transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease; }
+        .form-control:focus, .form-select:focus { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); color: var(--text-dark); outline: none; }
+        .form-control::placeholder { color: var(--text-muted); }
+        .form-label { font-weight: 600; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
 
-        /* Dropdown */
-        .dropdown-menu {
-            background: var(--surface);
-            border-color: var(--border-color);
-            border-radius: 12px;
-            box-shadow: var(--shadow-hover);
-            padding: 0.5rem;
-        }
+        .dropdown-menu { background: var(--surface); border-color: var(--border-color); border-radius: 12px; box-shadow: var(--shadow-hover); padding: 0.5rem; }
+        .dropdown-item { color: var(--text-main); border-radius: 8px; padding: 0.6rem 1rem; font-weight: 500; transition: all 0.2s; }
+        .dropdown-item:hover { background: var(--surface-hover); color: var(--text-dark); }
+        .dropdown-item.text-danger:hover { background: var(--danger-light); color: var(--danger) !important; }
+        .dropdown-divider { border-color: var(--border-color); margin: 0.5rem 0; }
+        .dropdown-header { color: var(--text-muted); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; padding: 0.5rem 1rem; }
+
+        .color-option { transition: transform 0.2s, border-color 0.2s; }
+        .color-option:hover, .color-option.selected { transform: scale(1.1); border-color: var(--primary) !important; }
+        .toast { background: var(--surface) !important; color: var(--text-dark) !important; border: 1px solid var(--border-color) !important; }
+        .divider-vertical { height: 30px; width: 1px; background: var(--border-color); margin: 0 15px; }
         
-        .dropdown-item {
-            color: var(--text-main);
-            border-radius: 8px;
-            padding: 0.6rem 1rem;
-            font-weight: 500;
-            transition: all 0.2s;
-        }
-        
-        .dropdown-item:hover {
-            background: var(--surface-hover);
-            color: var(--text-dark);
-        }
-        
-        .dropdown-item.text-danger:hover {
-            background: var(--danger-light);
-            color: var(--danger) !important;
-        }
-        
-        .dropdown-divider {
-            border-color: var(--border-color);
-            margin: 0.5rem 0;
-        }
-
-        .dropdown-header {
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            padding: 0.5rem 1rem;
-        }
-
-        /* Color Picker */
-        .color-option {
-            transition: transform 0.2s, border-color 0.2s;
-        }
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-        .color-option.selected {
-            border-color: var(--primary) !important;
-            transform: scale(1.1);
-        }
-
-        /* Toast */
-        .toast {
-            background: var(--surface) !important;
-            color: var(--text-dark) !important;
-            border: 1px solid var(--border-color) !important;
-        }
-
-        .divider-vertical {
-            height: 30px;
-            width: 1px;
-            background: var(--border-color);
-            margin: 0 15px;
-        }
-
-        .search-input {
-            padding-left: 45px;
-            background: var(--surface-hover);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-dark);
-            transition: all 0.3s ease;
-        }
-        
-        .search-input:focus {
-            background: var(--surface);
-            border-color: var(--primary);
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-            outline: none;
-        }
-        
-        .search-icon {
-            position: absolute;
-            left: 15px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            z-index: 10;
-        }
-
-        @keyframes highlight {
-            0% { transform: scale(1); background-color: var(--primary-light); }
-            50% { transform: scale(1.02); background-color: var(--primary-light); border-color: var(--primary); }
-            100% { transform: scale(1); background-color: var(--surface); }
-        }
+        .search-input { padding-left: 45px; background: var(--surface-hover); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-dark); transition: all 0.3s ease; }
+        .search-input:focus { background: var(--surface); border-color: var(--primary); box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); outline: none; }
+        .search-icon { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: var(--text-muted); z-index: 10; }
 
         @media (max-width: 768px) {
-            .navbar-brand span:not(.brand-icon) {
-                display: none;
-            }
-            
-            .members-btn span {
-                display: none;
-            }
+            .navbar-brand span:not(.brand-icon) { display: none; }
+            .members-btn span { display: none; }
+            .filter-section .col-md-3, .filter-section .col-md-4, .filter-section .col-md-2 { margin-bottom: 0.5rem; }
         }
     </style>
 </head>
@@ -635,7 +197,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
     <nav class="navbar">
         <div class="container-fluid px-lg-5">
-            <a class="navbar-brand" href="index.php">
+            <a class="navbar-brand" href="dashboard.php">
                 <i class="bi bi-arrow-left me-2" style="color: var(--text-muted);" 
                    onmouseover="this.style.color='var(--primary)'" 
                    onmouseout="this.style.color='var(--text-muted)'"></i>
@@ -644,12 +206,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             </a>
             
             <div class="d-flex align-items-center ms-auto gap-3">
-                <!-- Theme Toggle -->
                 <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
                     <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
                 </div>
                 
-                <!-- Members Dropdown -->
                 <?php if ($is_admin): ?>
                 <div class="dropdown">
                     <button class="members-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
@@ -658,9 +218,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <span class="badge bg-primary rounded-pill"><?= count($members) ?></span>
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end p-2" style="min-width: 320px;">
-                        <li>
-                            <h6 class="dropdown-header">Daftar Anggota</h6>
-                        </li>
+                        <li><h6 class="dropdown-header">Daftar Anggota</h6></li>
                         <li>
                             <div class="px-2" style="max-height: 350px; overflow-y: auto;">
                                 <?php foreach ($members as $member): ?>
@@ -718,7 +276,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                 <?php endforeach; ?>
                             </div>
                         </li>
-                        
                         <?php if ($is_admin): ?>
                         <li><hr class="dropdown-divider"></li>
                         <li class="p-2">
@@ -731,7 +288,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 </div>
                 <?php endif; ?>
                 
-                <!-- Project Actions -->
                 <?php if ($is_owner || $is_admin): ?>
                 <div class="dropdown">
                     <button class="project-action-btn" type="button" data-bs-toggle="dropdown">
@@ -753,7 +309,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 </div>
                 <?php endif; ?>
                 
-                <!-- Avatar Group -->
                 <div class="avatar-group d-none d-md-flex">
                     <?php 
                     $display_members = array_slice($members, 0, 4);
@@ -782,7 +337,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
     <div class="container-fluid px-lg-5 py-4">
         
-        <!-- Stats Cards -->
         <div class="row g-4 mb-4">
             <div class="col-6 col-md-3">
                 <div class="stats-card">
@@ -813,9 +367,42 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             </div>
         </div>
 
-        <!-- Kanban Board Header -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h5 class="fw-bold" style="color: var(--text-dark);">Kanban Board</h5>
+        <div class="filter-section">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text border-end-0 bg-transparent"><i class="bi bi-search text-muted"></i></span>
+                        <input type="text" id="searchTask" class="form-control border-start-0 ps-0 bg-transparent" placeholder="Cari tugas (judul/deskripsi)..." onkeyup="filterTasks()">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterPriority" class="form-select" onchange="filterTasks()">
+                        <option value="">Semua Prioritas</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select id="filterAssignee" class="form-select" onchange="filterTasks()">
+                        <option value="">Semua Anggota</option>
+                        <option value="unassigned">Belum Ditugaskan</option>
+                        <?php foreach ($members as $member): ?>
+                            <option value="<?= $member['id'] ?>"><?= htmlspecialchars($member['full_name']) ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-light w-100 border text-muted" onclick="resetFilters()">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3 mt-4">
+            <h5 class="fw-bold mb-0" style="color: var(--text-dark);">Kanban Board</h5>
             <?php if ($is_admin): ?>
             <button class="btn btn-sm btn-outline-primary rounded-pill px-3" onclick="openAddColumnModal()">
                 <i class="bi bi-plus-lg me-1"></i>Tambah Kolom
@@ -823,7 +410,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             <?php endif; ?>
         </div>
 
-        <!-- Kanban Board Container -->
         <div class="kanban-board-container" id="kanbanBoard">
             <div class="text-center py-5 w-100">
                 <div class="spinner-border text-primary"></div>
@@ -832,7 +418,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </div>
 
-    <!-- Modal New Task -->
     <div class="modal fade" id="newTaskModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -878,15 +463,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Buat Tugas</button>
+                        <button type="button" class="btn btn-outline-secondary border-0" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Buat Tugas</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal Edit Project -->
     <div class="modal fade" id="editProjectModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -908,15 +492,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="button" class="btn btn-outline-secondary border-0" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal Add Column -->
     <div class="modal fade" id="columnModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -969,15 +552,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="submit" class="btn btn-primary">Simpan</button>
+                        <button type="button" class="btn btn-outline-secondary border-0" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary rounded-pill px-4">Simpan</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Modal Edit Column -->
     <div class="modal fade" id="editColumnModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -1013,7 +595,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         </select>
                     </div>
                     
-                    <!-- Container untuk tombol reset default column -->
                     <div id="resetDefaultColumnContainer" style="display: none;" class="mt-3">
                         <hr>
                         <button type="button" class="btn btn-outline-warning w-100" onclick="resetDefaultColumn()">
@@ -1026,15 +607,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <i class="bi bi-trash3 me-2"></i>Hapus Kolom
                     </button>
                     <div class="ms-auto">
-                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
-                        <button type="button" class="btn btn-primary" onclick="updateCurrentColumn()">Simpan</button>
+                        <button type="button" class="btn btn-outline-secondary border-0" data-bs-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-primary rounded-pill px-4" onclick="updateCurrentColumn()">Simpan</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Add Member -->
     <div class="modal fade" id="addMemberModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -1071,20 +651,18 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-outline-secondary border-0" data-bs-dismiss="modal">Tutup</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Task Detail -->
     <div class="modal fade" id="taskDetailModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content" id="taskDetailContent"></div>
         </div>
     </div>
 
-    <!-- Toast Container -->
     <div class="toast-container position-fixed top-0 end-0 p-4 mt-5" style="z-index: 9999;"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -1136,6 +714,67 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             }
         });
 
+        // ========== FILTER TASK FUNCTIONS ==========
+        
+        function filterTasks() {
+            const searchQuery = document.getElementById('searchTask').value.toLowerCase();
+            const filterPriority = document.getElementById('filterPriority').value;
+            const filterAssignee = document.getElementById('filterAssignee').value;
+
+            const taskCards = document.querySelectorAll('.task-card');
+
+            taskCards.forEach(card => {
+                if(!card.hasAttribute('data-task-id')) return;
+
+                const title = card.getAttribute('data-title');
+                const desc = card.getAttribute('data-desc');
+                const priority = card.getAttribute('data-priority');
+                const assignee = card.getAttribute('data-assignee');
+
+                // Cek kesesuaian filter
+                let matchSearch = title.includes(searchQuery) || desc.includes(searchQuery);
+                let matchPriority = filterPriority === '' || priority === filterPriority;
+                let matchAssignee = filterAssignee === '' || 
+                                    (filterAssignee === 'unassigned' && assignee === 'unassigned') || 
+                                    assignee === filterAssignee;
+
+                if (matchSearch && matchPriority && matchAssignee) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Update badge hitungan di tiap kolom setelah disaring
+            updateVisibleTaskCounts();
+        }
+
+        function resetFilters() {
+            document.getElementById('searchTask').value = '';
+            document.getElementById('filterPriority').value = '';
+            document.getElementById('filterAssignee').value = '';
+            filterTasks();
+        }
+
+        function updateVisibleTaskCounts() {
+            const columns = document.querySelectorAll('.kanban-column-wrapper');
+            columns.forEach(col => {
+                const columnId = col.getAttribute('data-column-id');
+                let visibleCount = 0;
+                
+                col.querySelectorAll('.task-card').forEach(c => {
+                    if (c.style.display !== 'none' && c.hasAttribute('data-task-id')) {
+                        visibleCount++;
+                    }
+                });
+                
+                const countBadge = document.getElementById('count-' + columnId);
+                if (countBadge) {
+                    countBadge.textContent = visibleCount;
+                }
+            });
+        }
+
         // ========== KOLOM FUNCTIONS ==========
 
         function loadColumns() {
@@ -1143,15 +782,11 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        // Cek apakah board sudah ada
                         const existingColumns = document.querySelectorAll('.kanban-column-wrapper[data-column-id]');
-                        
                         if (existingColumns.length === 0) {
-                            // Jika belum ada, render semua
                             renderKanbanBoard(data.columns);
                         } else {
-                            // Jika sudah ada, hanya tambah kolom baru
-                            appendNewColumns(data.columns);
+                            updateBoardData(data.columns);
                         }
                     } else {
                         showNotification('Gagal memuat kolom', 'danger');
@@ -1163,84 +798,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 });
         }
 
-        function appendNewColumns(columns) {
-            const container = document.getElementById('kanbanBoard');
-            const existingColumnIds = Array.from(document.querySelectorAll('.kanban-column-wrapper[data-column-id]'))
-                .map(el => el.dataset.columnId);
-            
-            // Filter kolom yang belum ada
-            const newColumns = columns.filter(col => {
-                const colId = col.is_default ? col.id : 'custom_' + col.db_id;
-                return !existingColumnIds.includes(colId);
-            });
-            
-            if (newColumns.length === 0) return;
-            
-            // Hapus tombol "Tambah Kolom" sementara
-            const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
-            if (addButtonColumn) {
-                addButtonColumn.closest('.kanban-column-wrapper').remove();
-            }
-            
-            // Tambah kolom baru
-            newColumns.forEach(column => {
-                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
-                const isDefault = column.is_default;
-                const isCustomized = column.is_customized || false;
-                
-                const columnHtml = `
-                    <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position}">
-                        <div class="kanban-column">
-                            <div class="column-header">
-                                <div class="column-header-with-menu">
-                                    <div class="column-title">
-                                        <i class="bi ${column.icon}" style="color: ${column.color};"></i>
-                                        ${column.title}
-                                        ${!isDefault ? '<span class="custom-column-badge">Kustom</span>' : (isCustomized ? '<span class="custom-column-badge">Diedit</span>' : '')}
-                                    </div>
-                                    ${<?= $is_admin ? 'true' : 'false' ?> ? `
-                                        <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
-                                            <i class="bi bi-three-dots-vertical"></i>
-                                        </button>
-                                    ` : ''}
-                                </div>
-                                <span class="task-count" id="count-${columnId}">0</span>
-                            </div>
-                            
-                            <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
-                            
-                            ${columnId === 'todo' ? `
-                                <button class="btn w-100 mt-2 fw-bold" style="background: transparent; border: 2px dashed var(--border-color); color: var(--text-muted);" onclick="openNewTaskModal('todo')">
-                                    <i class="bi bi-plus-lg me-1"></i> Tambah Tugas
-                                </button>
-                            ` : ''}
-                        </div>
-                    </div>
-                `;
-                
-                container.insertAdjacentHTML('beforeend', columnHtml);
-                
-                // Load tasks untuk kolom baru
-                loadTasksForColumn(columnId);
-            });
-            
-            // Tambah kembali tombol "Tambah Kolom" jika admin
-            <?php if ($is_admin): ?>
-            const addButtonHtml = `
-                <div class="kanban-column-wrapper" style="min-width: 280px;">
-                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
-                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
-                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', addButtonHtml);
-            <?php endif; ?>
-            
-            setupDragAndDrop();
-        }
-
         function renderKanbanBoard(columns) {
             const container = document.getElementById('kanbanBoard');
             if (!container) return;
@@ -1248,19 +805,26 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             let html = '';
             
             columns.forEach(column => {
-                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
-                const isDefault = column.is_default;
-                const isCustomized = column.is_customized || false;
+                const isDefault = column.is_default === true || column.is_default === 'true' || column.is_default === 1 || column.is_default === '1';
+                const isCustomized = column.is_customized === true || column.is_customized === 'true' || column.is_customized === 1 || column.is_customized === '1';
+                const columnId = column.id;
+                
+                let badgeHtml = '';
+                if (!isDefault) {
+                    badgeHtml = '<span class="custom-column-badge">Kustom</span>';
+                } else if (isCustomized) {
+                    badgeHtml = '<span class="custom-column-badge">Diedit</span>';
+                }
                 
                 html += `
-                    <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position}">
+                    <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position || 0}">
                         <div class="kanban-column">
                             <div class="column-header">
                                 <div class="column-header-with-menu">
                                     <div class="column-title">
                                         <i class="bi ${column.icon}" style="color: ${column.color};"></i>
                                         ${column.title}
-                                        ${!isDefault ? '<span class="custom-column-badge">Kustom</span>' : (isCustomized ? '<span class="custom-column-badge">Diedit</span>' : '')}
+                                        ${badgeHtml}
                                     </div>
                                     ${<?= $is_admin ? 'true' : 'false' ?> ? `
                                         <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
@@ -1298,11 +862,157 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             container.innerHTML = html;
             
             columns.forEach(column => {
-                const columnId = column.is_default ? column.id : 'custom_' + column.db_id;
-                loadTasksForColumn(columnId);
+                loadTasksForColumn(column.id);
             });
             
             setupDragAndDrop();
+        }
+
+        function updateBoardData(columns) {
+            const existingColumns = document.querySelectorAll('.kanban-column-wrapper[data-column-id]');
+            const existingColumnIds = Array.from(existingColumns).map(el => el.dataset.columnId);
+            
+            const newColumns = columns.filter(col => {
+                return !existingColumnIds.includes(col.id);
+            });
+            
+            if (newColumns.length > 0) {
+                const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
+                let addBtnContainer = null;
+                if (addButtonColumn) {
+                    addBtnContainer = addButtonColumn.closest('.kanban-column-wrapper');
+                    addBtnContainer.remove();
+                }
+                
+                newColumns.forEach(column => {
+                    const isDefault = column.is_default === true || column.is_default === 'true' || column.is_default === 1 || column.is_default === '1';
+                    const isCustomized = column.is_customized === true || column.is_customized === 'true' || column.is_customized === 1 || column.is_customized === '1';
+                    const columnId = column.id;
+                    
+                    let badgeHtml = '';
+                    if (!isDefault) {
+                        badgeHtml = '<span class="custom-column-badge">Kustom</span>';
+                    } else if (isCustomized) {
+                        badgeHtml = '<span class="custom-column-badge">Diedit</span>';
+                    }
+                    
+                    const columnHtml = `
+                        <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${column.position || 0}">
+                            <div class="kanban-column">
+                                <div class="column-header">
+                                    <div class="column-header-with-menu">
+                                        <div class="column-title">
+                                            <i class="bi ${column.icon}" style="color: ${column.color};"></i>
+                                            ${column.title}
+                                            ${badgeHtml}
+                                        </div>
+                                        ${<?= $is_admin ? 'true' : 'false' ?> ? `
+                                            <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                    <span class="task-count" id="count-${columnId}">0</span>
+                                </div>
+                                
+                                <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    const container = document.getElementById('kanbanBoard');
+                    container.insertAdjacentHTML('beforeend', columnHtml);
+                    
+                    loadTasksForColumn(columnId);
+                });
+                
+                <?php if ($is_admin): ?>
+                const addButtonHtml = `
+                    <div class="kanban-column-wrapper" style="min-width: 280px;">
+                        <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
+                            <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
+                                <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.getElementById('kanbanBoard').insertAdjacentHTML('beforeend', addButtonHtml);
+                <?php endif; ?>
+                
+                setupDragAndDrop();
+            }
+            
+            columns.forEach(column => {
+                const countElement = document.getElementById(`count-${column.id}`);
+                if (countElement && column.task_count !== undefined) {
+                    countElement.textContent = column.task_count;
+                }
+            });
+            // Re-apply filters if they were set
+            filterTasks();
+        }
+
+        function addNewColumnToBoard(column) {
+            const container = document.getElementById('kanbanBoard');
+            
+            const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
+            if (addButtonColumn) {
+                addButtonColumn.closest('.kanban-column-wrapper').remove();
+            }
+            
+            const columnId = column.id; 
+            const position = column.position || (document.querySelectorAll('.kanban-column-wrapper[data-column-id]').length);
+            
+            const columnHtml = `
+                <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${position}">
+                    <div class="kanban-column">
+                        <div class="column-header">
+                            <div class="column-header-with-menu">
+                                <div class="column-title">
+                                    <i class="bi ${column.icon}" style="color: ${column.color};"></i>
+                                    ${column.title}
+                                    <span class="custom-column-badge">Kustom</span>
+                                </div>
+                                ${<?= $is_admin ? 'true' : 'false' ?> ? `
+                                    <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', false, false)">
+                                        <i class="bi bi-three-dots-vertical"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                            <span class="task-count" id="count-${columnId}">0</span>
+                        </div>
+                        
+                        <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
+                    </div>
+                </div>
+            `;
+            
+            container.insertAdjacentHTML('beforeend', columnHtml);
+            
+            const listElement = document.getElementById(`list-${columnId}`);
+            if (listElement) {
+                listElement.innerHTML = '<div class="text-center text-muted py-3 small">Belum ada tugas</div>';
+            }
+            document.getElementById(`count-${columnId}`).textContent = '0';
+            
+            <?php if ($is_admin): ?>
+            const addButtonHtml = `
+                <div class="kanban-column-wrapper" style="min-width: 280px;">
+                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
+                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
+                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
+                        </button>
+                    </div>
+                </div>
+            `;
+            container.insertAdjacentHTML('beforeend', addButtonHtml);
+            <?php endif; ?>
+            
+            setupDragAndDrop();
+            
+            setTimeout(() => {
+                updateColumnPositions();
+            }, 100);
         }
 
         function loadTasksForColumn(columnId) {
@@ -1344,7 +1054,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             });
             
             listElement.innerHTML = html;
-            if (countElement) countElement.textContent = tasks.length;
+            
+            // Re-apply filters seamlessly
+            filterTasks();
         }
 
         function createTaskCardElement(task) {
@@ -1375,8 +1087,20 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     <i class="bi bi-person"></i>
                 </div>`;
             
+            // Attributes for frontend filtering
+            const safeTitle = escapeHtml(task.title).toLowerCase().replace(/"/g, '&quot;');
+            const safeDesc = task.description ? escapeHtml(task.description).toLowerCase().replace(/"/g, '&quot;') : '';
+            const safeAssigneeId = task.assignee_id ? task.assignee_id : 'unassigned';
+
             return `
-                <div class="task-card" data-task-id="${task.id}" onclick="showTaskDetail(${task.id})">
+                <div class="task-card" 
+                     data-task-id="${task.id}" 
+                     data-priority="${task.priority}" 
+                     data-assignee="${safeAssigneeId}" 
+                     data-title="${safeTitle}" 
+                     data-desc="${safeDesc}" 
+                     onclick="showTaskDetail(${task.id})">
+                     
                     <div class="mb-3">
                         <span class="badge-soft ${priorityClass}">${priorityLabel}</span>
                     </div>
@@ -1393,12 +1117,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         function setupDragAndDrop() {
-            // Destroy existing Sortable instances
             if (window.columnSortable) {
                 window.columnSortable.destroy();
             }
             
-            // Setup column drag & drop for admin
             <?php if ($is_admin): ?>
             const boardContainer = document.getElementById('kanbanBoard');
             if (boardContainer) {
@@ -1414,7 +1136,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             }
             <?php endif; ?>
             
-            // Setup task drag & drop for each column
             document.querySelectorAll('.task-list').forEach(list => {
                 if (list.sortable) {
                     list.sortable.destroy();
@@ -1456,7 +1177,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showNotification('Posisi kolom diperbarui', 'success');
+                    // Posisi diam-diam tersimpan
                 }
             });
         }
@@ -1475,7 +1196,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .then(data => {
                 if (!data.success) {
                     showNotification('Gagal memindahkan tugas', 'danger');
-                    loadColumns(); // Reload to revert
+                    loadColumns(); 
+                } else {
+                    // Update hitungan karena task pindah
+                    updateVisibleTaskCounts();
                 }
             });
         }
@@ -1489,7 +1213,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             document.getElementById('selectedColor').value = '#64748b';
             document.getElementById('columnIcon').value = 'bi-circle';
             
-            // Reset selected color
             document.querySelectorAll('#columnModal .color-option').forEach(opt => {
                 opt.style.borderColor = 'transparent';
                 if (opt.dataset.color === '#64748b') {
@@ -1502,11 +1225,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         function openColumnMenu(columnId, title, color, icon, isDefault, isCustomized) {
-            // Pastikan columnId disimpan dengan benar
+            isDefault = (isDefault === true || isDefault === 'true' || isDefault === 1 || isDefault === '1');
+            isCustomized = (isCustomized === true || isCustomized === 'true' || isCustomized === 1 || isCustomized === '1');
+            
             currentEditingColumnId = columnId;
             currentEditingIsDefault = isDefault;
             
-            // Set nilai di form edit
             document.getElementById('editColumnTitle').value = title;
             document.getElementById('editSelectedColor').value = color;
             document.getElementById('editColumnIcon').value = icon;
@@ -1515,18 +1239,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             const deleteBtn = document.getElementById('deleteColumnBtn');
             
             if (isDefault) {
-                // Untuk default column
                 document.querySelector('#editColumnModal .modal-title').textContent = 'Edit Kolom Default';
                 resetBtnContainer.style.display = isCustomized ? 'block' : 'none';
                 deleteBtn.style.display = 'none';
             } else {
-                // Untuk custom column
                 document.querySelector('#editColumnModal .modal-title').textContent = 'Edit Kolom Kustom';
                 resetBtnContainer.style.display = 'none';
                 deleteBtn.style.display = 'block';
             }
             
-            // Generate color options
             const colorOptions = document.getElementById('editColorOptions');
             const colors = ['#64748b', '#6366f1', '#ec4899', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
             
@@ -1571,7 +1292,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             const isEdit = columnId !== '';
             const action = isEdit ? 'update' : 'create';
             
-            // Tampilkan loading
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
@@ -1589,10 +1309,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     showNotification(data.message, 'success');
                     
                     if (action === 'create' && data.column) {
-                        // Tambah kolom baru tanpa reload semua
                         addNewColumnToBoard(data.column);
                     } else if (action === 'update') {
-                        // Untuk update, update kolom yang diedit saja tanpa reload semua
                         updateColumnInBoard(columnId, {
                             title: formData.get('title'),
                             color: formData.get('color'),
@@ -1612,96 +1330,22 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             });
         }
 
-        function addNewColumnToBoard(column) {
-            const container = document.getElementById('kanbanBoard');
-            
-            // Hapus tombol "Tambah Kolom" sementara
-            const addButtonColumn = document.querySelector('.kanban-column-wrapper:last-child .btn-outline-primary');
-            if (addButtonColumn) {
-                addButtonColumn.closest('.kanban-column-wrapper').remove();
-            }
-            
-            // Pastikan column.id sudah dalam format yang benar
-            const columnId = column.id; // sudah dalam format 'custom_xx'
-            const position = column.position || (document.querySelectorAll('.kanban-column-wrapper[data-column-id]').length);
-            
-            // Tambah kolom baru
-            const columnHtml = `
-                <div class="kanban-column-wrapper" data-column-id="${columnId}" data-column-position="${position}">
-                    <div class="kanban-column">
-                        <div class="column-header">
-                            <div class="column-header-with-menu">
-                                <div class="column-title">
-                                    <i class="bi ${column.icon}" style="color: ${column.color};"></i>
-                                    ${column.title}
-                                    <span class="custom-column-badge">Kustom</span>
-                                </div>
-                                ${<?= $is_admin ? 'true' : 'false' ?> ? `
-                                    <button class="column-menu-btn" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', false, false)">
-                                        <i class="bi bi-three-dots-vertical"></i>
-                                    </button>
-                                ` : ''}
-                            </div>
-                            <span class="task-count" id="count-${columnId}">0</span>
-                        </div>
-                        
-                        <div id="list-${columnId}" class="task-list" data-column="${columnId}"></div>
-                    </div>
-                </div>
-            `;
-            
-            container.insertAdjacentHTML('beforeend', columnHtml);
-            
-            // Load tasks untuk kolom baru (kosong)
-            const listElement = document.getElementById(`list-${columnId}`);
-            if (listElement) {
-                listElement.innerHTML = '<div class="text-center text-muted py-3 small">Belum ada tugas</div>';
-            }
-            document.getElementById(`count-${columnId}`).textContent = '0';
-            
-            // Tambah kembali tombol "Tambah Kolom" jika admin
-            <?php if ($is_admin): ?>
-            const addButtonHtml = `
-                <div class="kanban-column-wrapper" style="min-width: 280px;">
-                    <div class="kanban-column d-flex align-items-center justify-content-center" style="background: transparent; border: 2px dashed var(--border-color);">
-                        <button class="btn btn-outline-primary rounded-pill px-4 py-3" onclick="openAddColumnModal()">
-                            <i class="bi bi-plus-lg me-2"></i>Tambah Kolom
-                        </button>
-                    </div>
-                </div>
-            `;
-            container.insertAdjacentHTML('beforeend', addButtonHtml);
-            <?php endif; ?>
-            
-            setupDragAndDrop();
-            
-            // Update posisi kolom
-            setTimeout(() => {
-                updateColumnPositions();
-            }, 100);
-        }
-
         function updateColumnInBoard(columnId, newData) {
-            // Cari kolom berdasarkan ID
             const columnWrapper = document.querySelector(`.kanban-column-wrapper[data-column-id="${columnId}"]`);
             if (!columnWrapper) return;
             
-            // Update judul kolom
             const titleElement = columnWrapper.querySelector('.column-title');
             if (titleElement) {
-                // Update icon
                 const iconElement = titleElement.querySelector('i');
                 if (iconElement) {
                     iconElement.className = `bi ${newData.icon}`;
                     iconElement.style.color = newData.color;
                 }
                 
-                // Update text (ambil teks tanpa badge)
                 const textNode = titleElement.childNodes[titleElement.childNodes.length - 1];
                 if (textNode && textNode.nodeType === Node.TEXT_NODE) {
                     textNode.textContent = ' ' + newData.title;
                 } else {
-                    // Fallback
                     const badge = titleElement.querySelector('.custom-column-badge, .custom-column-badge');
                     if (badge) {
                         titleElement.innerHTML = `<i class="bi ${newData.icon}" style="color: ${newData.color};"></i> ${newData.title} `;
@@ -1712,12 +1356,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 }
             }
             
-            // Update data atribut untuk menu (agar openColumnMenu mendapatkan data terbaru)
             const menuBtn = columnWrapper.querySelector('.column-menu-btn');
             if (menuBtn) {
                 const onclickAttr = menuBtn.getAttribute('onclick');
                 if (onclickAttr) {
-                    // Parse existing onclick
                     const match = onclickAttr.match(/openColumnMenu\('([^']+)',\s*'([^']*)',\s*'([^']*)',\s*'([^']*)',\s*([^,]+),\s*([^)]+)\)/);
                     if (match) {
                         const isDefault = match[5] === 'true';
@@ -1727,8 +1369,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     }
                 }
             }
-            
-            showNotification('Kolom berhasil diperbarui', 'success');
         }
 
         function updateCurrentColumn() {
@@ -1741,14 +1381,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 return;
             }
             
-            // Tampilkan loading di tombol simpan
             const saveBtn = document.querySelector('#editColumnModal .btn-primary');
             const originalText = saveBtn.innerHTML;
             saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
             saveBtn.disabled = true;
             
             if (currentEditingIsDefault) {
-                // Update default column
                 const formData = new FormData();
                 formData.append('project_id', <?= $project_id ?>);
                 formData.append('column_name', currentEditingColumnId);
@@ -1765,10 +1403,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     if (data.success) {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
                         modal.hide();
-                        
-                        // Update kolom di board
                         updateColumnInBoard(currentEditingColumnId, { title, color, icon });
-                        
                         showNotification('Kolom berhasil diperbarui', 'success');
                     } else {
                         showNotification(data.message, 'danger');
@@ -1782,7 +1417,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     saveBtn.disabled = false;
                 });
             } else {
-                // Update custom column
                 const formData = new FormData();
                 formData.append('column_id', currentEditingColumnId.replace('custom_', ''));
                 formData.append('title', title);
@@ -1798,10 +1432,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     if (data.success) {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
                         modal.hide();
-                        
-                        // Update kolom di board
                         updateColumnInBoard(currentEditingColumnId, { title, color, icon });
-                        
                         showNotification('Kolom berhasil diperbarui', 'success');
                     } else {
                         showNotification(data.message, 'danger');
@@ -1825,7 +1456,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             
             if (!confirm('Yakin ingin menghapus kolom ini? Semua tugas akan dipindahkan ke To Do.')) return;
             
-            // Tampilkan loading di tombol delete
             const deleteBtn = document.getElementById('deleteColumnBtn');
             const originalText = deleteBtn.innerHTML;
             deleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menghapus...';
@@ -1841,13 +1471,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Tutup modal
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
                     modal.hide();
-                    
-                    // Hapus kolom dari board tanpa reload
                     removeColumnFromBoard(currentEditingColumnId);
-                    
                     showNotification('Kolom berhasil dihapus', 'success');
                 } else {
                     showNotification(data.message, 'danger');
@@ -1866,8 +1492,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             const columnWrapper = document.querySelector(`.kanban-column-wrapper[data-column-id="${columnId}"]`);
             if (columnWrapper) {
                 columnWrapper.remove();
-                
-                // Update posisi kolom yang tersisa
                 setTimeout(() => {
                     updateColumnPositions();
                 }, 100);
@@ -1877,7 +1501,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         function resetDefaultColumn() {
             if (!confirm('Kembalikan kolom ke pengaturan default?')) return;
             
-            // Tampilkan loading
             const resetBtn = document.querySelector('#resetDefaultColumnContainer .btn');
             const originalText = resetBtn.innerHTML;
             resetBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Mereset...';
@@ -1896,11 +1519,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 if (data.success) {
                     const modal = bootstrap.Modal.getInstance(document.getElementById('editColumnModal'));
                     modal.hide();
-                    
-                    // Load ulang kolom untuk mendapatkan data default
-                    // Untuk default column, lebih aman reload karena perlu reset ke nilai awal
                     loadColumns();
-                    
                     showNotification('Kolom dikembalikan ke default', 'success');
                 } else {
                     showNotification(data.message, 'danger');
@@ -1923,68 +1542,68 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         function handleEditProjectSubmit(e) {
-    e.preventDefault();
-    
-    const form = e.target;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    const originalText = submitBtn.innerHTML;
-    
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-    
-    const formData = new FormData(form);
-    formData.append('action', 'update'); // Tambahkan action
-    
-    fetch('api/projects.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
-            modal.hide();
-            showNotification(data.message, 'success');
-            setTimeout(() => location.reload(), 1000);
-        } else {
-            showNotification(data.message || 'Gagal memperbarui proyek', 'danger');
+            e.preventDefault();
+            
+            const form = e.target;
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+            
+            const formData = new FormData(form);
+            formData.append('action', 'update');
+            
+            fetch('api/projects.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editProjectModal'));
+                    modal.hide();
+                    showNotification(data.message, 'success');
+                    setTimeout(() => location.reload(), 1000);
+                } else {
+                    showNotification(data.message || 'Gagal memperbarui proyek', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan: ' + error.message, 'danger');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Terjadi kesalahan: ' + error.message, 'danger');
-    })
-    .finally(() => {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-    });
-}
 
         function deleteProject() {
-    if (!confirm('Yakin ingin menghapus proyek ini? Semua tugas akan ikut terhapus!')) return;
-    
-    const formData = new FormData();
-    formData.append('project_id', <?= $project_id ?>);
-    formData.append('action', 'delete'); // Tambahkan action
-    
-    fetch('api/projects.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showNotification(data.message, 'success');
-            setTimeout(() => window.location.href = 'index.php', 1500);
-        } else {
-            showNotification(data.message || 'Gagal menghapus proyek', 'danger');
+            if (!confirm('Yakin ingin menghapus proyek ini? Semua tugas akan ikut terhapus!')) return;
+            
+            const formData = new FormData();
+            formData.append('project_id', <?= $project_id ?>);
+            formData.append('action', 'delete');
+            
+            fetch('api/projects.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification(data.message, 'success');
+                    setTimeout(() => window.location.href = 'dashboard.php', 1500);
+                } else {
+                    showNotification(data.message || 'Gagal menghapus proyek', 'danger');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan: ' + error.message, 'danger');
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        showNotification('Terjadi kesalahan: ' + error.message, 'danger');
-    });
-}
 
         // ========== ANGGOTA FUNCTIONS ==========
 
@@ -2167,8 +1786,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     form.reset();
                     document.getElementById('task_status').value = 'todo';
                     
-                    // Reload hanya kolom yang berubah
-                    loadTasksForColumn('todo');
+                    // Reload seluruh kolom agar task baru muncul lalu di-filter kembali
+                    loadColumns();
                 } else {
                     showNotification(data.message || 'Terjadi kesalahan', 'danger');
                 }
@@ -2197,7 +1816,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 .then(data => {
                     if (data.success) {
                         modalContent.innerHTML = data.html;
-                        // Re-initialize tabs
                         const triggerTabList = [].slice.call(modalContent.querySelectorAll('#taskTab button'));
                         triggerTabList.forEach(el => new bootstrap.Tab(el));
                     } else {
@@ -2242,17 +1860,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             let bgClass, iconClass;
             
             switch(type) {
-                case 'success':
-                    bgClass = 'bg-success';
-                    iconClass = 'bi-check-circle-fill';
-                    break;
-                case 'danger':
-                    bgClass = 'bg-danger';
-                    iconClass = 'bi-exclamation-triangle-fill';
-                    break;
-                default:
-                    bgClass = 'bg-primary';
-                    iconClass = 'bi-info-circle-fill';
+                case 'success': bgClass = 'bg-success'; iconClass = 'bi-check-circle-fill'; break;
+                case 'danger': bgClass = 'bg-danger'; iconClass = 'bi-exclamation-triangle-fill'; break;
+                default: bgClass = 'bg-primary'; iconClass = 'bi-info-circle-fill';
             }
             
             toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
@@ -2261,7 +1871,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             toast.innerHTML = `
                 <div class="d-flex p-2">
                     <div class="toast-body fw-bold fs-6">
-                        <i class="bi ${iconClass} me-2 fs-5"></i>${message}
+                        <i class="bi ${iconClass} me-2 fs-5" style="vertical-align: -2px;"></i>${message}
                     </div>
                     <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
                 </div>
@@ -2270,10 +1880,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             container.appendChild(toast);
             const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
             bsToast.show();
-            toast.addEventListener('hidden.bs.toast', () => toast.remove());
+            
+            toast.addEventListener('hidden.bs.toast', () => {
+                toast.remove();
+            });
         }
 
-        // Task detail functions (will be called from modal)
+        // Task detail functions (akan dipanggil dari dalam form detail Modal)
         window.updateTask = function(taskId) {
             const form = document.getElementById('editTaskForm');
             if (!form) return;

@@ -56,6 +56,9 @@ function handleListColumns() {
     
     $columns = getProjectColumns($project_id);
     
+    // Pastikan kolom Done selalu ada dan tidak terduplikasi
+    $columns = ensureDoneColumnExists($columns);
+    
     // Hitung jumlah tugas untuk setiap kolom
     foreach ($columns as &$column) {
         if ($column['is_default']) {
@@ -68,8 +71,66 @@ function handleListColumns() {
     
     echo json_encode([
         'success' => true,
-        'columns' => $columns
+        'columns' => array_values($columns) // Reset array indices
     ]);
+}
+
+// Fungsi baru untuk memastikan kolom Done selalu ada
+function ensureDoneColumnExists($columns) {
+    $doneExists = false;
+    $filteredColumns = [];
+    
+    foreach ($columns as $column) {
+        // Jika ini adalah kolom default dengan nama 'done'
+        if ($column['is_default'] && $column['id'] === 'done') {
+            $doneExists = true;
+        }
+        
+        // Filter out any duplicate custom columns that might represent 'done'
+        if (!$column['is_default'] && $column['title'] === 'Done') {
+            // Skip custom columns with title 'Done' to prevent duplicates
+            continue;
+        }
+        
+        $filteredColumns[] = $column;
+    }
+    
+    // Jika kolom Done belum ada, tambahkan secara manual
+    if (!$doneExists) {
+        $doneColumn = [
+            'id' => 'done',
+            'title' => 'Done',
+            'color' => '#10b981',
+            'icon' => 'bi-check2-circle',
+            'position' => 999, // Tempatkan di akhir
+            'is_default' => true,
+            'task_count' => 0
+        ];
+        
+        // Cek apakah ada pengaturan kustom untuk kolom Done di database
+        global $pdo;
+        if (isset($_GET['project_id'])) {
+            $project_id = (int)$_GET['project_id'];
+            $stmt = $pdo->prepare("SELECT * FROM default_column_settings WHERE project_id = ? AND column_name = 'done'");
+            $stmt->execute([$project_id]);
+            $settings = $stmt->fetch();
+            
+            if ($settings) {
+                $doneColumn['title'] = $settings['custom_title'] ?? 'Done';
+                $doneColumn['color'] = $settings['custom_color'] ?? '#10b981';
+                $doneColumn['icon'] = $settings['custom_icon'] ?? 'bi-check2-circle';
+            }
+        }
+        
+        $filteredColumns[] = $doneColumn;
+    }
+    
+    // Urutkan berdasarkan position
+    usort($filteredColumns, function($a, $b) {
+        return ($a['position'] ?? 0) <=> ($b['position'] ?? 0);
+    });
+    
+    return $filteredColumns;
 }
 
 function handleUpdateDefaultColumn() {
@@ -86,7 +147,13 @@ function handleUpdateDefaultColumn() {
         return;
     }
     
-    if (!in_array($column_name, ['todo', 'in_progress', 'review', 'done'])) {
+    // Cegah update untuk kolom Done - selalu gunakan default
+    if ($column_name === 'done') {
+        echo json_encode(['success' => false, 'message' => 'Kolom Done tidak dapat dimodifikasi - menggunakan default sistem']);
+        return;
+    }
+    
+    if (!in_array($column_name, ['todo', 'in_progress', 'review'])) {
         echo json_encode(['success' => false, 'message' => 'Nama kolom tidak valid']);
         return;
     }
@@ -138,7 +205,13 @@ function handleResetDefaultColumn() {
         return;
     }
     
-    if (!in_array($column_name, ['todo', 'in_progress', 'review', 'done'])) {
+    // Cegah reset untuk kolom Done
+    if ($column_name === 'done') {
+        echo json_encode(['success' => false, 'message' => 'Kolom Done selalu menggunakan default sistem']);
+        return;
+    }
+    
+    if (!in_array($column_name, ['todo', 'in_progress', 'review'])) {
         echo json_encode(['success' => false, 'message' => 'Nama kolom tidak valid']);
         return;
     }
@@ -171,6 +244,12 @@ function handleCreateColumn() {
     
     if ($project_id <= 0 || empty($title)) {
         echo json_encode(['success' => false, 'message' => 'Data tidak valid']);
+        return;
+    }
+    
+    // Cegah pembuatan kolom dengan judul "Done"
+    if (strtolower(trim($title)) === 'done') {
+        echo json_encode(['success' => false, 'message' => 'Tidak dapat membuat kolom dengan judul "Done" - sudah tersedia sebagai kolom default']);
         return;
     }
     
@@ -213,6 +292,12 @@ function handleUpdateColumn() {
     
     if ($column_id <= 0 || empty($title)) {
         echo json_encode(['success' => false, 'message' => 'Data tidak valid']);
+        return;
+    }
+    
+    // Cegah update kolom menjadi "Done"
+    if (strtolower(trim($title)) === 'done') {
+        echo json_encode(['success' => false, 'message' => 'Tidak dapat mengubah judul kolom menjadi "Done"']);
         return;
     }
     

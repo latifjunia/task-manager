@@ -511,19 +511,56 @@ function getDefaultColumnSettings($project_id) {
 function getProjectColumns($project_id) {
     global $pdo;
     
-    // Default columns dengan data awal
+    // Default columns dengan struktur yang benar
     $default_columns = [
-        ['id' => 'todo', 'title' => 'To Do', 'icon' => 'bi-circle', 'color' => '#64748b', 'is_default' => true, 'position' => 0],
-        ['id' => 'in_progress', 'title' => 'In Progress', 'icon' => 'bi-arrow-repeat', 'color' => '#6366f1', 'is_default' => true, 'position' => 1],
-        ['id' => 'review', 'title' => 'Review', 'icon' => 'bi-eye', 'color' => '#f59e0b', 'is_default' => true, 'position' => 2],
-        ['id' => 'done', 'title' => 'Done', 'icon' => 'bi-check2-circle', 'color' => '#10b981', 'is_default' => true, 'position' => 3]
+        'todo' => [
+            'id' => 'todo',
+            'title' => 'To Do',
+            'icon' => 'bi-circle',
+            'color' => '#64748b',
+            'is_default' => true,
+            'position' => 0
+        ],
+        'in_progress' => [
+            'id' => 'in_progress',
+            'title' => 'In Progress',
+            'icon' => 'bi-arrow-repeat',
+            'color' => '#6366f1',
+            'is_default' => true,
+            'position' => 1
+        ],
+        'review' => [
+            'id' => 'review',
+            'title' => 'Review',
+            'icon' => 'bi-eye',
+            'color' => '#f59e0b',
+            'is_default' => true,
+            'position' => 2
+        ],
+        'done' => [
+            'id' => 'done',
+            'title' => 'Done',
+            'icon' => 'bi-check2-circle',
+            'color' => '#10b981',
+            'is_default' => true,
+            'position' => 3
+        ]
     ];
     
     // Ambil custom settings untuk default columns
     $default_settings = getDefaultColumnSettings($project_id);
     
-    // Apply custom settings
-    foreach ($default_columns as &$col) {
+    // Apply custom settings hanya untuk todo, in_progress, review
+    $processed_columns = [];
+    foreach ($default_columns as $key => $col) {
+        // Untuk done column, selalu gunakan default tanpa customisasi
+        if ($col['id'] === 'done') {
+            $col['is_customized'] = false;
+            $processed_columns[$col['id']] = $col;
+            continue;
+        }
+        
+        // Untuk kolom lain, bisa dikustomisasi
         if (isset($default_settings[$col['id']])) {
             $setting = $default_settings[$col['id']];
             $col['title'] = $setting['custom_title'] ?? $col['title'];
@@ -533,6 +570,8 @@ function getProjectColumns($project_id) {
         } else {
             $col['is_customized'] = false;
         }
+        
+        $processed_columns[$col['id']] = $col;
     }
     
     // Kolom kustom dari database
@@ -544,27 +583,37 @@ function getProjectColumns($project_id) {
     $stmt->execute([$project_id]);
     $custom_columns = $stmt->fetchAll();
     
-    $formatted_custom = [];
-    foreach ($custom_columns as $col) {
-        $formatted_custom[] = [
-            'id' => 'custom_' . $col['id'],
+    $custom_position_start = 4; // Mulai dari posisi 4 (setelah done)
+    
+    foreach ($custom_columns as $index => $col) {
+        // Lewati jika ada kolom kustom dengan judul "Done" (untuk jaga-jaga)
+        if ($col['title'] === 'Done') {
+            continue;
+        }
+        
+        $position = $custom_position_start + $index;
+        $custom_id = 'custom_' . $col['id'];
+        
+        $processed_columns[$custom_id] = [
+            'id' => $custom_id,
             'original_id' => $col['id'],
             'title' => $col['title'],
             'icon' => $col['icon'],
             'color' => $col['color'],
             'is_default' => false,
             'is_customized' => true,
-            'position' => $col['position'],
+            'position' => $position,
             'db_id' => $col['id']
         ];
     }
     
-    $all_columns = array_merge($default_columns, $formatted_custom);
-    usort($all_columns, function($a, $b) {
-        return $a['position'] - $b['position'];
+    // Urutkan berdasarkan position
+    uasort($processed_columns, function($a, $b) {
+        return ($a['position'] ?? 0) - ($b['position'] ?? 0);
     });
     
-    return $all_columns;
+    // Kembalikan sebagai array biasa (reset index)
+    return array_values($processed_columns);
 }
 
 function getTasksByColumn($project_id, $column) {
@@ -619,11 +668,17 @@ function getTasksByColumn($project_id, $column) {
 function createCustomColumn($project_id, $title, $color = '#64748b', $icon = 'bi-circle', $position = null) {
     global $pdo;
     
+    // Cegah pembuatan kolom dengan judul "Done"
+    if (trim($title) === 'Done') {
+        return false;
+    }
+    
     if ($position === null) {
         $stmt = $pdo->prepare("SELECT MAX(position) as max_pos FROM project_columns WHERE project_id = ?");
         $stmt->execute([$project_id]);
         $result = $stmt->fetch();
-        $position = ($result['max_pos'] ?? 3) + 1;
+        // Mulai dari posisi 4 (setelah done)
+        $position = max(4, ($result['max_pos'] ?? 3) + 1);
     }
     
     $stmt = $pdo->prepare("
@@ -642,6 +697,20 @@ function createCustomColumn($project_id, $title, $color = '#64748b', $icon = 'bi
 
 function updateCustomColumn($column_id, $data) {
     global $pdo;
+    
+    // Cek apakah kolom ini ada dan bukan kolom default
+    $stmt = $pdo->prepare("SELECT title FROM project_columns WHERE id = ?");
+    $stmt->execute([$column_id]);
+    $column = $stmt->fetch();
+    
+    if (!$column) {
+        return false;
+    }
+    
+    // Cegah update judul menjadi "Done"
+    if (isset($data['title']) && trim($data['title']) === 'Done') {
+        return false;
+    }
     
     $sets = [];
     $params = [];
@@ -683,6 +752,7 @@ function deleteCustomColumn($column_id, $project_id) {
     try {
         $pdo->beginTransaction();
         
+        // Pindahkan task ke kolom todo
         $stmt = $pdo->prepare("
             UPDATE tasks 
             SET column_id = NULL, column_status = 'todo' 
@@ -690,6 +760,7 @@ function deleteCustomColumn($column_id, $project_id) {
         ");
         $stmt->execute([$column_id]);
         
+        // Hapus kolom
         $stmt = $pdo->prepare("DELETE FROM project_columns WHERE id = ?");
         $success = $stmt->execute([$column_id]);
         
@@ -710,10 +781,19 @@ function updateColumnPositions($project_id, $positions) {
         $pdo->beginTransaction();
         
         foreach ($positions as $item) {
+            // Update posisi untuk custom columns saja
             if (strpos($item['id'], 'custom_') === 0) {
                 $column_id = str_replace('custom_', '', $item['id']);
-                $stmt = $pdo->prepare("UPDATE project_columns SET position = ? WHERE id = ? AND project_id = ?");
-                $stmt->execute([$item['position'], $column_id, $project_id]);
+                
+                // Pastikan posisi minimal 4 (setelah done)
+                $position = max(4, $item['position']);
+                
+                $stmt = $pdo->prepare("
+                    UPDATE project_columns 
+                    SET position = ? 
+                    WHERE id = ? AND project_id = ?
+                ");
+                $stmt->execute([$position, $column_id, $project_id]);
             }
         }
         
