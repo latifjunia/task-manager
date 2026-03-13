@@ -5,7 +5,6 @@ require_once 'includes/functions.php';
 // Jika user sudah login, langsung arahkan ke dashboard
 if (isLoggedIn()) {
     redirect('dashboard.php');
-<<<<<<< HEAD
 }
 
 // Cek preferensi tema dari cookie
@@ -16,7 +15,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskFlow - Kelola Tugas & Proyek Tim dengan Mudah</title>
+    <title>Task Manager - Kelola Tugas & Proyek Tim dengan Mudah</title>
     
     <!-- Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -464,46 +463,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             line-height: 1.6;
         }
 
-        /* CTA Section */
-        .cta-section {
-            padding: 80px 0;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            text-align: center;
-        }
-
-        .cta-title {
-            font-size: 2.5rem;
-            font-weight: 700;
-            margin-bottom: 1.5rem;
-        }
-
-        .cta-description {
-            font-size: 1.1rem;
-            max-width: 700px;
-            margin: 0 auto 2rem;
-            opacity: 0.9;
-        }
-
-        .btn-cta {
-            background: white;
-            color: var(--primary);
-            padding: 1rem 3rem;
-            border-radius: 50px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-        }
-
-        .btn-cta:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-            color: var(--primary-dark);
-        }
-
         /* Footer */
         .footer {
             background: var(--surface);
@@ -624,10 +583,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .section-title {
                 font-size: 2rem;
             }
-            
-            .cta-title {
-                font-size: 2rem;
-            }
         }
 
         /* Animations */
@@ -656,43 +611,43 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 <body>
 
     <!-- Navigation -->
-<nav class="navbar navbar-expand-lg" id="mainNav">
-    <div class="container">
-        <a class="navbar-brand" href="index.php">
-            <div class="brand-icon">
-                <i class="bi bi-layers-half"></i>
-            </div>
-            <span>Task Manager</span>  <!-- Diganti dari TaskFlow -->
-        </a>
-        
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <i class="bi bi-list fs-1" style="color: var(--text-dark);"></i>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- Menu Navigasi di KIRI -->
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#features">Fitur</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#how-it-works">Cara Kerja</a>
-                </li>
-            </ul>
-            
-            <!-- Tombol Aksi di KANAN (termasuk theme toggle) -->
-            <div class="d-flex align-items-center gap-2">
-                <!-- Theme Toggle - Paling Kiri di grup kanan -->
-                <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
-                    <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
+    <nav class="navbar navbar-expand-lg" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">
+                <div class="brand-icon">
+                    <i class="bi bi-layers-half"></i>
                 </div>
+                <span>Task Manager</span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1" style="color: var(--text-dark);"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <!-- Menu Navigasi di KIRI -->
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Fitur</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">Cara Kerja</a>
+                    </li>
+                </ul>
                 
-                <a href="login.php" class="btn-login">Masuk</a>
-                <a href="register.php" class="btn-register">Daftar</a>
+                <!-- Tombol Aksi di KANAN -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- Theme Toggle -->
+                    <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
+                        <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
+                    </div>
+                    
+                    <a href="login.php" class="btn-login">Masuk</a>
+                    <a href="register.php" class="btn-register">Daftar</a>
+                </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -715,7 +670,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     
                     <div class="hero-cta fade-up delay-3">
                         <a href="register.php" class="btn-primary-custom">
-                            <i class="bi bi-rocket me-2"></i>Mulai
+                            <i class="bi bi-rocket me-2"></i>Mulai 
                         </a>
                         <a href="#features" class="btn-outline-custom">
                             <i class="bi bi-play-circle me-2"></i>Demo
@@ -884,8 +839,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </section>
 
-   
-
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
@@ -948,7 +901,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2026 Task Manager. Latif Junia Angreani</i></p>
+                <p>&copy; 2026 Task Manager. Latif Junia Angreani</p>
             </div>
         </div>
     </footer>
@@ -1055,10 +1008,3 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     </script>
 </body>
 </html>
-=======
-} else {
-// Jika belum login, arahkan ke halaman login
-    redirect('login.php');
-}
-?>
->>>>>>> 561b11f05780e737ae8ff127661b91b721910d4c
