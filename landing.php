@@ -1,17 +1,5 @@
-<?php
-require_once 'includes/config.php';
-require_once 'includes/functions.php';
-
-// Jika user sudah login, langsung arahkan ke dashboard
-if (isLoggedIn()) {
-    redirect('dashboard.php');
-}
-
-// Cek preferensi tema dari cookie
-$theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
-?>
 <!DOCTYPE html>
-<html lang="id" data-theme="<?= $theme ?>">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -32,7 +20,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         :root {
-            /* Light Mode Variables */
             --primary: #6366f1;
             --primary-dark: #4f46e5;
             --primary-light: #e0e7ff;
@@ -41,17 +28,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --warning: #f59e0b;
             --danger: #ef4444;
             
-            --bg-body: #f8fafc;
-            --bg-gradient: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-            --surface: #ffffff;
-            --surface-hover: #f1f5f9;
+            --dark: #0f172a;
+            --dark-soft: #1e293b;
+            --gray: #64748b;
+            --gray-light: #94a3b8;
+            --light: #f8fafc;
             
-            --text-dark: #0f172a;
-            --text-main: #334155;
-            --text-muted: #64748b;
-            
-            --border-color: rgba(226, 232, 240, 0.8);
-            --border-color-solid: #e2e8f0;
+            --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-2: linear-gradient(135deg, #6366f1, #ec4899);
+            --gradient-3: linear-gradient(135deg, #667eea, #764ba2, #6366f1);
             
             --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.1);
             --shadow-md: 0 20px 25px -5px rgba(0,0,0,0.1);
@@ -62,44 +47,16 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --radius-lg: 24px;
         }
 
-        /* Dark Mode Variables */
-        [data-theme="dark"] {
-            --primary: #818cf8;
-            --primary-dark: #6366f1;
-            --primary-light: #1e1b4b;
-            --secondary: #f472b6;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --danger: #ef4444;
-            
-            --bg-body: #0f172a;
-            --bg-gradient: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
-            --surface: #1e293b;
-            --surface-hover: #334155;
-            
-            --text-dark: #f1f5f9;
-            --text-main: #cbd5e1;
-            --text-muted: #94a3b8;
-            
-            --border-color: rgba(51, 65, 85, 0.8);
-            --border-color-solid: #334155;
-            
-            --shadow-sm: 0 4px 6px -1px rgba(0,0,0,0.2);
-            --shadow-md: 0 20px 25px -5px rgba(0,0,0,0.2);
-            --shadow-lg: 0 25px 50px -12px rgba(0,0,0,0.3);
-        }
-
         body {
             font-family: 'Outfit', sans-serif;
-            background: var(--bg-body);
-            color: var(--text-main);
+            background: var(--light);
+            color: var(--dark);
             overflow-x: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Navigation */
         .navbar {
-            background: rgba(var(--surface-rgb, 255,255,255), 0.8);
+            background: rgba(255,255,255,0.8);
             backdrop-filter: blur(10px);
             padding: 1rem 0;
             box-shadow: 0 2px 20px rgba(0,0,0,0.03);
@@ -111,19 +68,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             transition: all 0.3s ease;
         }
 
-        [data-theme="dark"] .navbar {
-            background: rgba(30, 41, 59, 0.8);
-        }
-
         .navbar.scrolled {
-            background: var(--surface);
+            background: white;
             box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
         .navbar-brand {
             font-weight: 700;
             font-size: 1.5rem;
-            color: var(--text-dark) !important;
+            color: var(--dark);
             display: flex;
             align-items: center;
             gap: 8px;
@@ -132,7 +85,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .brand-icon {
             width: 40px;
             height: 40px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             border-radius: 12px;
             display: flex;
             align-items: center;
@@ -144,7 +97,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
         .nav-link {
             font-weight: 500;
-            color: var(--text-muted) !important;
+            color: var(--gray) !important;
             padding: 0.5rem 1.2rem !important;
             border-radius: 30px;
             transition: all 0.3s ease;
@@ -155,28 +108,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             background: var(--primary-light);
         }
 
-        /* Theme Toggle */
-        .theme-toggle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--surface);
-            border: 1px solid var(--border-color-solid);
-            color: var(--text-main);
-            cursor: pointer;
-            transition: all 0.3s ease;
-            margin-right: 10px;
-        }
-        
-        .theme-toggle:hover {
-            transform: rotate(15deg);
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
         .btn-login {
             background: transparent;
             border: 2px solid var(--primary-light);
@@ -185,7 +116,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border-radius: 30px;
             font-weight: 600;
             transition: all 0.3s ease;
-            text-decoration: none;
         }
 
         .btn-login:hover {
@@ -196,7 +126,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         .btn-register {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             border: none;
             color: white;
             padding: 0.5rem 1.8rem;
@@ -204,7 +134,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             font-weight: 600;
             transition: all 0.3s ease;
             box-shadow: 0 5px 15px rgba(99,102,241,0.3);
-            text-decoration: none;
         }
 
         .btn-register:hover {
@@ -216,7 +145,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         /* Hero Section */
         .hero-section {
             padding: 160px 0 100px;
-            background: var(--bg-gradient);
+            background: linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
             position: relative;
             overflow: hidden;
         }
@@ -240,7 +169,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
         .hero-badge {
             display: inline-block;
-            background: var(--primary-light);
+            background: rgba(99,102,241,0.1);
             color: var(--primary);
             padding: 0.5rem 1.5rem;
             border-radius: 30px;
@@ -255,12 +184,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             font-size: 3.5rem;
             font-weight: 800;
             line-height: 1.2;
-            color: var(--text-dark);
+            color: var(--dark);
             margin-bottom: 1.5rem;
         }
 
         .hero-title span {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -268,7 +197,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
         .hero-description {
             font-size: 1.2rem;
-            color: var(--text-muted);
+            color: var(--gray);
             margin-bottom: 2rem;
             max-width: 600px;
         }
@@ -280,7 +209,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         .btn-primary-custom {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             border: none;
             padding: 1rem 2.5rem;
             border-radius: 50px;
@@ -332,12 +261,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .stat-number {
             font-size: 2rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--dark);
             line-height: 1.2;
         }
 
         .stat-label {
-            color: var(--text-muted);
+            color: var(--gray);
             font-size: 0.95rem;
         }
 
@@ -352,7 +281,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             max-width: 600px;
             border-radius: var(--radius-lg);
             box-shadow: var(--shadow-lg);
-            border: 1px solid var(--border-color);
         }
 
         @keyframes float {
@@ -363,28 +291,28 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         /* Features Section */
         .features-section {
             padding: 100px 0;
-            background: var(--surface);
+            background: white;
         }
 
         .section-title {
             text-align: center;
             font-size: 2.5rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--dark);
             margin-bottom: 1rem;
         }
 
         .section-subtitle {
             text-align: center;
             font-size: 1.1rem;
-            color: var(--text-muted);
+            color: var(--gray);
             max-width: 700px;
             margin: 0 auto 4rem;
         }
 
         .feature-card {
-            background: var(--surface);
-            border: 1px solid var(--border-color);
+            background: white;
+            border: 1px solid rgba(0,0,0,0.05);
             border-radius: var(--radius-lg);
             padding: 2rem;
             transition: all 0.3s ease;
@@ -395,14 +323,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .feature-card:hover {
             transform: translateY(-10px);
             box-shadow: var(--shadow-lg);
-            border-color: var(--primary);
-            background: var(--surface-hover);
+            border-color: var(--primary-light);
         }
 
         .feature-icon {
             width: 70px;
             height: 70px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             border-radius: 20px;
             display: flex;
             align-items: center;
@@ -415,19 +342,19 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .feature-title {
             font-size: 1.3rem;
             font-weight: 600;
-            color: var(--text-dark);
+            color: var(--dark);
             margin-bottom: 1rem;
         }
 
         .feature-description {
-            color: var(--text-muted);
+            color: var(--gray);
             line-height: 1.6;
         }
 
         /* How It Works */
         .how-it-works {
             padding: 100px 0;
-            background: var(--bg-body);
+            background: #f8fafc;
         }
 
         .step-card {
@@ -439,7 +366,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .step-number {
             width: 60px;
             height: 60px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -454,19 +381,185 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .step-title {
             font-size: 1.3rem;
             font-weight: 600;
-            color: var(--text-dark);
+            color: var(--dark);
             margin-bottom: 1rem;
         }
 
         .step-description {
-            color: var(--text-muted);
+            color: var(--gray);
             line-height: 1.6;
+        }
+
+        /* Testimonials */
+        .testimonials-section {
+            padding: 100px 0;
+            background: white;
+        }
+
+        .testimonial-card {
+            background: white;
+            border: 1px solid rgba(0,0,0,0.05);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .testimonial-text {
+            font-size: 1rem;
+            color: var(--dark);
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .author-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--gradient-2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .author-info h6 {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.2rem;
+        }
+
+        .author-info small {
+            color: var(--gray);
+        }
+
+        /* Pricing Section */
+        .pricing-section {
+            padding: 100px 0;
+            background: #f8fafc;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card.popular {
+            transform: scale(1.05);
+            border: 2px solid var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .popular-badge {
+            position: absolute;
+            top: 20px;
+            right: -35px;
+            background: var(--gradient-2);
+            color: white;
+            padding: 0.5rem 3rem;
+            transform: rotate(45deg);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .pricing-card.popular:hover {
+            transform: scale(1.05) translateY(-10px);
+        }
+
+        .pricing-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 1rem;
+        }
+
+        .pricing-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 2rem;
+        }
+
+        .pricing-price small {
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--gray);
+        }
+
+        .pricing-features {
+            list-style: none;
+            padding: 0;
+            margin-bottom: 2rem;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .pricing-features i {
+            color: var(--success);
+        }
+
+        .btn-pricing {
+            background: transparent;
+            border: 2px solid var(--primary-light);
+            color: var(--primary);
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-pricing:hover {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .btn-pricing.popular {
+            background: var(--gradient-2);
+            border: none;
+            color: white;
+            box-shadow: 0 5px 15px rgba(99,102,241,0.3);
         }
 
         /* CTA Section */
         .cta-section {
             padding: 80px 0;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: var(--gradient-2);
             color: white;
             text-align: center;
         }
@@ -505,10 +598,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
         /* Footer */
         .footer {
-            background: var(--surface);
-            color: var(--text-main);
+            background: var(--dark);
+            color: white;
             padding: 60px 0 30px;
-            border-top: 1px solid var(--border-color);
         }
 
         .footer-brand {
@@ -518,11 +610,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             display: flex;
             align-items: center;
             gap: 10px;
-            color: var(--text-dark);
         }
 
         .footer-description {
-            color: var(--text-muted);
+            color: var(--gray-light);
             margin-bottom: 2rem;
         }
 
@@ -536,19 +627,19 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         .footer-links a {
-            color: var(--text-muted);
+            color: var(--gray-light);
             text-decoration: none;
             transition: color 0.3s ease;
         }
 
         .footer-links a:hover {
-            color: var(--primary);
+            color: white;
         }
 
         .footer-title {
             font-weight: 600;
             margin-bottom: 1.5rem;
-            color: var(--text-dark);
+            color: white;
         }
 
         .social-links {
@@ -560,29 +651,27 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .social-links a {
             width: 40px;
             height: 40px;
-            background: var(--surface-hover);
+            background: rgba(255,255,255,0.1);
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--text-muted);
+            color: white;
             text-decoration: none;
             transition: all 0.3s ease;
-            border: 1px solid var(--border-color);
         }
 
         .social-links a:hover {
             background: var(--primary);
-            color: white;
             transform: translateY(-3px);
         }
 
         .footer-bottom {
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid rgba(255,255,255,0.1);
             padding-top: 30px;
             margin-top: 40px;
             text-align: center;
-            color: var(--text-muted);
+            color: var(--gray-light);
         }
 
         /* Responsive */
@@ -594,6 +683,14 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             .hero-stats {
                 flex-wrap: wrap;
                 gap: 1.5rem;
+            }
+            
+            .pricing-card.popular {
+                transform: scale(1);
+            }
+            
+            .pricing-card.popular:hover {
+                transform: translateY(-10px);
             }
         }
 
@@ -655,43 +752,42 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 <body>
 
     <!-- Navigation -->
-<nav class="navbar navbar-expand-lg" id="mainNav">
-    <div class="container">
-        <a class="navbar-brand" href="index.php">
-            <div class="brand-icon">
-                <i class="bi bi-layers-half"></i>
-            </div>
-            <span>Task Manager</span>  <!-- Diganti dari TaskFlow -->
-        </a>
-        
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <i class="bi bi-list fs-1" style="color: var(--text-dark);"></i>
-        </button>
-        
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <!-- Menu Navigasi di KIRI -->
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="#features">Fitur</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#how-it-works">Cara Kerja</a>
-                </li>
-            </ul>
-            
-            <!-- Tombol Aksi di KANAN (termasuk theme toggle) -->
-            <div class="d-flex align-items-center gap-2">
-                <!-- Theme Toggle - Paling Kiri di grup kanan -->
-                <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
-                    <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
+    <nav class="navbar navbar-expand-lg" id="mainNav">
+        <div class="container">
+            <a class="navbar-brand" href="index.php">
+                <div class="brand-icon">
+                    <i class="bi bi-layers-half"></i>
                 </div>
+                <span>TaskFlow</span>
+            </a>
+            
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <i class="bi bi-list fs-1" style="color: var(--dark);"></i>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mx-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Fitur</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#how-it-works">Cara Kerja</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#testimonials">Testimoni</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#pricing">Harga</a>
+                    </li>
+                </ul>
                 
-                <a href="login.php" class="btn-login">Masuk</a>
-                <a href="register.php" class="btn-register">Daftar</a>
+                <div class="d-flex gap-2">
+                    <a href="login.php" class="btn-login">Masuk</a>
+                    <a href="register.php" class="btn-register">Daftar</a>
+                </div>
             </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <!-- Hero Section -->
     <section class="hero-section">
@@ -714,7 +810,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     
                     <div class="hero-cta fade-up delay-3">
                         <a href="register.php" class="btn-primary-custom">
-                            <i class="bi bi-rocket me-2"></i>Mulai
+                            <i class="bi bi-rocket me-2"></i>Mulai Gratis
                         </a>
                         <a href="#features" class="btn-outline-custom">
                             <i class="bi bi-play-circle me-2"></i>Demo
@@ -883,7 +979,145 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </section>
 
-   
+    <!-- Testimonials -->
+    <section class="testimonials-section" id="testimonials">
+        <div class="container">
+            <h2 class="section-title fade-up">Apa Kata Pengguna Kami</h2>
+            <p class="section-subtitle fade-up delay-1">
+                Ribuan tim telah merasakan manfaat menggunakan TaskFlow
+            </p>
+            
+            <div class="row g-4">
+                <div class="col-md-4 fade-up delay-1">
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "TaskFlow membantu tim kami meningkatkan produktivitas hingga 40%. 
+                            Fitur Kanban board sangat intuitif dan mudah digunakan."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">AB</div>
+                            <div class="author-info">
+                                <h6>Ahmad Budiman</h6>
+                                <small>Project Manager, TechCorp</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 fade-up delay-2">
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "Sangat membantu dalam mengelola deadline. Notifikasi otomatis 
+                            membuat kami tidak pernah melewatkan tenggat waktu."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">SR</div>
+                            <div class="author-info">
+                                <h6>Siti Rahma</h6>
+                                <small>Team Lead, StartupHub</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 fade-up delay-3">
+                    <div class="testimonial-card">
+                        <div class="testimonial-text">
+                            "UI/UX yang modern dan responsif. Bisa diakses dari mana saja 
+                            dan sangat membantu tim remote work kami."
+                        </div>
+                        <div class="testimonial-author">
+                            <div class="author-avatar">DP</div>
+                            <div class="author-info">
+                                <h6>Dimas Putra</h6>
+                                <small>Founder, Digital Agency</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing-section" id="pricing">
+        <div class="container">
+            <h2 class="section-title fade-up">Harga yang Fleksibel</h2>
+            <p class="section-subtitle fade-up delay-1">
+                Pilih paket yang sesuai dengan kebutuhan tim Anda
+            </p>
+            
+            <div class="row g-4 align-items-center">
+                <div class="col-md-4 fade-up delay-1">
+                    <div class="pricing-card">
+                        <h4 class="pricing-name">Basic</h4>
+                        <div class="pricing-price">
+                            Gratis <small>/selamanya</small>
+                        </div>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-lg"></i> 3 proyek aktif</li>
+                            <li><i class="bi bi-check-lg"></i> 5 anggota tim</li>
+                            <li><i class="bi bi-check-lg"></i> Kanban board</li>
+                            <li><i class="bi bi-check-lg"></i> File attachments</li>
+                            <li><i class="bi bi-check-lg"></i> Notifikasi dasar</li>
+                        </ul>
+                        <a href="register.php" class="btn-pricing">Mulai Gratis</a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 fade-up delay-2">
+                    <div class="pricing-card popular">
+                        <div class="popular-badge">POPULER</div>
+                        <h4 class="pricing-name">Pro</h4>
+                        <div class="pricing-price">
+                            Rp99k <small>/bulan</small>
+                        </div>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-lg"></i> Proyek tak terbatas</li>
+                            <li><i class="bi bi-check-lg"></i> 20 anggota tim</li>
+                            <li><i class="bi bi-check-lg"></i> Kolom kustom</li>
+                            <li><i class="bi bi-check-lg"></i> Laporan & statistik</li>
+                            <li><i class="bi bi-check-lg"></i> Prioritas support</li>
+                            <li><i class="bi bi-check-lg"></i> Backup data</li>
+                        </ul>
+                        <a href="register.php" class="btn-pricing popular">Pilih Pro</a>
+                    </div>
+                </div>
+                
+                <div class="col-md-4 fade-up delay-3">
+                    <div class="pricing-card">
+                        <h4 class="pricing-name">Enterprise</h4>
+                        <div class="pricing-price">
+                            Custom
+                        </div>
+                        <ul class="pricing-features">
+                            <li><i class="bi bi-check-lg"></i> Semua fitur Pro</li>
+                            <li><i class="bi bi-check-lg"></i> Unlimited members</li>
+                            <li><i class="bi bi-check-lg"></i> SSO & advanced security</li>
+                            <li><i class="bi bi-check-lg"></i> Dedicated account manager</li>
+                            <li><i class="bi bi-check-lg"></i> API akses</li>
+                            <li><i class="bi bi-check-lg"></i> SLA guarantee</li>
+                        </ul>
+                        <a href="contact.php" class="btn-pricing">Hubungi Kami</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title fade-up">Siap Meningkatkan Produktivitas Tim?</h2>
+            <p class="cta-description fade-up delay-1">
+                Mulai kelola proyek dengan lebih efisien. Daftar gratis dan 
+                rasakan manfaatnya dalam 5 menit!
+            </p>
+            <a href="register.php" class="btn-cta fade-up delay-2">
+                <i class="bi bi-rocket-takeoff me-2"></i>Mulai Gratis Sekarang
+            </a>
+        </div>
+    </section>
 
     <!-- Footer -->
     <footer class="footer">
@@ -894,7 +1128,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <div class="brand-icon">
                             <i class="bi bi-layers-half"></i>
                         </div>
-                        <span>Task Manager</span>
+                        <span>TaskFlow</span>
                     </div>
                     <p class="footer-description">
                         Platform manajemen tugas modern untuk tim produktif. 
@@ -913,6 +1147,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     <h6 class="footer-title">Produk</h6>
                     <ul class="footer-links">
                         <li><a href="#features">Fitur</a></li>
+                        <li><a href="#pricing">Harga</a></li>
                         <li><a href="#">Keamanan</a></li>
                         <li><a href="#">FAQ</a></li>
                     </ul>
@@ -934,6 +1169,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                         <li><a href="#">Dokumentasi</a></li>
                         <li><a href="#">API</a></li>
                         <li><a href="#">Bantuan</a></li>
+                        <li><a href="#">Komunitas</a></li>
                     </ul>
                 </div>
                 
@@ -942,12 +1178,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     <ul class="footer-links">
                         <li><a href="#">Kebijakan Privasi</a></li>
                         <li><a href="#">Syarat & Ketentuan</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
                     </ul>
                 </div>
             </div>
             
             <div class="footer-bottom">
-                <p>&copy; 2026 Task Manager. Latif Junia Angreani</i></p>
+                <p>&copy; 2026 TaskFlow. All rights reserved. Made with <i class="bi bi-heart-fill text-danger"></i> in Indonesia</p>
             </div>
         </div>
     </footer>
@@ -955,24 +1192,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Theme Toggle Function
-        function toggleTheme() {
-            const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            html.setAttribute('data-theme', newTheme);
-            
-            // Update icon
-            const themeIcon = document.querySelector('.theme-toggle i');
-            if (themeIcon) {
-                themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
-            }
-            
-            // Save to cookie (7 days)
-            document.cookie = `theme=${newTheme}; path=/; max-age=604800`;
-        }
-
         // Navbar scroll effect
         window.addEventListener('scroll', function() {
             const navbar = document.getElementById('mainNav');

@@ -13,6 +13,12 @@ if (!isLoggedIn()) {
     exit;
 }
 
+// Debug: log received data
+error_log("Projects API called");
+error_log("GET: " . print_r($_GET, true));
+error_log("POST: " . print_r($_POST, true));
+error_log("REQUEST: " . print_r($_REQUEST, true));
+
 // Cek action dari berbagai sumber
 $action = '';
 if (isset($_GET['action'])) {
@@ -23,8 +29,17 @@ if (isset($_GET['action'])) {
     $action = $_REQUEST['action'];
 }
 
+// Jika tidak ada action, coba deteksi dari endpoint
 if (empty($action)) {
-    echo json_encode(['success' => false, 'message' => 'Action tidak ditemukan']);
+    $request_uri = $_SERVER['REQUEST_URI'] ?? '';
+    if (strpos($request_uri, '?action=') !== false) {
+        parse_str(parse_url($request_uri, PHP_URL_QUERY), $query);
+        $action = $query['action'] ?? '';
+    }
+}
+
+if (empty($action)) {
+    echo json_encode(['success' => false, 'message' => 'Action tidak ditemukan. Data diterima: ' . json_encode($_POST)]);
     exit;
 }
 
@@ -57,7 +72,7 @@ function handleCreateProject() {
             return;
         }
         
-        // Insert proyek baru
+        // Insert proyek baru - HAPUS updated_at karena tidak ada di tabel
         $stmt = $pdo->prepare("INSERT INTO projects (name, description, created_by, created_at) VALUES (?, ?, ?, NOW())");
         $success = $stmt->execute([$name, $description, $_SESSION['user_id']]);
         
@@ -79,7 +94,7 @@ function handleCreateProject() {
         
     } catch (Exception $e) {
         error_log("Error create project: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
+        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
     }
 }
 
@@ -93,6 +108,8 @@ function handleUpdateProject() {
         $project_id = (int)($_POST['project_id'] ?? 0);
         $name = trim($_POST['name'] ?? '');
         $description = trim($_POST['description'] ?? '');
+        
+        error_log("Updating project ID: $project_id, Name: $name");
         
         if ($project_id <= 0) {
             echo json_encode(['success' => false, 'message' => 'Project ID tidak valid']);
@@ -116,21 +133,23 @@ function handleUpdateProject() {
             return;
         }
         
-        // Update proyek
-        $stmt = $pdo->prepare("UPDATE projects SET name = ?, description = ?, updated_at = NOW() WHERE id = ?");
+        // Update proyek - HAPUS updated_at karena tidak ada di tabel
+        $stmt = $pdo->prepare("UPDATE projects SET name = ?, description = ? WHERE id = ?");
         $success = $stmt->execute([$name, $description, $project_id]);
         
         if ($success) {
             // Buat notifikasi untuk anggota proyek
-            $members = getProjectMembers($project_id);
-            foreach ($members as $member) {
-                if ($member['id'] != $_SESSION['user_id']) {
-                    createNotification(
-                        $member['id'],
-                        'Proyek Diperbarui',
-                        $_SESSION['full_name'] . ' memperbarui proyek: ' . $name,
-                        'system'
-                    );
+            if (function_exists('createNotification')) {
+                $members = getProjectMembers($project_id);
+                foreach ($members as $member) {
+                    if ($member['id'] != $_SESSION['user_id']) {
+                        createNotification(
+                            $member['id'],
+                            'Proyek Diperbarui',
+                            $_SESSION['full_name'] . ' memperbarui proyek: ' . $name,
+                            'system'
+                        );
+                    }
                 }
             }
             
@@ -144,7 +163,7 @@ function handleUpdateProject() {
         
     } catch (Exception $e) {
         error_log("Error update project: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
+        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
     }
 }
 
@@ -156,6 +175,8 @@ function handleDeleteProject() {
     
     try {
         $project_id = (int)($_POST['project_id'] ?? 0);
+        
+        error_log("Deleting project ID: $project_id");
         
         if ($project_id <= 0) {
             echo json_encode(['success' => false, 'message' => 'Project ID tidak valid']);
@@ -185,28 +206,50 @@ function handleDeleteProject() {
         $stmt->execute([$project_id]);
         $attachments = $stmt->fetchAll();
         
+        $uploadDir = __DIR__ . '/../../uploads/tasks/';
         foreach ($attachments as $attachment) {
-            $filepath = __DIR__ . '/../uploads/' . $attachment['filepath'];
+            $filepath = $uploadDir . $attachment['filepath'];
             if (file_exists($filepath)) {
                 unlink($filepath);
             }
         }
         
-        // Hapus semua data terkait (foreign key cascade akan menghapus)
+        // Hapus semua data terkait
+        // 1. Hapus comments (via tasks)
+        $pdo->prepare("DELETE c FROM comments c INNER JOIN tasks t ON c.task_id = t.id WHERE t.project_id = ?")->execute([$project_id]);
+        
+        // 2. Hapus attachments (via tasks)
+        $pdo->prepare("DELETE a FROM attachments a INNER JOIN tasks t ON a.task_id = t.id WHERE t.project_id = ?")->execute([$project_id]);
+        
+        // 3. Hapus tasks
+        $pdo->prepare("DELETE FROM tasks WHERE project_id = ?")->execute([$project_id]);
+        
+        // 4. Hapus custom columns
+        $pdo->prepare("DELETE FROM project_columns WHERE project_id = ?")->execute([$project_id]);
+        
+        // 5. Hapus default column settings
+        $pdo->prepare("DELETE FROM default_column_settings WHERE project_id = ?")->execute([$project_id]);
+        
+        // 6. Hapus project members
+        $pdo->prepare("DELETE FROM project_members WHERE project_id = ?")->execute([$project_id]);
+        
+        // 7. Hapus project
         $pdo->prepare("DELETE FROM projects WHERE id = ?")->execute([$project_id]);
         
         // Commit transaksi
         $pdo->commit();
         
         // Buat notifikasi untuk anggota (setelah commit)
-        foreach ($members as $member) {
-            if ($member['id'] != $_SESSION['user_id']) {
-                createNotification(
-                    $member['id'],
-                    'Proyek Dihapus',
-                    'Proyek "' . $project['name'] . '" telah dihapus oleh ' . $_SESSION['full_name'],
-                    'system'
-                );
+        if (function_exists('createNotification')) {
+            foreach ($members as $member) {
+                if ($member['id'] != $_SESSION['user_id']) {
+                    createNotification(
+                        $member['id'],
+                        'Proyek Dihapus',
+                        'Proyek "' . $project['name'] . '" telah dihapus oleh ' . $_SESSION['full_name'],
+                        'system'
+                    );
+                }
             }
         }
         
@@ -221,7 +264,7 @@ function handleDeleteProject() {
             $pdo->rollBack();
         }
         error_log("Error delete project: " . $e->getMessage());
-        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
+        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
     }
 }
 ?>
