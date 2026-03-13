@@ -5,6 +5,7 @@ require_once 'includes/functions.php';
 // Jika user sudah login, langsung arahkan ke dashboard
 if (isLoggedIn()) {
     redirect('dashboard.php');
+<<<<<<< HEAD
 }
 
 // Cek preferensi tema dari cookie
@@ -1054,3 +1055,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     </script>
 </body>
 </html>
+=======
+} else {
+// Jika belum login, arahkan ke halaman login
+    redirect('login.php');
+}
+?>
+>>>>>>> 561b11f05780e737ae8ff127661b91b721910d4c
