@@ -4,13 +4,13 @@ Aplikasi manajemen tugas berbasis web yang memungkinkan tim untuk berkolaborasi 
 
 ## 🚀 Fitur Utama
 
-- ✅ **Manajemen Proyek** - Buat dan kelola beberapa proyek
-- 📋 **Kanban Board** - Drag & drop tugas antar kolom 
-- 👥 **Kolaborasi Tim** - Tambah anggota, beri komentar, upload file
-- ⚠️ **Tugas Terlambat** - Halaman khusus untuk melihat tugas yang melewati deadline
-- 🎨 **Custom Kolom Kanban** - Menambahkan kolom baru dan Memilih icon kolom
-- 🔔 **Notifikasi** - Pemberitahuan real-time
-- 🌓 **Dark Mode** - Tersedia tema gelap dan terang
+- **Manajemen Proyek** - Buat dan kelola beberapa proyek
+- **Kanban Board** - Drag & drop tugas antar kolom 
+- **Kolaborasi Tim** - Tambah anggota, beri komentar, upload file
+- **Tugas Terlambat** - Halaman khusus untuk melihat tugas yang melewati deadline
+- **Custom Kolom Kanban** - Menambahkan kolom baru dan Memilih icon kolom
+- **Notifikasi** - Pemberitahuan real-time
+- **Dark Mode** - Tersedia tema gelap dan terang
 
 
 ## 🛠️ Teknologi
