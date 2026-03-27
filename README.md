@@ -4,35 +4,13 @@ Aplikasi manajemen tugas berbasis web yang memungkinkan tim untuk berkolaborasi 
 
 ## 🚀 Fitur Utama
 
-<<<<<<< HEAD
-- ✅ **Manajemen Proyek** - Buat dan kelola beberapa proyek
-- 📋 **Kanban Board** - Drag & drop tugas antar kolom 
-- 👥 **Kolaborasi Tim** - Tambah anggota, beri komentar, upload file
-- ⚠️ **Tugas Terlambat** - Halaman khusus untuk melihat tugas yang melewati deadline
-- 🎨 **Custom Kolom Kanban** - Menambahkan kolom baru dan Memilih icon kolom
-- 🔔 **Notifikasi** - Pemberitahuan real-time
-- 🌓 **Dark Mode** - Tersedia tema gelap dan terang
-=======
-- 📊 **Dashboard**
-  - Menampilkan ringkasan proyek dan statistika tugas
-- ✅ **Manajemen Proyek**
-  - Buat dan kelola beberapa proyek
-- 📋 **Kanban Board**
-  - Drag & drop tugas antar kolom, kolom default: To do, In Progress, Review, dan Progress proyek dihitung otomatis
-- ⚠️ **Tugas Terlambat**
-  - Halaman khusus untuk melihat tugas yang melewati deadline
-  - Filter berdasarkan: Proyek, Prioritas, Status keterlambatan
-- 🎨 **Custom Kolom Kanban**
-  - Menambahkan kolom baru
-  - Memilih warna kolom
-  - Memilih icon kolom
-- 🔔 **Notifikasi**
-  - Pemberitahuan real-time
-- 🌓 **Dark Mode**
-  - Tersedia tema gelap dan terang
-- 📱 **Responsive**
-  - Bisa diakses dari HP dan desktop
->>>>>>> 561b11f05780e737ae8ff127661b91b721910d4c
+- **Manajemen Proyek** - Buat dan kelola beberapa proyek
+- **Kanban Board** - Drag & drop tugas antar kolom 
+- **Kolaborasi Tim** - Tambah anggota, beri komentar, upload file
+- **Tugas Terlambat** - Halaman khusus untuk melihat tugas yang melewati deadline
+- **Custom Kolom Kanban** - Menambahkan kolom baru dan Memilih icon kolom
+- **Notifikasi** - Pemberitahuan real-time
+- **Dark Mode** - Tersedia tema gelap dan terang
 
 ## 🛠️ Teknologi
 
@@ -64,18 +42,13 @@ Buka browser, akses:
 http://localhost/task-manager
 
 ## 🔐 Akun Login
-### 👑 Administrator
+### Administrator
 Username : admin
 Password : admin098
 Email : admin@taskmanager.com
-### 👤 Member
+### Member
 Username : niaa
 Password : nia1234
-<<<<<<< HEAD
 Email : nia@example.com
-=======
-Email : nia@gmail.com
-
->>>>>>> 561b11f05780e737ae8ff127661b91b721910d4c
 
 

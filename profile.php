@@ -23,18 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $new_password = $_POST['new_password'] ?? '';
     $confirm_password = $_POST['confirm_password'] ?? '';
     
-    // Validasi
     if (empty($full_name) || empty($email)) {
         $error = 'Nama lengkap dan email wajib diisi';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = 'Format email tidak valid';
     } else {
         try {
-            // Update basic info
             $stmt = $pdo->prepare("UPDATE users SET full_name = ?, email = ? WHERE id = ?");
             $stmt->execute([$full_name, $email, $user_id]);
             
-            // Update password if provided
             if (!empty($current_password) && !empty($new_password)) {
                 if (!password_verify($current_password, $user['password'])) {
                     $error = 'Password saat ini salah';
@@ -52,11 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             if (empty($error)) {
                 $success = 'Profil berhasil diperbarui.' . ($success ?? '');
-                // Update session
                 $_SESSION['full_name'] = $full_name;
                 $_SESSION['email'] = $email;
                 
-                // Refresh user data
                 $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
                 $stmt->execute([$user_id]);
                 $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -68,10 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// Cek preferensi tema dari cookie
 $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 $notif_count = getNotificationCount($user_id);
-$overdue_count = getOverdueTasksCount($user_id);
 $notifications = getUnreadNotifications($user_id);
 $is_admin = isAdmin();
 ?>
@@ -85,7 +78,7 @@ $is_admin = isAdmin();
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
     
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
@@ -93,16 +86,15 @@ $is_admin = isAdmin();
     <style>
         :root {
             --primary: #6366f1;
-            --primary-hover: #4f46e5;
+            --primary-dark: #4f46e5;
             --primary-light: #e0e7ff;
-            --secondary: #ec4899;
             --success: #10b981;
             --danger: #ef4444;
             
             --bg-body: #f8fafc;
-            --bg-gradient: linear-gradient(120deg, #f8fafc 0%, #eef2ff 100%);
+            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             --surface: #ffffff;
-            --surface-hover: #f1f5f9;
+            --surface-hover: #f8fafc;
             
             --text-dark: #0f172a;
             --text-main: #334155;
@@ -110,23 +102,21 @@ $is_admin = isAdmin();
             
             --border-color: #e2e8f0;
             
-            --radius-lg: 24px;
-            --radius-md: 16px;
-            --radius-sm: 12px;
-            --shadow-soft: 0 2px 8px rgba(0,0,0,0.04);
-            --shadow-hover: 0 4px 12px rgba(99, 102, 241, 0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 20px;
         }
 
         [data-theme="dark"] {
             --primary: #818cf8;
-            --primary-hover: #6366f1;
+            --primary-dark: #6366f1;
             --primary-light: #1e1b4b;
-            --secondary: #f472b6;
             --success: #10b981;
             --danger: #ef4444;
             
             --bg-body: #0f172a;
-            --bg-gradient: linear-gradient(120deg, #0f172a 0%, #1e1b4b 100%);
+            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             --surface: #1e293b;
             --surface-hover: #334155;
             
@@ -137,78 +127,90 @@ $is_admin = isAdmin();
             --border-color: #334155;
         }
 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body {
-            background: var(--bg-body);
-            font-family: 'Outfit', sans-serif;
+            background: var(--bg-gradient);
+            font-family: 'Inter', sans-serif;
             color: var(--text-main);
-            transition: background 0.3s ease, color 0.3s ease;
+            min-height: 100vh;
         }
 
-        /* Navbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
+
         .navbar {
-            background: var(--surface);
+            background: rgba(var(--surface-rgb, 255,255,255), 0.8);
+            backdrop-filter: blur(20px);
             border-bottom: 1px solid var(--border-color);
-            padding: 1rem 0;
+            padding: 0.75rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
         }
         
+        [data-theme="dark"] .navbar { background: rgba(30, 41, 59, 0.8); }
+        
         .navbar-brand { 
             font-weight: 700; 
-            font-size: 1.3rem; 
+            font-size: 1.2rem; 
             color: var(--text-dark) !important; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
         
         .brand-icon {
-            width: 38px; height: 38px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 12px;
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.2rem;
+            color: white; font-size: 1.1rem;
         }
 
         .theme-toggle {
-            width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            background: var(--surface); border: 1px solid var(--border-color); color: var(--text-main); 
-            cursor: pointer; transition: 0.3s;
-        }
-        .theme-toggle:hover { background: var(--primary-light); color: var(--primary); transform: rotate(15deg); }
-
-        .icon-circle-sm { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
-
-        /* Cards */
-        .card {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             background: var(--surface);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-soft);
-            overflow: hidden;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
-        .card-header {
-            background: transparent;
-            border-bottom: 1px solid var(--border-color);
-            padding: 1.25rem 1.5rem;
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 1.1rem;
-        }
-        
-        .card-body {
-            padding: 1.5rem;
+        .theme-toggle:hover {
+            transform: rotate(15deg);
+            background: var(--primary-light);
+            color: var(--primary);
         }
 
-        /* Profile Header */
+        .icon-circle-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-hover);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        
+        .icon-circle-sm:hover {
+            background: var(--primary-light);
+            color: var(--primary);
+        }
+
         .profile-header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
-            border: none;
-            padding: 2rem;
             border-radius: var(--radius-lg);
+            padding: 2rem;
             margin-bottom: 1.5rem;
         }
         
@@ -217,11 +219,12 @@ $is_admin = isAdmin();
             height: 100px;
             border-radius: 50%;
             border: 4px solid rgba(255,255,255,0.3);
-            background: white;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(10px);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: var(--primary);
+            color: white;
             font-size: 2.5rem;
             font-weight: 700;
             margin-bottom: 1rem;
@@ -249,60 +252,80 @@ $is_admin = isAdmin();
             display: inline-block;
         }
 
-        /* Form Controls */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 1.5rem;
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 1rem;
+        }
+        
+        .card-body {
+            padding: 1.5rem;
+        }
+
         .form-label {
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             color: var(--text-muted);
             margin-bottom: 0.5rem;
         }
         
         .form-control { 
-            border-radius: 12px; 
-            padding: 0.8rem 1rem; 
+            border-radius: var(--radius-md); 
+            padding: 0.6rem 1rem; 
             border: 1px solid var(--border-color); 
             background: var(--surface-hover);
             color: var(--text-dark);
-            transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
         
         .form-control:focus { 
             background: var(--surface); 
             border-color: var(--primary); 
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); 
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
             outline: none;
         }
         
         .form-control:disabled {
             background: var(--surface-hover);
             opacity: 0.7;
-            cursor: not-allowed;
         }
 
+        .btn { 
+            padding: 0.5rem 1.25rem; 
+            border-radius: var(--radius-md); 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+            font-size: 0.85rem;
+        }
+        
         .btn-primary { 
             background: var(--primary); 
             border: none; 
-            padding: 0.7rem 1.5rem; 
-            border-radius: 12px; 
-            font-weight: 600; 
-            transition: 0.3s; 
             color: white;
         }
         
         .btn-primary:hover { 
-            background: var(--primary-hover); 
-            transform: translateY(-2px); 
+            background: var(--primary-dark); 
+            transform: translateY(-1px); 
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); 
         }
         
         .btn-outline-secondary {
             background: transparent;
             border: 1px solid var(--border-color);
-            color: var(--text-muted);
-            padding: 0.7rem 1.5rem;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: 0.3s;
+            color: var(--text-main);
         }
         
         .btn-outline-secondary:hover {
@@ -311,22 +334,23 @@ $is_admin = isAdmin();
         }
 
         .alert {
-            border-radius: 12px;
+            border-radius: var(--radius-md);
             padding: 1rem 1.25rem;
             border: none;
             font-weight: 500;
+            font-size: 0.85rem;
         }
         
         .alert-success {
             background: #d1fae5;
-            color: #10b981;
-            border-left: 4px solid #10b981;
+            color: #065f46;
+            border-left: 4px solid var(--success);
         }
         
         .alert-danger {
             background: #fee2e2;
-            color: #ef4444;
-            border-left: 4px solid #ef4444;
+            color: #991b1b;
+            border-left: 4px solid var(--danger);
         }
 
         [data-theme="dark"] .alert-success {
@@ -344,98 +368,166 @@ $is_admin = isAdmin();
             background: var(--border-color);
             margin: 1.5rem 0;
         }
+        
+        .section-title {
+            font-weight: 700;
+            color: var(--text-dark);
+            font-size: 0.95rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .section-title i {
+            color: var(--primary);
+        }
+        
+        .text-muted-small {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
 
-        /* Responsive */
+        .dropdown-menu {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            color: var(--text-main);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--surface-hover);
+            color: var(--text-dark);
+        }
+        
+        .dropdown-divider {
+            border-color: var(--border-color);
+        }
+
+        /* ===== DARK MODE INPUT FIX ===== */
+        [data-theme="dark"] input,
+        [data-theme="dark"] textarea,
+        [data-theme="dark"] .form-control {
+            color: #ffffff !important;
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        [data-theme="dark"] input::placeholder,
+        [data-theme="dark"] textarea::placeholder,
+        [data-theme="dark"] .form-control::placeholder {
+            color: #94a3b8 !important;
+        }
+
+        [data-theme="dark"] input:focus,
+        [data-theme="dark"] .form-control:focus {
+            color: #ffffff !important;
+            background-color: #0f172a !important;
+            border-color: #818cf8 !important;
+            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2) !important;
+        }
+
+        [data-theme="dark"] input:disabled,
+        [data-theme="dark"] .form-control:disabled {
+            background-color: #0f172a !important;
+            color: #64748b !important;
+        }
+
         @media (max-width: 768px) {
-            .profile-avatar {
-                width: 80px;
-                height: 80px;
-                font-size: 2rem;
-            }
-            
-            .profile-name {
-                font-size: 1.5rem;
-            }
-            
-            .profile-header {
-                padding: 1.5rem;
-            }
+            .profile-avatar { width: 80px; height: 80px; font-size: 2rem; }
+            .profile-name { font-size: 1.5rem; }
+            .profile-header { padding: 1.5rem; }
+            .card-body { padding: 1.25rem; }
+        }
+        
+        @media (max-width: 576px) {
+            .navbar-brand span { display: none; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Navbar -->
     <nav class="navbar">
-        <div class="container-fluid px-lg-5">
+        <div class="container-fluid px-3 px-lg-4">
             <a class="navbar-brand" href="dashboard.php">
-                <div class="brand-icon"><i class="bi bi-layers-half"></i></div>
+                <div class="brand-icon"><i class="bi bi-check2-square"></i></div>
                 <span>Task Manager</span>
             </a>
             
-            <div class="d-flex align-items-center ms-auto gap-3">
-                <div class="theme-toggle" onclick="toggleTheme()" title="Ganti Tema">
+            <div class="d-flex align-items-center ms-auto gap-2">
+                <div class="theme-toggle" onclick="toggleTheme()">
                     <i class="bi bi-<?= $theme === 'dark' ? 'sun' : 'moon' ?>"></i>
                 </div>
 
-                <!-- Notifikasi -->
                 <div class="dropdown">
-                    <a class="nav-link position-relative d-flex align-items-center" href="#" data-bs-toggle="dropdown">
-                        <div class="icon-circle-sm" style="background: var(--surface-hover); color: var(--text-main);">
+                    <a class="nav-link position-relative d-flex align-items-center p-0" href="#" data-bs-toggle="dropdown">
+                        <div class="icon-circle-sm">
                             <i class="bi bi-bell"></i>
                             <?php if ($notif_count > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger border border-2 border-white" style="font-size: 0.65rem; padding: 0.25rem 0.5rem;">
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.2rem 0.4rem;">
                                     <?= $notif_count ?>
                                 </span>
                             <?php endif; ?>
                         </div>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0" style="width: 350px; border-radius: 16px; padding: 0; overflow: hidden;">
-                        <div class="p-3 border-bottom">
+                    <div class="dropdown-menu dropdown-menu-end shadow" style="width: 340px;">
+                        <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
                             <h6 class="mb-0 fw-bold" style="color: var(--text-dark);">Notifikasi</h6>
+                            <?php if ($notif_count > 0): ?>
+                                <span class="badge bg-primary rounded-pill"><?= $notif_count ?> Baru</span>
+                            <?php endif; ?>
                         </div>
                         <?php if (empty($notifications)): ?>
                             <div class="text-center py-4">
-                                <i class="bi bi-bell-slash fs-1 text-muted opacity-50 mb-2"></i>
-                                <p class="text-muted mb-0 small">Belum ada notifikasi</p>
+                                <i class="bi bi-bell-slash fs-1 text-muted opacity-50"></i>
+                                <p class="text-muted small mt-2">Belum ada notifikasi</p>
                             </div>
                         <?php else: ?>
-                            <div style="max-height: 320px; overflow-y: auto;">
+                            <div style="max-height: 360px; overflow-y: auto;">
                                 <?php foreach ($notifications as $notif): ?>
                                     <a class="dropdown-item d-flex p-3 border-bottom" href="notifications.php">
                                         <div class="me-3">
-                                            <div class="icon-circle-sm" style="background: var(--primary-light); color: var(--primary); width: 36px; height: 36px;">
+                                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--primary-light); color: var(--primary);">
                                                 <i class="bi bi-info-circle"></i>
                                             </div>
                                         </div>
                                         <div>
-                                            <div class="fw-bold small"><?= htmlspecialchars($notif['title']) ?></div>
+                                            <div class="fw-semibold small" style="color: var(--text-dark);"><?= htmlspecialchars($notif['title']) ?></div>
                                             <div class="text-muted small"><?= htmlspecialchars($notif['message']) ?></div>
                                             <small class="text-muted mt-1 d-block"><?= timeAgo($notif['created_at']) ?></small>
                                         </div>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
+                            <div class="p-2 text-center border-top">
+                                <a href="notifications.php" class="text-decoration-none small" style="color: var(--primary);">Lihat semua notifikasi</a>
+                            </div>
                         <?php endif; ?>
                     </div>
                 </div>
 
-                <!-- User Menu -->
                 <div class="dropdown">
                     <a class="d-flex align-items-center gap-2 text-decoration-none" href="#" data-bs-toggle="dropdown">
-                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=6366f1&color=fff&size=40" 
-                             class="rounded-circle border border-2" style="border-color: var(--border-color) !important; width: 40px; height: 40px;">
+                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=6366f1&color=fff&size=36&bold=true&length=2" 
+                             class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
                         <div class="d-none d-md-block text-start">
-                            <div class="fw-bold small" style="color: var(--text-dark);"><?= htmlspecialchars($_SESSION['full_name']) ?></div>
+                            <div class="fw-semibold small" style="color: var(--text-dark);"><?= htmlspecialchars(explode(' ', $_SESSION['full_name'])[0]) ?></div>
                             <small class="text-muted" style="font-size: 0.7rem;"><?= $is_admin ? 'Admin' : 'Member' ?></small>
                         </div>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow border-0 mt-2 p-2" style="border-radius: 12px; min-width: 180px;">
-                        <a class="dropdown-item py-2 px-3 rounded-3" href="profile.php">
+                    <div class="dropdown-menu dropdown-menu-end shadow mt-2">
+                        <a class="dropdown-item" href="profile.php">
                             <i class="bi bi-person me-2"></i>Profil
                         </a>
-                        <div class="dropdown-divider my-2"></div>
-                        <a class="dropdown-item py-2 px-3 rounded-3 text-danger" href="logout.php">
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="logout.php">
                             <i class="bi bi-box-arrow-right me-2"></i>Keluar
                         </a>
                     </div>
@@ -444,9 +536,8 @@ $is_admin = isAdmin();
         </div>
     </nav>
 
-    <div class="container px-lg-5 py-4">
+    <div class="container-fluid px-3 px-lg-4 py-4">
         
-        <!-- Profile Header -->
         <div class="profile-header">
             <div class="row align-items-center">
                 <div class="col-md-auto text-center text-md-start">
@@ -457,12 +548,12 @@ $is_admin = isAdmin();
                 <div class="col-md">
                     <h1 class="profile-name"><?= htmlspecialchars($user['full_name']) ?></h1>
                     <div class="profile-username">@<?= htmlspecialchars($user['username']) ?></div>
-                    <div>
+                    <div class="d-flex gap-2 flex-wrap">
                         <span class="badge-role">
                             <i class="bi bi-shield-check me-1"></i>
                             <?= $user['role'] == 'admin' ? 'Administrator' : 'Anggota Tim' ?>
                         </span>
-                        <span class="badge-role ms-2">
+                        <span class="badge-role">
                             <i class="bi bi-calendar me-1"></i> Bergabung <?= date('M Y', strtotime($user['created_at'])) ?>
                         </span>
                     </div>
@@ -470,9 +561,8 @@ $is_admin = isAdmin();
             </div>
         </div>
 
-        <!-- Alert Messages -->
         <?php if (!empty($success)): ?>
-            <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <div class="alert alert-success alert-dismissible fade show">
                 <i class="bi bi-check-circle-fill me-2"></i>
                 <?= htmlspecialchars($success) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -480,14 +570,13 @@ $is_admin = isAdmin();
         <?php endif; ?>
         
         <?php if (!empty($error)): ?>
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <div class="alert alert-danger alert-dismissible fade show">
                 <i class="bi bi-exclamation-triangle-fill me-2"></i>
                 <?= htmlspecialchars($error) ?>
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
 
-        <!-- Form Edit Profil (Sederhana) -->
         <div class="card">
             <div class="card-header">
                 <i class="bi bi-pencil-square me-2" style="color: var(--primary);"></i>
@@ -512,14 +601,17 @@ $is_admin = isAdmin();
                         <div class="col-md-6">
                             <label class="form-label">Username</label>
                             <input type="text" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" disabled>
-                            <small class="text-muted">Username tidak dapat diubah</small>
+                            <small class="text-muted-small mt-1 d-block">Username tidak dapat diubah</small>
                         </div>
                     </div>
                     
                     <div class="divider"></div>
                     
-                    <h5 class="mb-3" style="color: var(--text-dark);">Ubah Password</h5>
-                    <p class="text-muted small mb-4">Kosongkan jika tidak ingin mengubah password</p>
+                    <div class="section-title">
+                        <i class="bi bi-lock-fill"></i>
+                        Ubah Password
+                    </div>
+                    <p class="text-muted-small mb-4">Kosongkan jika tidak ingin mengubah password</p>
                     
                     <div class="row mb-4">
                         <div class="col-md-12 mb-3">
@@ -540,10 +632,10 @@ $is_admin = isAdmin();
                     </div>
                     
                     <div class="d-flex justify-content-end gap-2">
-                        <a href="dashboard.php" class="btn btn-outline-secondary px-4">
+                        <a href="dashboard.php" class="btn btn-outline-secondary">
                             <i class="bi bi-x-circle me-2"></i>Batal
                         </a>
-                        <button type="submit" class="btn btn-primary px-4">
+                        <button type="submit" class="btn btn-primary">
                             <i class="bi bi-save me-2"></i>Simpan Perubahan
                         </button>
                     </div>
@@ -555,45 +647,67 @@ $is_admin = isAdmin();
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Theme Toggle
         function toggleTheme() {
             const html = document.documentElement;
-            const currentTheme = html.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
+            const newTheme = html.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
             html.setAttribute('data-theme', newTheme);
-            
+            document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
             const themeIcon = document.querySelector('.theme-toggle i');
-            if (themeIcon) {
-                themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
-            }
-            
-            document.cookie = `theme=${newTheme}; path=/; max-age=604800`;
+            if (themeIcon) themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
+            fixDarkModeInputs();
         }
 
-        // Password validation
+        function fixDarkModeInputs() {
+            if (document.documentElement.getAttribute('data-theme') === 'dark') {
+                document.querySelectorAll('input, textarea, .form-control').forEach(el => {
+                    el.style.color = '#ffffff';
+                    el.style.backgroundColor = '#1e293b';
+                    el.addEventListener('focus', function() {
+                        this.style.backgroundColor = '#0f172a';
+                        this.style.borderColor = '#818cf8';
+                    });
+                    el.addEventListener('blur', function() {
+                        this.style.backgroundColor = '#1e293b';
+                        this.style.borderColor = '#334155';
+                    });
+                });
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
+            fixDarkModeInputs();
+            
             const newPassword = document.getElementById('new_password');
             const confirmPassword = document.getElementById('confirm_password');
             
-            function validatePassword() {
-                if (newPassword.value !== confirmPassword.value) {
-                    confirmPassword.setCustomValidity('Password tidak sama');
-                } else {
-                    confirmPassword.setCustomValidity('');
+            if (newPassword && confirmPassword) {
+                function validatePassword() {
+                    if (newPassword.value !== confirmPassword.value) {
+                        confirmPassword.setCustomValidity('Password tidak sama');
+                    } else {
+                        confirmPassword.setCustomValidity('');
+                    }
                 }
+                newPassword.addEventListener('change', validatePassword);
+                confirmPassword.addEventListener('keyup', validatePassword);
             }
-            
-            newPassword.addEventListener('change', validatePassword);
-            confirmPassword.addEventListener('keyup', validatePassword);
         });
 
-        // Form submission loading state
-        document.getElementById('profileForm')?.addEventListener('submit', function(e) {
-            const submitBtn = this.querySelector('button[type="submit"]');
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
-            submitBtn.disabled = true;
-        });
+        const profileForm = document.getElementById('profileForm');
+        if (profileForm) {
+            profileForm.addEventListener('submit', function(e) {
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
+                submitBtn.disabled = true;
+                setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = originalText;
+                    }
+                }, 5000);
+            });
+        }
     </script>
 </body>
 </html>

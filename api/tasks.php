@@ -23,6 +23,8 @@ switch ($action) {
     case 'delete': handle_delete_task(); break;
     case 'upload_attachment': handle_upload_attachment(); break;
     case 'delete_attachment': handle_delete_attachment(); break;
+    case 'get_attachments': handle_get_attachments(); break;
+    case 'download_attachment': handle_download_attachment(); break;
     case 'move_to_column': handle_move_to_column(); break;
     case 'list_by_column': handle_list_by_column(); break;
     default: echo json_encode(['success' => false, 'message' => 'Invalid action']);
@@ -230,6 +232,124 @@ function handle_list_by_column() {
     ]);
 }
 
+// ========== GET ATTACHMENTS ==========
+function handle_get_attachments() {
+    global $pdo;
+    try {
+        $task_id = (int)($_GET['task_id'] ?? 0);
+        
+        if ($task_id <= 0) {
+            echo json_encode(['success' => false, 'message' => 'Task ID tidak valid']);
+            return;
+        }
+        
+        $task = getTaskById($task_id);
+        if (!$task || !hasProjectAccess($task['project_id'], $_SESSION['user_id'])) {
+            echo json_encode(['success' => false, 'message' => 'Tidak memiliki akses']);
+            return;
+        }
+        
+        $stmt = $pdo->prepare("
+            SELECT a.*, u.full_name as uploaded_by_name 
+            FROM attachments a
+            LEFT JOIN users u ON a.uploaded_by = u.id
+            WHERE a.task_id = ?
+            ORDER BY a.uploaded_at DESC
+        ");
+        $stmt->execute([$task_id]);
+        $attachments = $stmt->fetchAll();
+        
+        // Format data untuk frontend
+        $formatted = [];
+        foreach ($attachments as $att) {
+            $formatted[] = [
+                'id' => $att['id'],
+                'filename' => $att['filename'],
+                'filepath' => $att['filepath'],
+                'uploaded_by' => $att['uploaded_by'],
+                'uploaded_by_name' => $att['uploaded_by_name'],
+                'uploaded_at' => $att['uploaded_at']
+            ];
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'attachments' => $formatted
+        ]);
+        
+    } catch (Exception $e) {
+        error_log("Error get attachments: " . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => 'Terjadi kesalahan sistem']);
+    }
+}
+
+// ========== DOWNLOAD ATTACHMENT ==========
+function handle_download_attachment() {
+    global $pdo;
+    
+    $attachment_id = (int)($_GET['id'] ?? 0);
+    
+    if ($attachment_id <= 0) {
+        http_response_code(400);
+        die('Invalid attachment ID');
+    }
+    
+    // Ambil data attachment
+    $stmt = $pdo->prepare("SELECT * FROM attachments WHERE id = ?");
+    $stmt->execute([$attachment_id]);
+    $attachment = $stmt->fetch();
+    
+    if (!$attachment) {
+        http_response_code(404);
+        die('File tidak ditemukan');
+    }
+    
+    // Cek akses ke task yang terkait
+    $task = getTaskById($attachment['task_id']);
+    if (!$task || !hasProjectAccess($task['project_id'], $_SESSION['user_id'])) {
+        http_response_code(403);
+        die('Akses ditolak');
+    }
+    
+    $filePath = __DIR__ . '/../../uploads/tasks/' . $attachment['filepath'];
+    
+    if (!file_exists($filePath)) {
+        http_response_code(404);
+        die('File tidak ditemukan di server');
+    }
+    
+    // Set headers untuk download
+    $filename = $attachment['filename'];
+    $fileSize = filesize($filePath);
+    
+    // Deteksi MIME type
+    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+    $mimeType = finfo_file($finfo, $filePath);
+    finfo_close($finfo);
+    
+    // Jika gagal deteksi MIME, gunakan default
+    if (!$mimeType) {
+        $mimeType = 'application/octet-stream';
+    }
+    
+    // Header untuk download
+    header('Content-Type: ' . $mimeType);
+    header('Content-Disposition: attachment; filename="' . addslashes($filename) . '"');
+    header('Content-Length: ' . $fileSize);
+    header('Cache-Control: no-cache, must-revalidate');
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    
+    // Bersihkan buffer output
+    if (ob_get_level()) {
+        ob_end_clean();
+    }
+    
+    // Baca dan kirim file
+    readfile($filePath);
+    exit;
+}
+
 // ========== GET TASK DETAIL ==========
 function handle_get_task() {
     global $pdo;
@@ -385,7 +505,7 @@ function handle_get_task() {
                             </label>
                         </div>
                         
-                        <div class="d-flex flex-column gap-2">
+                        <div class="d-flex flex-column gap-2" id="attachments-container-<?= $task_id ?>">
                             <?php if (empty($attachments)): ?>
                                 <div class="text-center p-3 rounded-4" style="border: 1px dashed var(--border-color); background: var(--surface-hover);">
                                     <small class="text-muted fw-bold">Belum ada file terlampir</small>
@@ -470,7 +590,7 @@ function handle_get_task() {
                                             </div>
                                         </div>
                                         <div class="d-flex gap-1 flex-shrink-0 ms-2">
-                                            <a href="../uploads/tasks/<?= htmlspecialchars($file['filepath']) ?>" target="_blank" class="btn btn-light btn-sm rounded-circle shadow-none" 
+                                            <a href="api/tasks.php?action=download_attachment&id=<?= $file['id'] ?>" class="btn btn-light btn-sm rounded-circle shadow-none" 
                                                style="background: var(--surface-hover); color: var(--primary); border: 1px solid var(--border-color);" 
                                                title="Download">
                                                 <i class="bi bi-download"></i>
