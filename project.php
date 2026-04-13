@@ -85,8 +85,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             --surface: #1e293b;
             --surface-hover: #334155;
             --surface-active: #2d3a4e;
-            --text-dark: #f1f5f9;
-            --text-main: #cbd5e1;
+            --text-dark: #ffffff;
+            --text-main: #e2e8f0;
             --text-muted: #94a3b8;
             --border-color: #334155;
             --border-light: #1e293b;
@@ -158,15 +158,91 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); 
         }
         
-        .btn-outline-primary {
-            border-color: var(--border-color);
-            color: var(--text-main);
-            background: transparent;
+        /* SIMPLE FILTER BAR */
+        .filter-bar {
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 0.75rem 1rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
         }
-        .btn-outline-primary:hover {
-            background: var(--primary-light);
+        
+        .search-wrapper {
+            flex: 2;
+            min-width: 200px;
+            position: relative;
+        }
+        
+        .search-wrapper i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        
+        .search-wrapper input {
+            width: 100%;
+            padding: 0.5rem 0.5rem 0.5rem 34px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            transition: var(--transition);
+        }
+        
+        .search-wrapper input:focus {
+            outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.1);
+        }
+        
+        .filter-select {
+            flex: 1;
+            min-width: 130px;
+        }
+        
+        .filter-select select {
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            background: var(--surface);
+            color: var(--text-dark);
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .filter-select select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        
+        .filter-reset-btn {
+            padding: 0.5rem 0.75rem;
+            background: transparent;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .filter-reset-btn:hover {
+            background: var(--surface-hover);
             color: var(--primary);
+            border-color: var(--primary-light);
         }
         
         .stats-grid {
@@ -179,7 +255,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .stat-card {
             background: var(--surface);
             border-radius: var(--radius-lg);
-            padding: 1.25rem;
+            padding: 1rem;
             border: 1px solid var(--border-color);
             transition: var(--transition);
         }
@@ -200,7 +276,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .stat-value {
-            font-size: 2rem;
+            font-size: 1.75rem;
             font-weight: 800;
             color: var(--text-dark);
             line-height: 1;
@@ -208,7 +284,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .progress-bar-custom {
-            height: 6px;
+            height: 4px;
             background: var(--border-color);
             border-radius: 10px;
             overflow: hidden;
@@ -221,25 +297,18 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             transition: width 0.3s ease;
         }
         
-        .filter-section {
-            background: var(--surface);
-            border: 1px solid var(--border-color);
-            border-radius: var(--radius-lg);
-            padding: 1rem 1.25rem;
-            margin-bottom: 1.5rem;
-        }
-        
         .kanban-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
         
         .kanban-header h5 {
             font-weight: 700;
             color: var(--text-dark);
             margin: 0;
+            font-size: 1rem;
         }
         
         .kanban-board {
@@ -262,7 +331,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .column-header {
-            padding: 1rem;
+            padding: 0.875rem 1rem;
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
@@ -274,20 +343,16 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             align-items: center;
             gap: 8px;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-dark);
-        }
-        
-        .column-title i {
-            font-size: 1rem;
         }
         
         .task-count {
             background: var(--task-count-bg);
             color: var(--primary);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 700;
-            padding: 2px 8px;
+            padding: 2px 7px;
             border-radius: 20px;
         }
         
@@ -298,15 +363,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             min-height: 200px;
         }
         
+        /* Task Card Styles */
         .task-card {
             background: var(--surface);
             border-radius: var(--radius-md);
-            padding: 1rem;
+            padding: 0.875rem;
             margin-bottom: 0.75rem;
             border: 1px solid var(--border-color);
             cursor: pointer;
             transition: var(--transition);
-            position: relative;
         }
         
         .task-card:hover {
@@ -317,13 +382,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         
         .task-priority {
             display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 6px;
-            font-size: 0.65rem;
+            padding: 0.15rem 0.5rem;
+            border-radius: 5px;
+            font-size: 0.6rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.3px;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
         }
         
         .priority-low { background: #dcfce7; color: #166534; }
@@ -331,27 +396,22 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .priority-high { background: #ffedd5; color: #9a3412; }
         .priority-urgent { background: #fee2e2; color: #991b1b; }
         
-        [data-theme="dark"] .priority-low { background: #14532d; color: #86efac; }
-        [data-theme="dark"] .priority-medium { background: #713f12; color: #fde047; }
-        [data-theme="dark"] .priority-high { background: #7c2d12; color: #fdba74; }
-        [data-theme="dark"] .priority-urgent { background: #7f1d1d; color: #fca5a5; }
-        
         .task-title {
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: var(--text-dark);
             margin-bottom: 0.5rem;
             line-height: 1.4;
         }
         
         .task-desc {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.5rem;
             line-height: 1.4;
         }
         
@@ -363,7 +423,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .due-date {
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             color: var(--text-muted);
             display: flex;
             align-items: center;
@@ -376,13 +436,13 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .avatar-small {
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             font-weight: 600;
             color: white;
         }
@@ -405,6 +465,574 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             background: var(--surface-hover);
         }
         
+        .add-column-card .text-center i {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-muted);
+        }
+        
+        .add-column-card .text-center small {
+            color: var(--text-muted);
+        }
+
+        /* Task Detail Modal - Ukuran Lebih Kecil & Rapi */
+        #taskDetailModal .modal-dialog {
+            max-width: 650px;
+        }
+        
+        #taskDetailModal .modal-content {
+            border-radius: 20px;
+            overflow: hidden;
+            max-height: 85vh;
+        }
+        
+        #taskDetailModal .modal-header {
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--surface);
+        }
+        
+        #taskDetailModal .modal-header .modal-title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #taskDetailModal .modal-header .modal-title i {
+            font-size: 1rem;
+        }
+        
+        #taskDetailModal .modal-body {
+            padding: 0;
+        }
+        
+        /* Tab Navigation - Lebih Ramping */
+        #taskDetailModal .nav-tabs {
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 1.25rem;
+            background: var(--surface);
+            gap: 0.25rem;
+        }
+        
+        #taskDetailModal .nav-tabs .nav-link {
+            border: none;
+            font-weight: 600;
+            font-size: 0.75rem;
+            padding: 0.6rem 0.875rem;
+            color: var(--text-muted);
+            background: transparent;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        
+        #taskDetailModal .nav-tabs .nav-link i {
+            margin-right: 6px;
+            font-size: 0.75rem;
+        }
+        
+        #taskDetailModal .nav-tabs .nav-link:hover {
+            color: var(--primary);
+            background: var(--surface-hover);
+            border-radius: 8px;
+        }
+        
+        #taskDetailModal .nav-tabs .nav-link.active {
+            color: var(--primary);
+            background: transparent;
+        }
+        
+        #taskDetailModal .nav-tabs .nav-link.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        /* Tab Content */
+        #taskDetailModal .tab-content {
+            padding: 1rem 1.25rem;
+            background: var(--surface);
+        }
+        
+        /* Info Cards - Lebih Ringkas */
+        #taskDetailModal .info-card {
+            background: var(--surface-hover);
+            border-radius: 12px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+        }
+        
+        #taskDetailModal .info-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            color: var(--text-muted);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        #taskDetailModal .info-label i {
+            font-size: 0.7rem;
+        }
+        
+        #taskDetailModal .info-value {
+            font-weight: 600;
+            color: var(--text-dark);
+            font-size: 0.85rem;
+        }
+        
+        /* Priority Badge */
+        #taskDetailModal .priority-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        
+        /* Comments Section */
+        #taskDetailModal .comment-item {
+            background: var(--surface-hover);
+            border-radius: 12px;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+        
+        #taskDetailModal .comment-item:hover {
+            border-color: var(--primary-light);
+        }
+        
+        #taskDetailModal .comment-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: white;
+            flex-shrink: 0;
+        }
+        
+        #taskDetailModal .comment-content {
+            flex: 1;
+        }
+        
+        #taskDetailModal .comment-author {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-dark);
+            margin-bottom: 0.2rem;
+        }
+        
+        #taskDetailModal .comment-time {
+            font-size: 0.6rem;
+            color: var(--text-muted);
+        }
+        
+        #taskDetailModal .comment-text {
+            font-size: 0.75rem;
+            color: var(--text-main);
+            margin-top: 0.35rem;
+            line-height: 1.4;
+        }
+        
+        /* Attachments */
+        #taskDetailModal .attachment-item {
+            border-radius: 10px;
+            transition: all 0.2s ease;
+        }
+        
+        #taskDetailModal .attachment-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--task-hover-shadow);
+        }
+        
+        /* Form Styling inside Modal */
+        #taskDetailModal .form-control,
+        #taskDetailModal .form-select {
+            border-radius: 10px;
+            padding: 0.45rem 0.75rem;
+            font-size: 0.8rem;
+        }
+        
+        #taskDetailModal .form-label {
+            font-size: 0.65rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.35rem;
+        }
+        
+        /* Modal Footer */
+        #taskDetailModal .modal-footer {
+            padding: 0.75rem 1.25rem;
+            border-top: 1px solid var(--border-color);
+            background: var(--surface);
+            gap: 0.5rem;
+        }
+        
+        #taskDetailModal .modal-footer .btn {
+            border-radius: 10px;
+            padding: 0.4rem 1rem;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        
+        /* Status Badge */
+        #taskDetailModal .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            background: var(--border-light);
+            color: var(--text-main);
+        }
+        
+        /* Dark Mode Adjustments for Task Detail Modal */
+        [data-theme="dark"] #taskDetailModal .info-card {
+            background: #0f172a;
+        }
+        
+        [data-theme="dark"] #taskDetailModal .comment-item {
+            background: #0f172a;
+        }
+        
+        [data-theme="dark"] #taskDetailModal .status-badge {
+            background: #334155;
+        }
+        
+        /* ========== PERBAIKAN TOAST NOTIFICATION ========== */
+        /* Toast Container */
+        .toast-container {
+            z-index: 9999;
+        }
+        
+        /* Toast dasar */
+        .toast {
+            background: var(--surface) !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: var(--radius-md) !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+            opacity: 0.96 !important;
+        }
+        
+        .toast .toast-body {
+            color: var(--text-dark) !important;
+            font-weight: 500 !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Toast untuk mode terang - warna solid dengan teks putih */
+        [data-theme="light"] .toast.bg-success {
+            background: #10b981 !important;
+            border-color: #059669 !important;
+        }
+        
+        [data-theme="light"] .toast.bg-success .toast-body {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .toast.bg-danger {
+            background: #ef4444 !important;
+            border-color: #dc2626 !important;
+        }
+        
+        [data-theme="light"] .toast.bg-danger .toast-body {
+            color: #ffffff !important;
+        }
+        
+        [data-theme="light"] .toast.bg-primary {
+            background: #6366f1 !important;
+            border-color: #4f46e5 !important;
+        }
+        
+        [data-theme="light"] .toast.bg-primary .toast-body {
+            color: #ffffff !important;
+        }
+        
+        /* Toast untuk mode gelap */
+        [data-theme="dark"] .toast.bg-success {
+            background: #059669 !important;
+            border-color: #047857 !important;
+        }
+        
+        [data-theme="dark"] .toast.bg-danger {
+            background: #dc2626 !important;
+            border-color: #b91c1c !important;
+        }
+        
+        [data-theme="dark"] .toast.bg-primary {
+            background: #4f46e5 !important;
+            border-color: #4338ca !important;
+        }
+        
+        [data-theme="dark"] .toast .toast-body {
+            color: #ffffff !important;
+        }
+        
+        /* Tombol close di toast */
+        .toast .btn-close {
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
+        
+        .toast .btn-close:hover {
+            opacity: 1;
+        }
+        
+        /* Toast hover effect */
+        .toast:hover {
+            opacity: 1 !important;
+            transform: translateY(-2px);
+            transition: all 0.2s ease;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            #taskDetailModal .modal-dialog {
+                max-width: calc(100% - 1rem);
+                margin: 0.5rem;
+            }
+            
+            #taskDetailModal .tab-content {
+                padding: 0.75rem 1rem;
+            }
+            
+            #taskDetailModal .nav-tabs {
+                padding: 0 0.75rem;
+            }
+            
+            #taskDetailModal .nav-tabs .nav-link {
+                padding: 0.5rem 0.6rem;
+                font-size: 0.7rem;
+            }
+            
+            #taskDetailModal .modal-footer {
+                flex-wrap: wrap;
+            }
+            
+            #taskDetailModal .modal-footer .btn {
+                flex: 1;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 0.75rem;
+            }
+            
+            .kanban-column {
+                min-width: 280px;
+                width: 280px;
+            }
+            
+            .filter-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-wrapper, .filter-select {
+                width: 100%;
+            }
+            
+            .filter-reset-btn {
+                justify-content: center;
+            }
+        }
+        
+        /* ========== DARK MODE STYLES ========== */
+        [data-theme="dark"] .task-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .task-card:hover {
+            background: #334155 !important;
+        }
+        
+        [data-theme="dark"] .task-title {
+            color: #f8fafc !important;
+        }
+        
+        [data-theme="dark"] .task-desc {
+            color: #cbd5e1 !important;
+        }
+        
+        [data-theme="dark"] .due-date {
+            color: #94a3b8 !important;
+        }
+        
+        [data-theme="dark"] .due-date.overdue {
+            color: #fca5a5 !important;
+        }
+        
+        [data-theme="dark"] .priority-low {
+            background: #14532d !important;
+            color: #86efac !important;
+        }
+        
+        [data-theme="dark"] .priority-medium {
+            background: #713f12 !important;
+            color: #fde047 !important;
+        }
+        
+        [data-theme="dark"] .priority-high {
+            background: #7c2d12 !important;
+            color: #fdba74 !important;
+        }
+        
+        [data-theme="dark"] .priority-urgent {
+            background: #7f1d1d !important;
+            color: #fca5a5 !important;
+        }
+        
+        [data-theme="dark"] .stat-card {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .stat-value {
+            color: #f8fafc !important;
+        }
+        
+        [data-theme="dark"] .stat-label {
+            color: #94a3b8 !important;
+        }
+        
+        [data-theme="dark"] .filter-bar {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .search-wrapper input,
+        [data-theme="dark"] .filter-select select {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        
+        [data-theme="dark"] .search-wrapper input::placeholder {
+            color: #64748b !important;
+        }
+        
+        [data-theme="dark"] .filter-reset-btn {
+            color: #94a3b8 !important;
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .filter-reset-btn:hover {
+            background: #334155 !important;
+            color: #a5b4fc !important;
+        }
+        
+        [data-theme="dark"] .kanban-column {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .column-header {
+            border-color: #334155 !important;
+        }
+        
+        [data-theme="dark"] .column-title {
+            color: #f8fafc !important;
+        }
+        
+        [data-theme="dark"] .task-count {
+            background: #334155 !important;
+            color: #a5b4fc !important;
+        }
+        
+        /* Fix untuk tombol three dots (titik tiga) di dark mode */
+        [data-theme="dark"] .column-header button.btn-light {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: #94a3b8 !important;
+        }
+        
+        [data-theme="dark"] .column-header button.btn-light:hover {
+            background-color: #334155 !important;
+            color: #a5b4fc !important;
+            border-color: #6366f1 !important;
+        }
+        
+        [data-theme="dark"] .column-header button.btn-light i {
+            color: #94a3b8 !important;
+        }
+        
+        [data-theme="dark"] .column-header button.btn-light:hover i {
+            color: #a5b4fc !important;
+        }
+        
+        /* Fix untuk tombol "Tambah Tugas" di dark mode */
+        [data-theme="dark"] .kanban-column .btn-light.w-100 {
+            background-color: #1e293b !important;
+            border: 1px dashed #334155 !important;
+            color: #94a3b8 !important;
+        }
+        
+        [data-theme="dark"] .kanban-column .btn-light.w-100:hover {
+            background-color: #334155 !important;
+            border-color: #6366f1 !important;
+            color: #a5b4fc !important;
+        }
+        
+        /* Fix untuk tombol "Tambah Kolom" card di dark mode */
+        [data-theme="dark"] .add-column-card {
+            background-color: #1e293b !important;
+            border: 2px dashed #334155 !important;
+        }
+        
+        [data-theme="dark"] .add-column-card:hover {
+            background-color: #334155 !important;
+            border-color: #6366f1 !important;
+        }
+        
+        [data-theme="dark"] .add-column-card i {
+            color: #64748b !important;
+        }
+        
+        [data-theme="dark"] .add-column-card:hover i {
+            color: #a5b4fc !important;
+        }
+        
+        [data-theme="dark"] .add-column-card small {
+            color: #64748b !important;
+        }
+        
+        [data-theme="dark"] .add-column-card:hover small {
+            color: #a5b4fc !important;
+        }
+        
+        /* Fix untuk custom column badge */
+        [data-theme="dark"] .custom-column-badge {
+            background-color: #334155 !important;
+            color: #94a3b8 !important;
+            font-size: 0.6rem;
+            padding: 2px 6px;
+            border-radius: 12px;
+            margin-left: 6px;
+        }
+        
+        /* Modal Styles */
         .modal-content {
             border-radius: var(--radius-xl);
             border: 1px solid var(--border-color);
@@ -413,26 +1041,26 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         
         .modal-header {
             border-bottom: 1px solid var(--border-color);
-            padding: 1.25rem 1.5rem;
+            padding: 1rem 1.25rem;
         }
         
         .modal-body {
-            padding: 1.5rem;
+            padding: 1.25rem;
         }
         
         .modal-footer {
             border-top: 1px solid var(--border-color);
-            padding: 1rem 1.5rem;
+            padding: 0.875rem 1.25rem;
             background: var(--surface-hover);
         }
         
         .form-control, .form-select {
             border-radius: 10px;
-            padding: 0.6rem 1rem;
+            padding: 0.5rem 0.875rem;
             border: 1px solid var(--border-color);
             background: var(--surface);
             color: var(--text-dark);
-            font-size: 0.9rem;
+            font-size: 0.85rem;
         }
         
         .form-control:focus, .form-select:focus {
@@ -442,12 +1070,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .form-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: var(--text-muted);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.4rem;
         }
         
         .avatar-group {
@@ -465,8 +1093,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .theme-toggle {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -487,10 +1115,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .members-btn {
             background: var(--surface);
             border: 1px solid var(--border-color);
-            padding: 0.5rem 1rem;
+            padding: 0.4rem 0.875rem;
             border-radius: 10px;
             font-weight: 500;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             transition: var(--transition);
             color: var(--text-dark);
         }
@@ -502,8 +1130,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
         
         .project-action-btn {
-            width: 38px;
-            height: 38px;
+            width: 36px;
+            height: 36px;
             border-radius: 10px;
             display: flex;
             align-items: center;
@@ -530,7 +1158,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         .dropdown-item {
             border-radius: 8px;
             padding: 0.5rem 1rem;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             color: var(--text-main);
         }
         
@@ -541,37 +1169,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         
         .dropdown-header {
             color: var(--text-muted);
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-        }
-        
-        .dropdown-menu .fw-semibold {
-            color: var(--text-dark);
-        }
-        
-        .kanban-column .btn-light {
-            background: var(--surface);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-        }
-        
-        .kanban-column .btn-light:hover {
-            background: var(--surface-hover);
-            color: var(--primary);
-        }
-        
-        .kanban-column .btn-light.w-100 {
-            background: var(--surface);
-            border: 1px dashed var(--border-color);
-            color: var(--text-main);
-        }
-        
-        .kanban-column .btn-light.w-100:hover {
-            background: var(--surface-hover);
-            border-color: var(--primary);
-            color: var(--primary);
         }
         
         .sortable-ghost {
@@ -580,444 +1181,39 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             border: 2px dashed var(--primary);
         }
         
-        .toast {
-            background: var(--surface) !important;
-            border: 1px solid var(--border-color) !important;
-            border-radius: var(--radius-md) !important;
+        [data-theme="dark"] .modal-content {
+            background: #1e293b !important;
         }
         
-        /* ===== DARK MODE INPUT TEXT FIX ===== */
-        [data-theme="dark"] input,
-        [data-theme="dark"] textarea,
-        [data-theme="dark"] select,
-        [data-theme="dark"] .form-control,
-        [data-theme="dark"] .form-select,
-        [data-theme="dark"] input.form-control,
-        [data-theme="dark"] textarea.form-control,
-        [data-theme="dark"] select.form-select,
-        [data-theme="dark"] input[type="text"],
-        [data-theme="dark"] input[type="email"],
-        [data-theme="dark"] input[type="password"],
-        [data-theme="dark"] input[type="date"],
-        [data-theme="dark"] input[type="number"],
-        [data-theme="dark"] input[type="search"],
-        [data-theme="dark"] input[type="tel"],
-        [data-theme="dark"] input[type="url"] {
-            color: #ffffff !important;
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] input::placeholder,
-        [data-theme="dark"] textarea::placeholder,
-        [data-theme="dark"] .form-control::placeholder {
-            color: #94a3b8 !important;
-            opacity: 1 !important;
-        }
-
-        [data-theme="dark"] input:focus,
-        [data-theme="dark"] textarea:focus,
-        [data-theme="dark"] .form-control:focus,
-        [data-theme="dark"] .form-select:focus {
-            color: #ffffff !important;
-            background-color: #0f172a !important;
-            border-color: #818cf8 !important;
-            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2) !important;
-        }
-
-        [data-theme="dark"] .input-group-text {
-            color: #94a3b8 !important;
-            background-color: #334155 !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] input:disabled,
-        [data-theme="dark"] textarea:disabled,
-        [data-theme="dark"] .form-control:disabled {
-            background-color: #0f172a !important;
-            color: #64748b !important;
-        }
-
-        [data-theme="dark"] select option {
-            background-color: #1e293b !important;
-            color: #ffffff !important;
-        }
-
-        [data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-
-        [data-theme="dark"] input:-webkit-autofill,
-        [data-theme="dark"] input:-webkit-autofill:hover,
-        [data-theme="dark"] input:-webkit-autofill:focus,
-        [data-theme="dark"] textarea:-webkit-autofill,
-        [data-theme="dark"] textarea:-webkit-autofill:hover,
-        [data-theme="dark"] textarea:-webkit-autofill:focus,
-        [data-theme="dark"] select:-webkit-autofill,
-        [data-theme="dark"] select:-webkit-autofill:hover,
-        [data-theme="dark"] select:-webkit-autofill:focus {
-            -webkit-text-fill-color: #ffffff !important;
-            -webkit-box-shadow: 0 0 0px 1000px #1e293b inset !important;
-            background-color: #1e293b !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-
-        /* Dark mode fixes for task cards */
-        [data-theme="dark"] .task-card {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .task-card:hover {
-            background-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .task-title {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="dark"] .task-desc {
-            color: #94a3b8 !important;
-        }
-
-        [data-theme="dark"] .modal-content {
-            background-color: #1e293b !important;
-        }
-
         [data-theme="dark"] .modal-header,
         [data-theme="dark"] .modal-footer {
             border-color: #334155 !important;
-            background-color: #1e293b !important;
+            background: #1e293b !important;
         }
-
-        [data-theme="dark"] .modal-title {
-            color: #f1f5f9 !important;
-        }
-
+        
         [data-theme="dark"] .btn-close {
-            filter: invert(1) grayscale(100%) brightness(200%) !important;
+            filter: invert(1);
         }
-
+        
+        [data-theme="dark"] .form-control,
+        [data-theme="dark"] .form-select {
+            background: #0f172a !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+        
         [data-theme="dark"] .dropdown-menu {
-            background-color: #1e293b !important;
+            background: #1e293b !important;
             border-color: #334155 !important;
         }
-
+        
         [data-theme="dark"] .dropdown-item {
             color: #cbd5e1 !important;
         }
-
+        
         [data-theme="dark"] .dropdown-item:hover {
-            background-color: #334155 !important;
+            background: #334155 !important;
             color: #ffffff !important;
-        }
-
-        [data-theme="dark"] .kanban-column {
-            background-color: #0f172a !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .column-header {
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .column-title {
-            color: #f1f5f9 !important;
-        }
-
-        [data-theme="dark"] .task-count {
-            background-color: #334155 !important;
-            color: #818cf8 !important;
-        }
-
-        [data-theme="dark"] .add-column-card {
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
-        }
-
-        [data-theme="dark"] .add-column-card:hover {
-            background-color: #334155 !important;
-        }
-
-        /* Task Detail Modal Styling */
-        #taskDetailModal .modal-content {
-            border-radius: 20px;
-            border: none;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-        }
-
-        #taskDetailModal .modal-header {
-            padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-            background: var(--surface);
-        }
-
-        #taskDetailModal .modal-header .modal-title {
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        #taskDetailModal .modal-body {
-            padding: 0;
-        }
-
-        /* Tab Navigation */
-        #taskDetailModal .nav-tabs {
-            border-bottom: 1px solid var(--border-color);
-            padding: 0 1.5rem;
-            background: var(--surface);
-            gap: 0.5rem;
-        }
-
-        #taskDetailModal .nav-tabs .nav-link {
-            border: none;
-            font-weight: 600;
-            font-size: 0.85rem;
-            padding: 0.75rem 1rem;
-            color: var(--text-muted);
-            background: transparent;
-            border-radius: 0;
-            position: relative;
-            transition: all 0.2s ease;
-        }
-
-        #taskDetailModal .nav-tabs .nav-link i {
-            margin-right: 8px;
-            font-size: 0.9rem;
-        }
-
-        #taskDetailModal .nav-tabs .nav-link:hover {
-            color: var(--primary);
-            background: var(--surface-hover);
-        }
-
-        #taskDetailModal .nav-tabs .nav-link.active {
-            color: var(--primary);
-            background: transparent;
-        }
-
-        #taskDetailModal .nav-tabs .nav-link.active::after {
-            content: '';
-            position: absolute;
-            bottom: -1px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-        /* Tab Content */
-        #taskDetailModal .tab-content {
-            padding: 1.5rem;
-            background: var(--surface);
-        }
-
-        /* Info Cards */
-        #taskDetailModal .info-card {
-            background: var(--surface-hover);
-            border-radius: 16px;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-        }
-
-        #taskDetailModal .info-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        #taskDetailModal .info-value {
-            font-weight: 600;
-            color: var(--text-dark);
-            font-size: 0.9rem;
-        }
-
-        /* Priority Badge */
-        #taskDetailModal .priority-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-        }
-
-        /* Comments Section */
-        #taskDetailModal .comment-item {
-            background: var(--surface-hover);
-            border-radius: 16px;
-            padding: 1rem;
-            border: 1px solid var(--border-color);
-            transition: all 0.2s ease;
-        }
-
-        #taskDetailModal .comment-item:hover {
-            border-color: var(--primary-light);
-        }
-
-        #taskDetailModal .comment-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: white;
-            flex-shrink: 0;
-        }
-
-        #taskDetailModal .comment-content {
-            flex: 1;
-        }
-
-        #taskDetailModal .comment-author {
-            font-weight: 700;
-            font-size: 0.85rem;
-            color: var(--text-dark);
-            margin-bottom: 0.25rem;
-        }
-
-        #taskDetailModal .comment-time {
-            font-size: 0.65rem;
-            color: var(--text-muted);
-        }
-
-        #taskDetailModal .comment-text {
-            font-size: 0.85rem;
-            color: var(--text-main);
-            margin-top: 0.5rem;
-            line-height: 1.5;
-        }
-
-        /* Attachments */
-        #taskDetailModal .attachment-item {
-            border-radius: 12px;
-            transition: all 0.2s ease;
-        }
-
-        #taskDetailModal .attachment-item:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--task-hover-shadow);
-        }
-
-        /* Form Styling inside Modal */
-        #taskDetailModal .form-control,
-        #taskDetailModal .form-select {
-            border-radius: 12px;
-            padding: 0.6rem 1rem;
-            font-size: 0.85rem;
-        }
-
-        #taskDetailModal .form-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Modal Footer */
-        #taskDetailModal .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid var(--border-color);
-            background: var(--surface);
-            gap: 0.75rem;
-        }
-
-        #taskDetailModal .modal-footer .btn {
-            border-radius: 12px;
-            padding: 0.5rem 1.25rem;
-            font-weight: 600;
-            font-size: 0.85rem;
-        }
-
-        /* Status Badge */
-        #taskDetailModal .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 0.3rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            background: var(--border-light);
-            color: var(--text-main);
-        }
-
-        /* Dark Mode Adjustments for Task Detail Modal */
-        [data-theme="dark"] #taskDetailModal .info-card {
-            background: #0f172a;
-        }
-
-        [data-theme="dark"] #taskDetailModal .comment-item {
-            background: #0f172a;
-        }
-
-        [data-theme="dark"] #taskDetailModal .status-badge {
-            background: #334155;
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 0.75rem;
-            }
-            
-            .kanban-column {
-                min-width: 280px;
-                width: 280px;
-            }
-            
-            .navbar-brand span:not(.brand-icon) {
-                display: none;
-            }
-            
-            .members-btn span {
-                display: none;
-            }
-
-            #taskDetailModal .modal-dialog {
-                margin: 0.5rem;
-            }
-            
-            #taskDetailModal .tab-content {
-                padding: 1rem;
-            }
-            
-            #taskDetailModal .nav-tabs {
-                padding: 0 0.75rem;
-            }
-            
-            #taskDetailModal .nav-tabs .nav-link {
-                padding: 0.5rem 0.75rem;
-                font-size: 0.75rem;
-            }
-            
-            #taskDetailModal .modal-footer {
-                flex-wrap: wrap;
-            }
-            
-            #taskDetailModal .modal-footer .btn {
-                flex: 1;
-            }
         }
     </style>
 </head>
@@ -1026,7 +1222,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     <nav class="navbar">
         <div class="container-fluid px-3 px-lg-4">
             <a class="navbar-brand" href="dashboard.php">
-                <i class="bi bi-arrow-left me-1" style="color: var(--text-muted); font-size: 1.2rem;"></i>
+                <i class="bi bi-arrow-left me-1" style="color: var(--text-muted); font-size: 1.1rem;"></i>
                 <div class="brand-icon"><i class="bi bi-check2-square"></i></div>
                 <span><?= htmlspecialchars($project['name']) ?></span>
             </a>
@@ -1041,9 +1237,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     <button class="members-btn d-flex align-items-center gap-2" type="button" data-bs-toggle="dropdown">
                         <i class="bi bi-people-fill"></i>
                         <span>Anggota</span>
-                        <span class="badge bg-primary rounded-pill" style="font-size: 0.7rem;"><?= count($members) ?></span>
+                        <span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;"><?= count($members) ?></span>
                     </button>
-                    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 300px;">
+                    <ul class="dropdown-menu dropdown-menu-end" style="min-width: 280px;">
                         <li><h6 class="dropdown-header">Daftar Anggota</h6></li>
                         <li>
                             <div style="max-height: 350px; overflow-y: auto;">
@@ -1059,11 +1255,11 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                                     <span class="badge bg-<?= 
                                                         $member['role'] == 'owner' ? 'danger' : 
                                                         ($member['role'] == 'admin' ? 'warning' : 'secondary') 
-                                                    ?> rounded-pill" style="font-size: 0.6rem;">
+                                                    ?> rounded-pill" style="font-size: 0.55rem;">
                                                         <?= ucfirst($member['role']) ?>
                                                     </span>
                                                     <?php if ($member['id'] == $_SESSION['user_id']): ?>
-                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.6rem;">Anda</span>
+                                                        <span class="badge bg-primary rounded-pill" style="font-size: 0.55rem;">Anda</span>
                                                     <?php endif; ?>
                                                 </div>
                                             </div>
@@ -1168,38 +1364,33 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             </div>
         </div>
 
-        <div class="filter-section">
-            <div class="row g-2 align-items-center">
-                <div class="col-md-4">
-                    <div class="position-relative">
-                        <i class="bi bi-search position-absolute" style="left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                        <input type="text" id="searchTask" class="form-control ps-4" style="padding-left: 35px;" placeholder="Cari tugas..." onkeyup="filterTasks()">
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <select id="filterPriority" class="form-select" onchange="filterTasks()">
-                        <option value="">Semua Prioritas</option>
-                        <option value="urgent">Urgent</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select id="filterAssignee" class="form-select" onchange="filterTasks()">
-                        <option value="">Semua Anggota</option>
-                        <option value="unassigned">Belum Ditugaskan</option>
-                        <?php foreach ($members as $member): ?>
-                            <option value="<?= $member['id'] ?>"><?= htmlspecialchars($member['full_name']) ?></option>
-                        <?php endforeach; ?>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button class="btn btn-outline-primary w-100" onclick="resetFilters()">
-                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
-                    </button>
-                </div>
+        <!-- SIMPLE FILTER BAR -->
+        <div class="filter-bar">
+            <div class="search-wrapper">
+                <i class="bi bi-search"></i>
+                <input type="text" id="searchTask" placeholder="Cari tugas..." onkeyup="filterTasks()">
             </div>
+            <div class="filter-select">
+                <select id="filterPriority" onchange="filterTasks()">
+                    <option value="">Semua Prioritas</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <div class="filter-select">
+                <select id="filterAssignee" onchange="filterTasks()">
+                    <option value="">Semua Anggota</option>
+                    <option value="unassigned">Belum Ditugaskan</option>
+                    <?php foreach ($members as $member): ?>
+                        <option value="<?= $member['id'] ?>"><?= htmlspecialchars($member['full_name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <button class="filter-reset-btn" onclick="resetFilters()">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </button>
         </div>
 
         <div class="kanban-header">
@@ -1324,7 +1515,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                 foreach ($colors as $code): 
                                 ?>
                                 <div class="color-option" onclick="selectColor('<?= $code ?>')" 
-                                     style="width: 36px; height: 36px; background: <?= $code ?>; border-radius: 50%; cursor: pointer; border: 2px solid transparent;"
+                                     style="width: 32px; height: 32px; background: <?= $code ?>; border-radius: 50%; cursor: pointer; border: 2px solid transparent;"
                                      data-color="<?= $code ?>"></div>
                                 <?php endforeach; ?>
                             </div>
@@ -1443,11 +1634,9 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         </div>
     </div>
 
-    <!-- Task Detail Modal - Improved -->
     <div class="modal fade" id="taskDetailModal" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content" id="taskDetailContent">
-                <!-- Content will be loaded here -->
             </div>
         </div>
     </div>
@@ -1467,79 +1656,26 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             const themeIcon = document.querySelector('.theme-toggle i');
             if (themeIcon) themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
             document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
-            fixDarkModeInputs();
         }
 
-        // Fix dark mode inputs
-        function fixDarkModeInputs() {
-            if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                const inputs = document.querySelectorAll('input, textarea, select, .form-control, .form-select');
-                inputs.forEach(input => {
-                    input.style.color = '#ffffff';
-                    input.style.backgroundColor = '#1e293b';
-                    input.addEventListener('focus', function() {
-                        this.style.backgroundColor = '#0f172a';
-                        this.style.borderColor = '#818cf8';
-                    });
-                    input.addEventListener('blur', function() {
-                        this.style.backgroundColor = '#1e293b';
-                        this.style.borderColor = '#334155';
-                    });
-                });
-                const inputGroups = document.querySelectorAll('.input-group-text');
-                inputGroups.forEach(group => {
-                    group.style.color = '#94a3b8';
-                    group.style.backgroundColor = '#334155';
-                });
-            }
-        }
-
-        // State
-        let currentEditingColumnId = null;
-        let currentEditingIsDefault = false;
-        let searchTimeout;
-
-        document.addEventListener('DOMContentLoaded', function() {
-            loadColumns();
-            const today = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('task_due_date');
-            if(dateInput) dateInput.setAttribute('min', today);
-            
-            const newTaskForm = document.getElementById('newTaskForm');
-            if (newTaskForm) newTaskForm.addEventListener('submit', handleNewTaskSubmit);
-            
-            const editProjectForm = document.getElementById('editProjectForm');
-            if (editProjectForm) editProjectForm.addEventListener('submit', handleEditProjectSubmit);
-            
-            const columnForm = document.getElementById('columnForm');
-            if (columnForm) columnForm.addEventListener('submit', handleColumnSubmit);
-            
-            fixDarkModeInputs();
-            
-            const observer = new MutationObserver(function(mutations) {
-                mutations.forEach(function(mutation) {
-                    if (mutation.attributeName === 'data-theme') {
-                        fixDarkModeInputs();
-                    }
-                });
-            });
-            observer.observe(document.documentElement, { attributes: true });
-        });
-
+        // Filter Functions
         function filterTasks() {
             const searchQuery = document.getElementById('searchTask').value.toLowerCase();
             const filterPriority = document.getElementById('filterPriority').value;
             const filterAssignee = document.getElementById('filterAssignee').value;
+            
             const taskCards = document.querySelectorAll('.task-card');
             taskCards.forEach(card => {
                 if(!card.hasAttribute('data-task-id')) return;
-                const title = card.getAttribute('data-title');
-                const desc = card.getAttribute('data-desc');
-                const priority = card.getAttribute('data-priority');
-                const assignee = card.getAttribute('data-assignee');
-                let matchSearch = title.includes(searchQuery) || desc.includes(searchQuery);
+                const title = card.getAttribute('data-title') || '';
+                const desc = card.getAttribute('data-desc') || '';
+                const priority = card.getAttribute('data-priority') || '';
+                const assignee = card.getAttribute('data-assignee') || '';
+                
+                let matchSearch = searchQuery === '' || title.includes(searchQuery) || desc.includes(searchQuery);
                 let matchPriority = filterPriority === '' || priority === filterPriority;
                 let matchAssignee = filterAssignee === '' || (filterAssignee === 'unassigned' && assignee === 'unassigned') || assignee === filterAssignee;
+                
                 card.style.display = (matchSearch && matchPriority && matchAssignee) ? 'block' : 'none';
             });
             updateVisibleTaskCounts();
@@ -1563,6 +1699,27 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 if (countBadge) countBadge.textContent = visibleCount;
             });
         }
+
+        // State
+        let currentEditingColumnId = null;
+        let currentEditingIsDefault = false;
+        let searchTimeout;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loadColumns();
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('task_due_date');
+            if(dateInput) dateInput.setAttribute('min', today);
+            
+            const newTaskForm = document.getElementById('newTaskForm');
+            if (newTaskForm) newTaskForm.addEventListener('submit', handleNewTaskSubmit);
+            
+            const editProjectForm = document.getElementById('editProjectForm');
+            if (editProjectForm) editProjectForm.addEventListener('submit', handleEditProjectSubmit);
+            
+            const columnForm = document.getElementById('columnForm');
+            if (columnForm) columnForm.addEventListener('submit', handleColumnSubmit);
+        });
 
         function loadColumns() {
             fetch(`api/columns.php?action=list&project_id=<?= $project_id ?>`)
@@ -1599,7 +1756,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                         ${badgeHtml}
                                     </div>
                                     ${<?= $is_admin ? 'true' : 'false' ?> ? `
-                                        <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
+                                        <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 26px; height: 26px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
                                             <i class="bi bi-three-dots-vertical small"></i>
                                         </button>
                                     ` : ''}
@@ -1620,8 +1777,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             html += `
                 <div class="add-column-card" onclick="openAddColumnModal()">
                     <div class="text-center">
-                        <i class="bi bi-plus-lg fs-3 d-block mb-1" style="color: var(--text-muted);"></i>
-                        <small class="text-muted">Tambah Kolom</small>
+                        <i class="bi bi-plus-lg fs-1 d-block mb-1"></i>
+                        <small>Tambah Kolom</small>
                     </div>
                 </div>
             `;
@@ -1629,7 +1786,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             container.innerHTML = html;
             columns.forEach(column => loadTasksForColumn(column.id));
             setupDragAndDrop();
-            fixDarkModeInputs();
         }
 
         function updateBoardData(columns) {
@@ -1657,7 +1813,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                             ${badgeHtml}
                                         </div>
                                         ${<?= $is_admin ? 'true' : 'false' ?> ? `
-                                            <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
+                                            <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 26px; height: 26px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', ${isDefault}, ${isCustomized})">
                                                 <i class="bi bi-three-dots-vertical small"></i>
                                             </button>
                                         ` : ''}
@@ -1672,7 +1828,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                     loadTasksForColumn(columnId);
                 });
                 <?php if ($is_admin): ?>
-                const addButtonHtml = `<div class="add-column-card" onclick="openAddColumnModal()"><div class="text-center"><i class="bi bi-plus-lg fs-3 d-block mb-1" style="color: var(--text-muted);"></i><small class="text-muted">Tambah Kolom</small></div></div>`;
+                const addButtonHtml = `<div class="add-column-card" onclick="openAddColumnModal()"><div class="text-center"><i class="bi bi-plus-lg fs-1 d-block mb-1"></i><small>Tambah Kolom</small></div></div>`;
                 document.getElementById('kanbanBoard').insertAdjacentHTML('beforeend', addButtonHtml);
                 <?php endif; ?>
                 setupDragAndDrop();
@@ -1682,7 +1838,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 if (countElement && column.task_count !== undefined) countElement.textContent = column.task_count;
             });
             filterTasks();
-            fixDarkModeInputs();
         }
 
         function loadTasksForColumn(columnId) {
@@ -1711,7 +1866,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             tasks.forEach(task => html += createTaskCardElement(task));
             listElement.innerHTML = html;
             filterTasks();
-            fixDarkModeInputs();
         }
 
         function createTaskCardElement(task) {
@@ -1724,14 +1878,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 const today = new Date();
                 today.setHours(0,0,0,0);
                 const isOverdue = dueDate < today && task.column_status !== 'done';
-                
-                // Format tanggal: 12 Mar 2024 (ringkas tapi jelas tahunnya)
-                const formattedDate = dueDate.toLocaleDateString('id-ID', { 
-                    day: 'numeric', 
-                    month: 'short', 
-                    year: 'numeric' 
-                });
-                
+                const formattedDate = dueDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
                 dueDateHtml = `<div class="due-date ${isOverdue ? 'overdue' : ''}" title="${dueDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}">
                     <i class="bi bi-calendar-event${isOverdue ? '-fill' : ''} me-1"></i>
                     ${formattedDate}
@@ -1817,7 +1964,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 if (opt.dataset.color === '#64748b') opt.style.borderColor = 'var(--primary)';
             });
             new bootstrap.Modal(document.getElementById('columnModal')).show();
-            setTimeout(fixDarkModeInputs, 100);
         }
 
         function openColumnMenu(columnId, title, color, icon, isDefault, isCustomized) {
@@ -1840,11 +1986,10 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             const colors = ['#64748b', '#6366f1', '#ef4444', '#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'];
             let colorHtml = '';
             colors.forEach(c => {
-                colorHtml += `<div class="color-option ${c === color ? 'selected' : ''}" onclick="selectEditColor('${c}')" style="width: 36px; height: 36px; background: ${c}; border-radius: 50%; cursor: pointer; border: 2px solid ${c === color ? 'var(--primary)' : 'transparent'};" data-color="${c}"></div>`;
+                colorHtml += `<div class="color-option ${c === color ? 'selected' : ''}" onclick="selectEditColor('${c}')" style="width: 32px; height: 32px; background: ${c}; border-radius: 50%; cursor: pointer; border: 2px solid ${c === color ? 'var(--primary)' : 'transparent'};" data-color="${c}"></div>`;
             });
             document.getElementById('editColorOptions').innerHTML = colorHtml;
             new bootstrap.Modal(document.getElementById('editColumnModal')).show();
-            setTimeout(fixDarkModeInputs, 100);
         }
 
         function selectColor(color) {
@@ -2005,7 +2150,7 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                                     <span class="custom-column-badge">Kustom</span>
                                 </div>
                                 ${<?= $is_admin ? 'true' : 'false' ?> ? `
-                                    <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 28px; height: 28px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', false, false)">
+                                    <button class="btn btn-sm btn-light p-1 rounded-circle" style="width: 26px; height: 26px;" onclick="event.stopPropagation(); openColumnMenu('${columnId}', '${column.title.replace(/'/g, "\\'")}', '${column.color}', '${column.icon}', false, false)">
                                         <i class="bi bi-three-dots-vertical small"></i>
                                     </button>
                                 ` : ''}
@@ -2019,13 +2164,12 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             container.insertAdjacentHTML('beforeend', columnHtml);
             document.getElementById(`list-${columnId}`).innerHTML = '<div class="text-center text-muted py-4 small">Belum ada tugas</div>';
             <?php if ($is_admin): ?>
-            container.insertAdjacentHTML('beforeend', `<div class="add-column-card" onclick="openAddColumnModal()"><div class="text-center"><i class="bi bi-plus-lg fs-3 d-block mb-1" style="color: var(--text-muted);"></i><small class="text-muted">Tambah Kolom</small></div></div>`);
+            container.insertAdjacentHTML('beforeend', `<div class="add-column-card" onclick="openAddColumnModal()"><div class="text-center"><i class="bi bi-plus-lg fs-1 d-block mb-1"></i><small>Tambah Kolom</small></div></div>`);
             <?php endif; ?>
             setupDragAndDrop();
-            fixDarkModeInputs();
         }
 
-        function openEditProjectModal() { new bootstrap.Modal(document.getElementById('editProjectModal')).show(); setTimeout(fixDarkModeInputs, 100); }
+        function openEditProjectModal() { new bootstrap.Modal(document.getElementById('editProjectModal')).show(); }
         
         function handleEditProjectSubmit(e) {
             e.preventDefault();
@@ -2068,7 +2212,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             document.getElementById('searchResults').innerHTML = `<div class="text-center text-muted py-4"><i class="bi bi-search fs-4 d-block mb-2 opacity-50"></i><small>Cari pengguna untuk ditambahkan</small></div>`;
             document.getElementById('searchUserInput').value = '';
             new bootstrap.Modal(document.getElementById('addMemberModal')).show();
-            setTimeout(fixDarkModeInputs, 100);
         }
         
         function searchUsers() {
@@ -2097,7 +2240,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                             });
                             resultsDiv.innerHTML = html;
                         } else resultsDiv.innerHTML = `<div class="text-center text-muted py-4"><i class="bi bi-person-x fs-4 d-block mb-2 opacity-50"></i><small>Tidak ada pengguna ditemukan</small></div>`;
-                        fixDarkModeInputs();
                     })
                     .catch(error => resultsDiv.innerHTML = '<div class="text-center text-danger py-3">Terjadi kesalahan</div>');
             }, 500);
@@ -2151,7 +2293,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         function openNewTaskModal(status) {
             document.getElementById('task_status').value = status;
             new bootstrap.Modal(document.getElementById('newTaskModal')).show();
-            setTimeout(fixDarkModeInputs, 100);
         }
         
         function handleNewTaskSubmit(e) {
@@ -2198,25 +2339,16 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 .then(data => {
                     if (data.success) {
                         modalContent.innerHTML = data.html;
-                        
-                        // Initialize tabs
-                        const triggerTabList = [].slice.call(modalContent.querySelectorAll('#taskTab button'));
-                        triggerTabList.forEach(el => {
-                            const tab = new bootstrap.Tab(el);
-                            el.addEventListener('click', (e) => {
-                                e.preventDefault();
-                                tab.show();
+                        setTimeout(() => {
+                            const triggerTabList = [].slice.call(modalContent.querySelectorAll('#taskTab button'));
+                            triggerTabList.forEach(el => {
+                                const tab = new bootstrap.Tab(el);
+                                el.addEventListener('click', (e) => {
+                                    e.preventDefault();
+                                    tab.show();
+                                });
                             });
-                        });
-                        
-                        // Set active tab from URL hash or default to details
-                        const hash = window.location.hash;
-                        if (hash === '#comments') {
-                            const commentsTab = modalContent.querySelector('#comments-tab');
-                            if (commentsTab) bootstrap.Tab.getInstance(commentsTab)?.show();
-                        }
-                        
-                        setTimeout(fixDarkModeInputs, 100);
+                        }, 100);
                     } else {
                         modalContent.innerHTML = `
                             <div class="modal-header">
@@ -2292,29 +2424,28 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             let attachmentsHtml = '';
             attachments.forEach(file => {
                 const ext = String(file.filename).split('.').pop().toLowerCase();
-                let icon = 'bi-file-earmark', bg = '#f1f5f9', col = '#64748b', bgDark = '#1e293b', colDark = '#94a3b8';
-                if (['jpg','jpeg','png','gif','webp'].includes(ext)) { icon = 'bi-file-image'; bg = '#e0e7ff'; col = '#4f46e5'; bgDark = '#1e1b4b'; colDark = '#818cf8'; }
-                else if (ext === 'pdf') { icon = 'bi-file-pdf'; bg = '#fee2e2'; col = '#ef4444'; bgDark = '#450a0a'; colDark = '#f87171'; }
-                else if (['doc','docx','txt'].includes(ext)) { icon = 'bi-file-text'; bg = '#dcfce7'; col = '#10b981'; bgDark = '#064e3b'; colDark = '#34d399'; }
-                else if (['xls','xlsx','csv'].includes(ext)) { icon = 'bi-file-spreadsheet'; bg = '#dcfce7'; col = '#10b981'; bgDark = '#064e3b'; colDark = '#34d399'; }
-                else if (['zip','rar','7z'].includes(ext)) { icon = 'bi-file-zip'; bg = '#fef3c7'; col = '#d97706'; bgDark = '#422006'; colDark = '#fbbf24'; }
+                let icon = 'bi-file-earmark', bg = '#f1f5f9', col = '#64748b';
+                if (['jpg','jpeg','png','gif','webp'].includes(ext)) { icon = 'bi-file-image'; bg = '#e0e7ff'; col = '#4f46e5'; }
+                else if (ext === 'pdf') { icon = 'bi-file-pdf'; bg = '#fee2e2'; col = '#ef4444'; }
+                else if (['doc','docx','txt'].includes(ext)) { icon = 'bi-file-text'; bg = '#dcfce7'; col = '#10b981'; }
+                else if (['xls','xlsx','csv'].includes(ext)) { icon = 'bi-file-spreadsheet'; bg = '#dcfce7'; col = '#10b981'; }
+                else if (['zip','rar','7z'].includes(ext)) { icon = 'bi-file-zip'; bg = '#fef3c7'; col = '#d97706'; }
                 const canDelete = canEdit || file.uploaded_by === currentUserId;
                 attachmentsHtml += `<div class="d-flex align-items-center justify-content-between p-2 rounded-3 attachment-item" style="border: 1px solid var(--border-color); background: var(--surface);">
                     <div class="d-flex align-items-center gap-3 overflow-hidden">
-                        <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: ${bg}; color: ${col};"><i class="bi ${icon} fs-5"></i></div>
+                        <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 32px; height: 32px; background: ${bg}; color: ${col};"><i class="bi ${icon} fs-5"></i></div>
                         <div class="lh-sm text-truncate">
                             <div class="fw-semibold text-truncate small" style="color: var(--text-dark);" title="${escapeHtml(file.filename)}">${escapeHtml(file.filename)}</div>
-                            <small class="text-muted" style="font-size: 0.65rem;">Oleh: ${escapeHtml(file.uploaded_by_name || 'Unknown')} • ${new Date(file.uploaded_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</small>
+                            <small class="text-muted" style="font-size: 0.6rem;">Oleh: ${escapeHtml(file.uploaded_by_name || 'Unknown')}</small>
                         </div>
                     </div>
                     <div class="d-flex gap-1 flex-shrink-0 ms-2">
-                        <a href="api/tasks.php?action=download_attachment&id=${file.id}" class="btn btn-sm btn-light rounded-circle p-1" style="width: 28px; height: 28px;"><i class="bi bi-download"></i></a>
-                        ${canDelete ? `<button type="button" class="btn btn-sm btn-light rounded-circle p-1" style="width: 28px; height: 28px; color: var(--danger);" onclick="deleteAttachment(${file.id}, ${taskId})"><i class="bi bi-trash3"></i></button>` : ''}
+                        <a href="api/tasks.php?action=download_attachment&id=${file.id}" class="btn btn-sm btn-light rounded-circle p-1" style="width: 26px; height: 26px;"><i class="bi bi-download"></i></a>
+                        ${canDelete ? `<button type="button" class="btn btn-sm btn-light rounded-circle p-1" style="width: 26px; height: 26px; color: var(--danger);" onclick="deleteAttachment(${file.id}, ${taskId})"><i class="bi bi-trash3"></i></button>` : ''}
                     </div>
                 </div>`;
             });
             attachmentsContainer.innerHTML = attachmentsHtml;
-            fixDarkModeInputs();
         };
         
         window.deleteAttachment = function(attachmentId, taskId) {
@@ -2371,29 +2502,67 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
                 .then(data => { if (data.success) { contentInput.value = ''; showTaskDetail(taskId); } else showNotification(data.message || 'Gagal menambahkan komentar', 'danger'); });
         };
 
-        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-        function getInitials(name) { if (!name) return '?'; return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(); }
-        function getAvatarColor(name) { const colors = ['#6366f1', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981']; return colors[(name?.length || 0) % colors.length]; }
-        
+        // ========== PERBAIKAN FUNGSI SHOW NOTIFICATION ==========
         function showNotification(message, type = 'success') {
             const container = document.querySelector('.toast-container');
             if (!container) return;
-            const toast = document.createElement('div');
-            let bgClass, iconClass;
-            switch(type) {
-                case 'success': bgClass = 'bg-success'; iconClass = 'bi-check-circle-fill'; break;
-                case 'danger': bgClass = 'bg-danger'; iconClass = 'bi-exclamation-triangle-fill'; break;
-                default: bgClass = 'bg-primary'; iconClass = 'bi-info-circle-fill';
+            
+            // Hapus toast lama jika terlalu banyak
+            const existingToasts = container.querySelectorAll('.toast');
+            if (existingToasts.length >= 3) {
+                existingToasts[0].remove();
             }
-            toast.className = `toast align-items-center text-white ${bgClass} border-0 shadow-lg`;
-            toast.style.borderRadius = '10px';
+            
+            const toast = document.createElement('div');
+            let bgColor, textColor, iconClass;
+            
+            // Tentukan warna berdasarkan tipe dan mode
+            const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+            
+            switch(type) {
+                case 'success': 
+                    bgColor = isDarkMode ? '#059669' : '#10b981';
+                    textColor = '#ffffff';
+                    iconClass = 'bi-check-circle-fill'; 
+                    break;
+                case 'danger': 
+                    bgColor = isDarkMode ? '#dc2626' : '#ef4444';
+                    textColor = '#ffffff';
+                    iconClass = 'bi-exclamation-triangle-fill'; 
+                    break;
+                default: 
+                    bgColor = isDarkMode ? '#4f46e5' : '#6366f1';
+                    textColor = '#ffffff';
+                    iconClass = 'bi-info-circle-fill';
+            }
+            
+            toast.className = 'toast align-items-center border-0 shadow-lg';
             toast.setAttribute('role', 'alert');
-            toast.innerHTML = `<div class="d-flex p-2"><div class="toast-body fw-semibold small"><i class="bi ${iconClass} me-2"></i>${message}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div>`;
+            toast.style.background = bgColor;
+            toast.style.color = textColor;
+            toast.style.borderRadius = '12px';
+            toast.style.marginBottom = '0.75rem';
+            toast.style.opacity = '0.96';
+            
+            toast.innerHTML = `
+                <div class="d-flex p-2 align-items-center">
+                    <div class="toast-body fw-semibold small" style="color: ${textColor};">
+                        <i class="bi ${iconClass} me-2"></i>${escapeHtml(message)}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close" style="font-size: 0.7rem;"></button>
+                </div>
+            `;
+            
             container.appendChild(toast);
-            const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+            const bsToast = new bootstrap.Toast(toast, { delay: 3000, animation: true });
             bsToast.show();
+            
             toast.addEventListener('hidden.bs.toast', () => toast.remove());
         }
+
+        function escapeHtml(text) { if (!text) return ''; const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
+        function getInitials(name) { if (!name) return '?'; return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase(); }
+        function getAvatarColor(name) { const colors = ['#6366f1', '#14b8a6', '#f59e0b', '#8b5cf6', '#10b981']; return colors[(name?.length || 0) % colors.length]; }
     </script>
 </body>
 </html>

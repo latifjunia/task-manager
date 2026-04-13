@@ -179,53 +179,81 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
             color: white;
         }
 
-        /* Hero Section */
+        /* Hero Section (Updated) */
         .hero-section {
-            padding: 120px 0 80px;
+            padding: 160px 0 100px;
+            position: relative;
+            background: linear-gradient(to bottom, var(--bg-body), var(--surface));
+            overflow: hidden;
+        }
+
+        .hero-bg-glow {
+            position: absolute;
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.15) 0%, rgba(255,255,255,0) 70%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        [data-theme="dark"] .hero-bg-glow {
+            background: radial-gradient(ellipse at center, rgba(99, 102, 241, 0.25) 0%, rgba(30, 41, 59, 0) 70%);
         }
 
         .hero-content {
             text-align: center;
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         .hero-badge {
-            display: inline-block;
-            background: var(--primary-light);
+            display: inline-flex;
+            align-items: center;
+            background: var(--surface);
             color: var(--primary);
-            padding: 0.4rem 1.2rem;
+            padding: 0.5rem 1.5rem;
             border-radius: var(--radius-full);
             font-weight: 600;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             margin-bottom: 1.5rem;
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            box-shadow: var(--shadow-sm);
         }
 
         .hero-title {
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 800;
             line-height: 1.2;
             color: var(--text-dark);
-            margin-bottom: 1.2rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.02em;
         }
 
-        .hero-title span {
-            color: var(--primary);
+        .hero-title .text-gradient {
+            background: linear-gradient(135deg, var(--primary), #a855f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .hero-description {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: var(--text-muted);
-            margin-bottom: 2rem;
-            max-width: 550px;
+            margin-bottom: 2.5rem;
+            max-width: 600px;
             margin-left: auto;
             margin-right: auto;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
         .hero-cta {
             display: flex;
-            gap: 1rem;
+            gap: 1.2rem;
             margin-bottom: 2rem;
             justify-content: center;
             flex-wrap: wrap;
@@ -233,36 +261,42 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            padding: 0.8rem 2rem;
+            padding: 0.9rem 2.2rem;
             border-radius: var(--radius-full);
             color: white;
             font-weight: 600;
             text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 14px 0 rgba(99, 102, 241, 0.3);
         }
 
         .btn-primary-custom:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 20px rgba(99,102,241,0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
             color: white;
         }
 
         .btn-outline-custom {
-            background: transparent;
-            border: 2px solid var(--border-color);
-            padding: 0.8rem 2rem;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            padding: 0.9rem 2.2rem;
             border-radius: var(--radius-full);
             color: var(--text-main);
             font-weight: 600;
             text-decoration: none;
-            display: inline-block;
-            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow-sm);
         }
 
         .btn-outline-custom:hover {
             border-color: var(--primary);
             color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
         }
 
         .hero-stats {
@@ -468,12 +502,8 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         @media (max-width: 768px) {
-            .hero-section {
-                padding: 100px 0 50px;
-            }
-            .hero-title {
-                font-size: 2rem;
-            }
+            .hero-section { padding: 120px 0 60px; }
+            .hero-title { font-size: 2.5rem; }
             .navbar-collapse {
                 background: var(--surface);
                 padding: 1rem;
@@ -484,15 +514,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
         }
 
         @media (max-width: 576px) {
-            .hero-title {
-                font-size: 1.6rem;
-            }
+            .hero-title { font-size: 2rem; }
             .hero-cta {
                 flex-direction: column;
                 align-items: center;
             }
             .hero-cta a {
                 text-align: center;
+                width: 100%;
+                justify-content: center;
             }
         }
 
@@ -560,19 +590,15 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
     </nav>
 
     <section class="hero-section">
-        <div class="container">
+        <div class="hero-bg-glow"></div>
+        <div class="container position-relative">
             <div class="hero-content">
                 <div class="hero-badge fade-up"><i class="bi bi-stars me-1"></i>Kelola Tugas Lebih Efisien</div>
-                <h1 class="hero-title fade-up delay-1">Kelola Proyek & <span>Tugas Tim</span> dengan Mudah</h1>
+                <h1 class="hero-title fade-up delay-1">Kelola Proyek & <span class="text-gradient">Tugas Tim</span> dengan Mudah</h1>
                 <p class="hero-description fade-up delay-2">Platform manajemen tugas yang intuitif untuk tim produktif. Kolaborasi, lacak progress, dan selesaikan proyek tepat waktu.</p>
                 <div class="hero-cta fade-up delay-3">
-                    <a href="register.php" class="btn-primary-custom"><i class="bi bi-rocket-takeoff me-2"></i>Mulai Gratis</a>
+                    <a href="register.php" class="btn-primary-custom"><i class="bi bi-rocket-takeoff me-2"></i>Mulai Sekarang</a>
                     <a href="#features" class="btn-outline-custom"><i class="bi bi-play-circle me-2"></i>Lihat Fitur</a>
-                </div>
-                <div class="hero-stats fade-up delay-4">
-                    <div><div class="stat-number">50K+</div><div class="stat-label">Pengguna Aktif</div></div>
-                    <div><div class="stat-number">100K+</div><div class="stat-label">Proyek Selesai</div></div>
-                    <div><div class="stat-number">⭐ 4.9</div><div class="stat-label">Rating Pengguna</div></div>
                 </div>
             </div>
         </div>
@@ -661,53 +687,6 @@ $theme = isset($_COOKIE['theme']) ? $_COOKIE['theme'] : 'light';
 
     <footer class="footer">
         <div class="container">
-            <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <a class="footer-brand" href="index.php">
-                        <div class="brand-icon"><i class="bi bi-check2-square"></i></div>
-                        <span>Task Manager</span>
-                    </a>
-                    <p class="footer-description">Platform manajemen tugas modern untuk tim produktif. Kelola proyek, kolaborasi, dan capai target tepat waktu.</p>
-                    <div class="social-links">
-                        <a href="#"><i class="bi bi-facebook"></i></a>
-                        <a href="#"><i class="bi bi-twitter"></i></a>
-                        <a href="#"><i class="bi bi-instagram"></i></a>
-                        <a href="#"><i class="bi bi-linkedin"></i></a>
-                        <a href="#"><i class="bi bi-github"></i></a>
-                    </div>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-4">
-                    <h6 class="footer-title">Produk</h6>
-                    <ul class="footer-links">
-                        <li><a href="#features">Fitur</a></li>
-                        <li><a href="#">Keamanan</a></li>
-                        <li><a href="#">FAQ</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-4">
-                    <h6 class="footer-title">Perusahaan</h6>
-                    <ul class="footer-links">
-                        <li><a href="#">Tentang Kami</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Kontak</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 col-md-4 mb-4">
-                    <h6 class="footer-title">Sumber Daya</h6>
-                    <ul class="footer-links">
-                        <li><a href="#">Dokumentasi</a></li>
-                        <li><a href="#">API</a></li>
-                        <li><a href="#">Bantuan</a></li>
-                    </ul>
-                </div>
-                <div class="col-lg-2 mb-4">
-                    <h6 class="footer-title">Legal</h6>
-                    <ul class="footer-links">
-                        <li><a href="#">Kebijakan Privasi</a></li>
-                        <li><a href="#">Syarat & Ketentuan</a></li>
-                    </ul>
-                </div>
-            </div>
             <div class="footer-bottom">
                 <p>&copy; 2026 Task Manager. All rights reserved.</p>
             </div>

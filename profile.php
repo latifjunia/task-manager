@@ -90,67 +90,70 @@ $is_admin = isAdmin();
             --primary-light: #e0e7ff;
             --success: #10b981;
             --danger: #ef4444;
+            --warning: #f59e0b;
             
             --bg-body: #f8fafc;
-            --bg-gradient: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             --surface: #ffffff;
             --surface-hover: #f8fafc;
+            --surface-active: #f1f5f9;
             
             --text-dark: #0f172a;
             --text-main: #334155;
             --text-muted: #64748b;
             
             --border-color: #e2e8f0;
+            --border-light: #f1f5f9;
             
             --radius-sm: 8px;
             --radius-md: 12px;
             --radius-lg: 16px;
             --radius-xl: 20px;
+            
+            --transition: all 0.2s ease;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
 
         [data-theme="dark"] {
             --primary: #818cf8;
             --primary-dark: #6366f1;
             --primary-light: #1e1b4b;
-            --success: #10b981;
-            --danger: #ef4444;
             
             --bg-body: #0f172a;
-            --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
             --surface: #1e293b;
             --surface-hover: #334155;
+            --surface-active: #2d3a4e;
             
             --text-dark: #f1f5f9;
             --text-main: #cbd5e1;
             --text-muted: #94a3b8;
             
             --border-color: #334155;
+            --border-light: #1e293b;
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
-            background: var(--bg-gradient);
+            background: var(--bg-body);
             font-family: 'Inter', sans-serif;
             color: var(--text-main);
             min-height: 100vh;
         }
 
         ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--border-color); border-radius: 10px; }
+        ::-webkit-scrollbar-track { background: var(--border-light); border-radius: 10px; }
         ::-webkit-scrollbar-thumb { background: var(--text-muted); border-radius: 10px; }
 
+        /* Navbar */
         .navbar {
-            background: rgba(var(--surface-rgb, 255,255,255), 0.8);
-            backdrop-filter: blur(20px);
+            background: var(--surface);
             border-bottom: 1px solid var(--border-color);
             padding: 0.75rem 0;
             position: sticky;
             top: 0;
             z-index: 1000;
         }
-        
-        [data-theme="dark"] .navbar { background: rgba(30, 41, 59, 0.8); }
         
         .navbar-brand { 
             font-weight: 700; 
@@ -162,13 +165,39 @@ $is_admin = isAdmin();
         }
         
         .brand-icon {
-            width: 36px; height: 36px;
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            width: 36px; 
+            height: 36px;
+            background: var(--primary);
             border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            color: white; font-size: 1.1rem;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            color: white; 
+            font-size: 1.1rem;
         }
 
+        /* Icon Circle */
+        .icon-circle-sm {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+        
+        .icon-circle-sm:hover {
+            background: var(--surface-hover);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Theme Toggle */
         .theme-toggle {
             width: 36px;
             height: 36px;
@@ -180,78 +209,63 @@ $is_admin = isAdmin();
             border: 1px solid var(--border-color);
             color: var(--text-main);
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
         }
         
         .theme-toggle:hover {
-            transform: rotate(15deg);
-            background: var(--primary-light);
-            color: var(--primary);
-        }
-
-        .icon-circle-sm {
-            width: 36px;
-            height: 36px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             background: var(--surface-hover);
-            color: var(--text-main);
-            transition: all 0.3s ease;
-        }
-        
-        .icon-circle-sm:hover {
-            background: var(--primary-light);
             color: var(--primary);
         }
 
+        /* Profile Header */
         .profile-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
+            background: var(--surface);
+            border: 1px solid var(--border-color);
             border-radius: var(--radius-lg);
             padding: 2rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
         
         .profile-avatar {
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            border: 4px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.2);
-            backdrop-filter: blur(10px);
+            background: var(--primary-light);
+            color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
             font-size: 2.5rem;
             font-weight: 700;
-            margin-bottom: 1rem;
         }
         
         .profile-name {
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 700;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-dark);
         }
         
         .profile-username {
-            font-size: 1rem;
-            opacity: 0.9;
+            font-size: 0.9rem;
+            color: var(--text-muted);
             margin-bottom: 1rem;
         }
 
         .badge-role {
-            background: rgba(255,255,255,0.2);
-            color: white;
+            background: var(--surface-hover);
+            color: var(--text-main);
             padding: 0.4rem 1rem;
-            border-radius: 30px;
-            font-size: 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: 600;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid var(--border-color);
         }
 
+        /* Cards */
         .card {
             background: var(--surface);
             border: 1px solid var(--border-color);
@@ -263,7 +277,7 @@ $is_admin = isAdmin();
             background: transparent;
             border-bottom: 1px solid var(--border-color);
             padding: 1.25rem 1.5rem;
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text-dark);
             font-size: 1rem;
         }
@@ -272,6 +286,7 @@ $is_admin = isAdmin();
             padding: 1.5rem;
         }
 
+        /* Form Elements */
         .form-label {
             font-weight: 600;
             font-size: 0.75rem;
@@ -282,16 +297,16 @@ $is_admin = isAdmin();
         }
         
         .form-control { 
-            border-radius: var(--radius-md); 
+            border-radius: var(--radius-sm); 
             padding: 0.6rem 1rem; 
             border: 1px solid var(--border-color); 
-            background: var(--surface-hover);
+            background: var(--surface);
             color: var(--text-dark);
             font-size: 0.9rem;
+            transition: var(--transition);
         }
         
         .form-control:focus { 
-            background: var(--surface); 
             border-color: var(--primary); 
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); 
             outline: none;
@@ -302,11 +317,12 @@ $is_admin = isAdmin();
             opacity: 0.7;
         }
 
+        /* Buttons */
         .btn { 
-            padding: 0.5rem 1.25rem; 
-            border-radius: var(--radius-md); 
+            padding: 0.6rem 1.5rem; 
+            border-radius: var(--radius-sm); 
             font-weight: 600; 
-            transition: all 0.3s ease; 
+            transition: var(--transition); 
             font-size: 0.85rem;
         }
         
@@ -318,8 +334,6 @@ $is_admin = isAdmin();
         
         .btn-primary:hover { 
             background: var(--primary-dark); 
-            transform: translateY(-1px); 
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); 
         }
         
         .btn-outline-secondary {
@@ -330,50 +344,55 @@ $is_admin = isAdmin();
         
         .btn-outline-secondary:hover {
             background: var(--surface-hover);
-            color: var(--text-dark);
+            border-color: var(--text-muted);
         }
 
+        /* Alerts */
         .alert {
-            border-radius: var(--radius-md);
-            padding: 1rem 1.25rem;
-            border: none;
-            font-weight: 500;
+            border-radius: var(--radius-sm);
+            padding: 0.875rem 1.25rem;
+            border: 1px solid transparent;
             font-size: 0.85rem;
+            margin-bottom: 1.5rem;
         }
         
         .alert-success {
             background: #d1fae5;
+            border-color: #a7f3d0;
             color: #065f46;
-            border-left: 4px solid var(--success);
         }
         
         .alert-danger {
             background: #fee2e2;
+            border-color: #fecaca;
             color: #991b1b;
-            border-left: 4px solid var(--danger);
         }
 
         [data-theme="dark"] .alert-success {
             background: #064e3b;
+            border-color: #065f46;
             color: #a7f3d0;
         }
 
         [data-theme="dark"] .alert-danger {
             background: #450a0a;
+            border-color: #7f1d1d;
             color: #fecaca;
         }
 
+        /* Divider */
         .divider {
             height: 1px;
             background: var(--border-color);
             margin: 1.5rem 0;
         }
         
+        /* Section Title */
         .section-title {
-            font-weight: 700;
+            font-weight: 600;
             color: var(--text-dark);
-            font-size: 0.95rem;
-            margin-bottom: 0.75rem;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
             display: flex;
             align-items: center;
             gap: 0.5rem;
@@ -388,10 +407,11 @@ $is_admin = isAdmin();
             color: var(--text-muted);
         }
 
+        /* Dropdown */
         .dropdown-menu {
             background: var(--surface);
             border: 1px solid var(--border-color);
-            border-radius: var(--radius-md);
+            border-radius: var(--radius-sm);
             padding: 0.5rem;
         }
         
@@ -400,6 +420,7 @@ $is_admin = isAdmin();
             border-radius: var(--radius-sm);
             padding: 0.5rem 1rem;
             font-size: 0.85rem;
+            transition: var(--transition);
         }
         
         .dropdown-item:hover {
@@ -411,44 +432,37 @@ $is_admin = isAdmin();
             border-color: var(--border-color);
         }
 
-        /* ===== DARK MODE INPUT FIX ===== */
-        [data-theme="dark"] input,
-        [data-theme="dark"] textarea,
-        [data-theme="dark"] .form-control {
-            color: #ffffff !important;
-            background-color: #1e293b !important;
-            border-color: #334155 !important;
+        /* Notification Badge */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.6rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
         }
 
-        [data-theme="dark"] input::placeholder,
-        [data-theme="dark"] textarea::placeholder,
-        [data-theme="dark"] .form-control::placeholder {
-            color: #94a3b8 !important;
-        }
-
-        [data-theme="dark"] input:focus,
-        [data-theme="dark"] .form-control:focus {
-            color: #ffffff !important;
-            background-color: #0f172a !important;
-            border-color: #818cf8 !important;
-            box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.2) !important;
-        }
-
-        [data-theme="dark"] input:disabled,
-        [data-theme="dark"] .form-control:disabled {
-            background-color: #0f172a !important;
-            color: #64748b !important;
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
+            .profile-header { padding: 1.5rem; }
             .profile-avatar { width: 80px; height: 80px; font-size: 2rem; }
             .profile-name { font-size: 1.5rem; }
-            .profile-header { padding: 1.5rem; }
             .card-body { padding: 1.25rem; }
         }
         
         @media (max-width: 576px) {
             .navbar-brand span { display: none; }
+            .profile-header .row { flex-direction: column; text-align: center; gap: 1rem; }
+            .profile-header .col-md-auto { text-align: center !important; }
+            .profile-avatar { margin: 0 auto !important; }
+            .d-flex.gap-2.flex-wrap { justify-content: center; }
         }
     </style>
 </head>
@@ -467,47 +481,45 @@ $is_admin = isAdmin();
                 </div>
 
                 <div class="dropdown">
-                    <a class="nav-link position-relative d-flex align-items-center p-0" href="#" data-bs-toggle="dropdown">
+                    <div class="position-relative" data-bs-toggle="dropdown" style="cursor: pointer;">
                         <div class="icon-circle-sm">
                             <i class="bi bi-bell"></i>
                             <?php if ($notif_count > 0): ?>
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; padding: 0.2rem 0.4rem;">
-                                    <?= $notif_count ?>
-                                </span>
+                                <span class="notification-badge"><?= $notif_count > 9 ? '9+' : $notif_count ?></span>
                             <?php endif; ?>
                         </div>
-                    </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow" style="width: 340px;">
+                    </div>
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm" style="width: 340px;">
                         <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-                            <h6 class="mb-0 fw-bold" style="color: var(--text-dark);">Notifikasi</h6>
+                            <h6 class="mb-0 fw-semibold small" style="color: var(--text-dark);">Notifikasi</h6>
                             <?php if ($notif_count > 0): ?>
-                                <span class="badge bg-primary rounded-pill"><?= $notif_count ?> Baru</span>
+                                <span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;"><?= $notif_count ?> Baru</span>
                             <?php endif; ?>
                         </div>
                         <?php if (empty($notifications)): ?>
                             <div class="text-center py-4">
-                                <i class="bi bi-bell-slash fs-1 text-muted opacity-50"></i>
-                                <p class="text-muted small mt-2">Belum ada notifikasi</p>
+                                <i class="bi bi-bell-slash fs-2 text-muted opacity-50"></i>
+                                <p class="text-muted small mt-2 mb-0">Belum ada notifikasi</p>
                             </div>
                         <?php else: ?>
                             <div style="max-height: 360px; overflow-y: auto;">
                                 <?php foreach ($notifications as $notif): ?>
                                     <a class="dropdown-item d-flex p-3 border-bottom" href="notifications.php">
-                                        <div class="me-3">
-                                            <div class="rounded-3 d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--primary-light); color: var(--primary);">
+                                        <div class="me-3 flex-shrink-0">
+                                            <div class="rounded d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: var(--primary-light); color: var(--primary);">
                                                 <i class="bi bi-info-circle"></i>
                                             </div>
                                         </div>
-                                        <div>
+                                        <div class="flex-grow-1">
                                             <div class="fw-semibold small" style="color: var(--text-dark);"><?= htmlspecialchars($notif['title']) ?></div>
                                             <div class="text-muted small"><?= htmlspecialchars($notif['message']) ?></div>
-                                            <small class="text-muted mt-1 d-block"><?= timeAgo($notif['created_at']) ?></small>
+                                            <small class="text-muted mt-1 d-block" style="font-size: 0.6rem;"><?= timeAgo($notif['created_at']) ?></small>
                                         </div>
                                     </a>
                                 <?php endforeach; ?>
                             </div>
                             <div class="p-2 text-center border-top">
-                                <a href="notifications.php" class="text-decoration-none small" style="color: var(--primary);">Lihat semua notifikasi</a>
+                                <a href="notifications.php" class="text-decoration-none small fw-semibold" style="color: var(--primary);">Lihat semua</a>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -515,14 +527,14 @@ $is_admin = isAdmin();
 
                 <div class="dropdown">
                     <a class="d-flex align-items-center gap-2 text-decoration-none" href="#" data-bs-toggle="dropdown">
-                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=6366f1&color=fff&size=36&bold=true&length=2" 
+                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($_SESSION['full_name']) ?>&background=6366f1&color=fff&size=36&bold=true&length=2&rounded=true" 
                              class="rounded-circle" style="width: 36px; height: 36px; object-fit: cover;">
                         <div class="d-none d-md-block text-start">
                             <div class="fw-semibold small" style="color: var(--text-dark);"><?= htmlspecialchars(explode(' ', $_SESSION['full_name'])[0]) ?></div>
-                            <small class="text-muted" style="font-size: 0.7rem;"><?= $is_admin ? 'Admin' : 'Member' ?></small>
+                            <small class="text-muted" style="font-size: 0.65rem;"><?= $is_admin ? 'Admin' : 'Member' ?></small>
                         </div>
                     </a>
-                    <div class="dropdown-menu dropdown-menu-end shadow mt-2">
+                    <div class="dropdown-menu dropdown-menu-end shadow-sm mt-2">
                         <a class="dropdown-item" href="profile.php">
                             <i class="bi bi-person me-2"></i>Profil
                         </a>
@@ -536,7 +548,7 @@ $is_admin = isAdmin();
         </div>
     </nav>
 
-    <div class="container-fluid px-3 px-lg-4 py-4">
+    <div class="container px-3 px-lg-4 py-4">
         
         <div class="profile-header">
             <div class="row align-items-center">
@@ -550,11 +562,14 @@ $is_admin = isAdmin();
                     <div class="profile-username">@<?= htmlspecialchars($user['username']) ?></div>
                     <div class="d-flex gap-2 flex-wrap">
                         <span class="badge-role">
-                            <i class="bi bi-shield-check me-1"></i>
-                            <?= $user['role'] == 'admin' ? 'Administrator' : 'Anggota Tim' ?>
+                            <i class="bi bi-<?= $user['role'] == 'admin' ? 'shield-check' : 'person-check' ?>"></i>
+                            <?= $user['role'] == 'admin' ? 'Administrator' : 'Member' ?>
                         </span>
                         <span class="badge-role">
-                            <i class="bi bi-calendar me-1"></i> Bergabung <?= date('M Y', strtotime($user['created_at'])) ?>
+                            <i class="bi bi-calendar"></i> <?= date('M Y', strtotime($user['created_at'])) ?>
+                        </span>
+                        <span class="badge-role">
+                            <i class="bi bi-envelope"></i> <?= htmlspecialchars($user['email']) ?>
                         </span>
                     </div>
                 </div>
@@ -597,12 +612,12 @@ $is_admin = isAdmin();
                         </div>
                     </div>
                     
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">Username</label>
-                            <input type="text" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" disabled>
-                            <small class="text-muted-small mt-1 d-block">Username tidak dapat diubah</small>
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label">Username</label>
+                        <input type="text" class="form-control" value="<?= htmlspecialchars($user['username']) ?>" disabled>
+                        <small class="text-muted-small mt-1 d-block">
+                            <i class="bi bi-info-circle"></i> Username tidak dapat diubah
+                        </small>
                     </div>
                     
                     <div class="divider"></div>
@@ -613,17 +628,15 @@ $is_admin = isAdmin();
                     </div>
                     <p class="text-muted-small mb-4">Kosongkan jika tidak ingin mengubah password</p>
                     
-                    <div class="row mb-4">
-                        <div class="col-md-12 mb-3">
-                            <label class="form-label">Password Saat Ini</label>
-                            <input type="password" class="form-control" name="current_password" id="current_password">
-                        </div>
+                    <div class="mb-4">
+                        <label class="form-label">Password Saat Ini</label>
+                        <input type="password" class="form-control" name="current_password" id="current_password">
                     </div>
                     
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3 mb-md-0">
                             <label class="form-label">Password Baru</label>
-                            <input type="password" class="form-control" name="new_password" id="new_password">
+                            <input type="password" class="form-control" name="new_password" id="new_password" placeholder="Minimal 6 karakter">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Konfirmasi Password Baru</label>
@@ -633,9 +646,9 @@ $is_admin = isAdmin();
                     
                     <div class="d-flex justify-content-end gap-2">
                         <a href="dashboard.php" class="btn btn-outline-secondary">
-                            <i class="bi bi-x-circle me-2"></i>Batal
+                            <i class="bi bi-arrow-left me-2"></i>Kembali
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitBtn">
                             <i class="bi bi-save me-2"></i>Simpan Perubahan
                         </button>
                     </div>
@@ -654,29 +667,10 @@ $is_admin = isAdmin();
             document.cookie = `theme=${newTheme}; path=/; max-age=31536000`;
             const themeIcon = document.querySelector('.theme-toggle i');
             if (themeIcon) themeIcon.className = `bi bi-${newTheme === 'dark' ? 'sun' : 'moon'}`;
-            fixDarkModeInputs();
         }
 
-        function fixDarkModeInputs() {
-            if (document.documentElement.getAttribute('data-theme') === 'dark') {
-                document.querySelectorAll('input, textarea, .form-control').forEach(el => {
-                    el.style.color = '#ffffff';
-                    el.style.backgroundColor = '#1e293b';
-                    el.addEventListener('focus', function() {
-                        this.style.backgroundColor = '#0f172a';
-                        this.style.borderColor = '#818cf8';
-                    });
-                    el.addEventListener('blur', function() {
-                        this.style.backgroundColor = '#1e293b';
-                        this.style.borderColor = '#334155';
-                    });
-                });
-            }
-        }
-
+        // Password validation
         document.addEventListener('DOMContentLoaded', function() {
-            fixDarkModeInputs();
-            
             const newPassword = document.getElementById('new_password');
             const confirmPassword = document.getElementById('confirm_password');
             
@@ -687,19 +681,29 @@ $is_admin = isAdmin();
                     } else {
                         confirmPassword.setCustomValidity('');
                     }
+                    
+                    if (newPassword.value.length > 0 && newPassword.value.length < 6) {
+                        newPassword.setCustomValidity('Password minimal 6 karakter');
+                    } else {
+                        newPassword.setCustomValidity('');
+                    }
                 }
-                newPassword.addEventListener('change', validatePassword);
-                confirmPassword.addEventListener('keyup', validatePassword);
+                
+                newPassword.addEventListener('input', validatePassword);
+                confirmPassword.addEventListener('input', validatePassword);
             }
         });
 
+        // Form submit with loading state
         const profileForm = document.getElementById('profileForm');
-        if (profileForm) {
-            profileForm.addEventListener('submit', function(e) {
-                const submitBtn = this.querySelector('button[type="submit"]');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        if (profileForm && submitBtn) {
+            profileForm.addEventListener('submit', function() {
                 const originalText = submitBtn.innerHTML;
                 submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Menyimpan...';
                 submitBtn.disabled = true;
+                
                 setTimeout(() => {
                     if (submitBtn.disabled) {
                         submitBtn.disabled = false;
@@ -708,6 +712,14 @@ $is_admin = isAdmin();
                 }, 5000);
             });
         }
+        
+        // Auto-dismiss alerts
+        document.querySelectorAll('.alert').forEach(alert => {
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 4000);
+        });
     </script>
 </body>
 </html>
