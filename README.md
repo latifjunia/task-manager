@@ -38,7 +38,7 @@ Copy folder `task-manager` ke:
 - Klik **Go**
 
 ### 5. Jalankan Aplikasi
-Buka browser, akses:
+Buka browser, akses: http://localhost/task-manager
 
 
 ## 🔐 Akun Login
